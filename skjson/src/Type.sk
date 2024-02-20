@@ -602,7 +602,7 @@ class Type private (types: Array<(Int, SType)>) uses Orderable {
 }
 
 /*****************************************************************************/
-/* Type-checking: verifies that a JSON correponds to a given schema. */
+/* Type-checking: verifies that a JSON corresponds to a given schema. */
 /*****************************************************************************/
 
 base class CheckResult {

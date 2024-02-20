@@ -48,13 +48,13 @@ class Env{
  * guarded in two ways
  * 1) Any usage of the tparam in the parents class is more constrained than the
  * invariant usage in the child. i.e. if the usage of the tparam is admissable
- * in the parent, it is admissabl ein the child
- * 2) Any bad downcast from the parent is protected via this mismached variance
+ * in the parent, it is admissable in the child
+ * 2) Any bad downcast from the parent is protected via this mismatched variance
  * check. in other words, if you attempt to upcast the child to the
  * co/contravariant parent, you will not be able to abuse that in the parent
  * (since the parent must not be mutable otherwise it would be invariant)
  * and if you attempt to downcast to witness the change, we replace the
- * argumnent to the instantiated mismatched tparam with an unknown existentials
+ * argument to the instantiated mismatched tparam with an unknown existential
  * thus blocking any access
  */
 base class Acc<Ta> {

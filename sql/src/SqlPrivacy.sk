@@ -145,7 +145,7 @@ base class PredefinedTable private final {
     }
   }
 
-  // Determines if a change in a directoy affects a given user
+  // Determines if a change in a directory affects a given user
   deferred fun hasChangedForUser(
     context: readonly SKStore.Context,
     user: UserFile,
@@ -216,7 +216,7 @@ class PredefinedRow(
     | Some(CInt(n)) -> n
     | v ->
       invariant_violation(
-        "Undexpected value for col " + colName + " " + inspect(v).toString(),
+        "Unexpected value for col " + colName + " " + inspect(v).toString(),
       )
     }
   }
@@ -226,7 +226,7 @@ class PredefinedRow(
     | Some(CString(n)) -> n
     | v ->
       invariant_violation(
-        "Undexpected value for col " + colName + " " + inspect(v).toString(),
+        "Unexpected value for col " + colName + " " + inspect(v).toString(),
       )
     }
   }
@@ -476,7 +476,7 @@ fun checkUserCanReadRow(
     | AROK() ->
       // group is visible to this user.  they can see this permission iff
       // (a) they are the specified user,
-      // (b) the permission is a default for all unspecifed users, OR
+      // (b) the permission is a default for all unspecified users, OR
       // (c) they are an admin of the group
       row.getValue(skdbGroupPermissions.getColNbr(userIDColName)) match {
       | None() -> return AROK()

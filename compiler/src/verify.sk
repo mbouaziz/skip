@@ -280,11 +280,11 @@ mutable private class Verifier(
 
   private mutable fun verifySimpleTerminator(
     instr: Terminator,
-    numExpectedSuccesors: Int,
+    numExpectedSuccessors: Int,
   ): void {
     this.verifyInstrType(instr, tVoid);
     this.invariant(
-      instr.successors.size() == numExpectedSuccesors,
+      instr.successors.size() == numExpectedSuccessors,
       "Successor count mismatch",
     )
   }

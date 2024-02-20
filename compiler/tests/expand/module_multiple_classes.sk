@@ -2,7 +2,7 @@ fun main(): void {
   print_string("Pass")
 }
 
-module MyAweseomModule;
+module MyAwesomeModule;
 
 base class Nat {
   children =

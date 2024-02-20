@@ -426,7 +426,7 @@ fun make_name_subst(
 }
 
 fun type_subst(subst: UMap<Ast.Type_>, ty: Ast.Type_): Ast.Type_ {
-  (_, ty_subsituted) = type(
+  (_, ty_substituted) = type(
     (subst, _void, ty) ~> {
       ty match {
       | (_, Ast.Tapply(Ast.Tclass(ident), _))
@@ -441,7 +441,7 @@ fun type_subst(subst: UMap<Ast.Type_>, ty: Ast.Type_): Ast.Type_ {
     void,
     ty,
   );
-  ty_subsituted
+  ty_substituted
 }
 
 fun expr_body_is_none(body: Ast.Expr_body): Bool {

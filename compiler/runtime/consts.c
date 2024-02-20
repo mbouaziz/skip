@@ -50,7 +50,7 @@ char* sk_new_const(char* cst) {
       if (unsafe_new_const_mode) {
         return cst;
       }
-      fprintf(stderr, "Cannot have a changing constant in persitent mode\n");
+      fprintf(stderr, "Cannot have a changing constant in persistent mode\n");
       SKIP_throw_cruntime(ERROR_CHANGING_CONST);
     }
 #endif

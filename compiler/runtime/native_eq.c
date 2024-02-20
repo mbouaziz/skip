@@ -19,7 +19,7 @@
  * we need to take into account the fact that because of padding, two objects
  * can be considered different, when they are in fact equal.
  *
- * Because this function is used to decide if we need to invalide a cache or
+ * Because this function is used to decide if we need to invalidate a cache or
  * not: this ends not being a problem. We might recompute a little bit too
  * much on the rare occasions where this padding problem occurs ... which is
  * ok!

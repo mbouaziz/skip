@@ -130,7 +130,7 @@ fun testLazy(): void {
   T.expectEq(
     Array<SKStore.File>[SKStore.IntFile(22)],
     getData(context, dir3, SKStore.IID(0)),
-    "Eeager after update",
+    "Eager after update",
   )
 }
 

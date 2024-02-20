@@ -861,7 +861,7 @@ fun check_fun_privacy(env: Env, privacy: ?FileRange): void {
 fun check_const_privacy(env: Env, x: (FileRange, A.Visibility)): void {
   x match {
   | (_, A.VPublic()) -> void
-  | (_, A.VProtected()) -> invariant_violation("ICE proected const")
+  | (_, A.VProtected()) -> invariant_violation("ICE protected const")
   | (pos, A.VPrivate()) ->
     check_module_element_privacy("constant", env, Some(pos))
   }
@@ -941,7 +941,7 @@ fun var_name(
 /*****************************************************************************/
 /* Assign unique type parameter ids to the parse trees. */
 /*****************************************************************************/
-/* Tparams have globably unique names (based on their declared context
+/* Tparams have globally unique names (based on their declared context
  * to make substitution easier in later passes
  */
 
@@ -1104,7 +1104,7 @@ fun mergeDefs(
   (_, defs2) = posDefs2;
   class_defs = defs1.class_defs;
   for (cd in defs2.class_defs) {
-    (!class_defs, _) = add_cd_merge_extentions(class_defs, cd);
+    (!class_defs, _) = add_cd_merge_extensions(class_defs, cd);
   };
   (
     pos,
@@ -1225,7 +1225,7 @@ fun definition(
     !cd = malias_class_def(context, env, cd);
     children_ = cd.children_;
     !module_defs = add_def(env, module_defs, defs -> {
-      (class_defs, !cd) = add_cd_merge_extentions(defs.class_defs, cd);
+      (class_defs, !cd) = add_cd_merge_extensions(defs.class_defs, cd);
       defs with {class_defs}
     });
     add_child = (chi: A.Child, map: UMap<A.Class_def>) -> {
@@ -1250,7 +1250,7 @@ fun definition(
 }
 
 /* Classes marked 'native' get a native constructor
- * TODO move the native keyword to cosntructor/field list position
+ * TODO move the native keyword to constructor/field list position
  */
 fun setNativeConstructor(cd: A.Class_def): A.Class_def {
   (cd.native_, cd.params) match {
@@ -1269,7 +1269,7 @@ fun setNativeConstructor(cd: A.Class_def): A.Class_def {
   }
 }
 
-fun add_cd_merge_extentions(
+fun add_cd_merge_extensions(
   class_defs: UMap<A.Class_def>,
   cd: A.Class_def,
 ): (UMap<A.Class_def>, A.Class_def) {
@@ -1945,7 +1945,7 @@ fun malias_tid(env: Env, x: A.TypeIdentifier): A.TypeIdentifier {
 /* Substitute tparams for ext classes.
  * If this substitution is not done, the tparams will not be properly
  * resolved for code written inside the extension class
- * ALTERNATIVE TODO. Another option woould be to require extension classes to
+ * ALTERNATIVE TODO. Another option would be to require extension classes to
  */
 
 /*****************************************************************************/
@@ -2425,7 +2425,7 @@ fun add_cd_to_acc(name: A.Name, cd: A.Class_def, acc: A.Program): A.Program {
       ],
     )
   };
-  (class_defs, _cd) = add_cd_merge_extentions(acc.class_defs, cd);
+  (class_defs, _cd) = add_cd_merge_extensions(acc.class_defs, cd);
   acc with {class_defs}
 }
 

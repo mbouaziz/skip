@@ -59,7 +59,7 @@ fun main(): void {
 }
 
 /*****************************************************************************/
-/* Command infering a schema (from a set of JSON objects). */
+/* Command inferring a schema (from a set of JSON objects). */
 /*****************************************************************************/
 
 fun infer(): (Cli.Command, Cli.ParseResults ~> void) {

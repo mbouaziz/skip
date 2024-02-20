@@ -19,7 +19,7 @@ module SkipTypes;
 // TODO it might have been a bad idea to shadow here, was done for dogfooding
 base class Exception extends .Exception
 
-// General Error for Subtying Mismatch
+// General Error for Subtyping Mismatch
 class Join(N.Type_, N.Type_) extends Exception
 // Mismatch function arity
 class ArityMismatch(FileRange, Int, FileRange, Int) extends Exception
@@ -76,7 +76,7 @@ fun join_modifiers_inv<Ta>(
     | (Some(x1), Some(x2)) ->
       cmp_mods(x1, x2) match {
       | EQ() ->
-        elt = x1; // arbitary since equal
+        elt = x1; // arbitrary since equal
         result.push(elt)
       | _ -> throw exn
       }
@@ -103,7 +103,7 @@ fun join_modifiers_minus_plus<Ta>(
     | (Some(mElt), Some(pElt)) ->
       cmp_mods(mElt, pElt) match {
       | EQ() ->
-        elt = mElt; // arbitary since equal
+        elt = mElt; // arbitrary since equal
         result.push(elt);
         !mCur = mIter.next();
         !pCur = pIter.next()
@@ -170,7 +170,7 @@ fun join_modifiers_plus_plus<Ta>(
     | (Some(elt1), Some(elt2)) ->
       cmp_mods(elt1, elt2) match {
       | EQ() ->
-        // arbitary since equal
+        // arbitrary since equal
         result.push(elt1);
         !cur1 = iter1.next();
         !cur2 = iter2.next()
@@ -449,7 +449,7 @@ fun unfold_type(subst: IMap<N.Type_>, x: N.Type_): N.Type_ {
   }
 }
 
-// Helper for grabbign the fields from a tset
+// Helper for grabbing the fields from a tset
 // TODO just replace this function with 'as'
 fun assert_tset(
   x: (FileRange, N.Type__),
@@ -460,7 +460,7 @@ fun assert_tset(
   }
 }
 
-// Helper for grabbign the fields from a tpromoted
+// Helper for grabbing the fields from a tpromoted
 // TODO just replace this function with 'as'
 fun assert_tpromoted(x: (FileRange, N.Type__)): (FileRange, N.Tpromoted) {
   x match {
@@ -933,7 +933,7 @@ fun to_readonly_modifiers(
     throw MutLambdaToReadonly(
       List[
         (caller_pos, "Cannot have a readonly view of a mutable lambda"),
-        (lambda_pos, "This is the lambda you are trying to make reaodnly"),
+        (lambda_pos, "This is the lambda you are trying to make readonly"),
       ],
     )
   }
@@ -1148,7 +1148,7 @@ fun promote_inter_elt(
 ): N.InterElt {
   cd = SkipNaming.getClass(context, elt.name);
   targs = promote_targs(context, env, variance, mode, subst, cd, elt.targs);
-  // dont promote the conditions, done lazily on filtering
+  // don't promote the conditions, done lazily on filtering
   elt with {targs}
 }
 
@@ -1331,7 +1331,7 @@ fun make_promoted(
       wca.map(wc -> {
         lhs = tsubst(wc.i0);
         rhs = wc.i1.map(tsubst);
-        // dont promote the conditions, done lazily on filtering
+        // don't promote the conditions, done lazily on filtering
         (lhs, rhs)
       })
     );
@@ -1766,7 +1766,7 @@ fun join_try_list(
   result: ?(SkipTypes.Acc, SkipNamedAst.Type_) = None();
   for (ty2 in tyl2) {
     ty2 match {
-    /* Contraints already handled */
+    /* Constraints already handled */
     | (_, N.Tfrozen _)
     | (_, N.TnonNullable _) ->
       continue
@@ -1852,7 +1852,7 @@ fun maybe_join_modality(
 
 fun all_ktype(x: Array<N.InterElt>): Bool {
   !x.isEmpty() &&
-    /* Taking advandtage of the sorted set elements */
+    /* Taking advantage of the sorted set elements */
     x[0].kind is A.KTrait()
 }
 
@@ -1861,8 +1861,8 @@ fun all_ktype(x: Array<N.InterElt>): Bool {
  *
  * trait Arith { ... }
  * base class Bogus
- * class Foo(x : Int) extends Bogus implemnts Arith
- * class Bar(x : String) extends Bogus implemnts Arith
+ * class Foo(x : Int) extends Bogus implements Arith
+ * class Bar(x : String) extends Bogus implements Arith
  *
  * a = if (true) Foo(42) else Bar(invariant_violation(""))
  * b = if (true) Bar("hello") else Foo(invariant_violation(""))
@@ -2145,7 +2145,7 @@ fun uniqElt(
   | _ ->
     elt1Valid = validConditions(context, next_id, env, acc, elt1);
     elt2Valid = validConditions(context, next_id, env, acc, elt2);
-    // Add elt if either conditions satisified, but take targs only from the
+    // Add elt if either conditions satisfied, but take targs only from the
     // valid elts
     (elt1Valid, elt2Valid) match {
     | (true, true) ->
@@ -2219,7 +2219,7 @@ fun join_set_minus_minus(
     | (None(), None()) -> break (acc, result.toArray())
     | (Some(elt), None())
     | (None(), Some(elt)) ->
-      // Drop any unsatisified conditional elements
+      // Drop any unsatisfied conditional elements
       rem = cur1 match {
       | None() -> Array[elt].values().concat(iter2)
       | Some _ -> Array[elt].values().concat(iter1)
@@ -2232,7 +2232,7 @@ fun join_set_minus_minus(
     | (Some(elt1), Some(elt2)) ->
       compare_set_elt(elt1, elt2) match {
       | EQ() ->
-        // add if either conditions satsified
+        // add if either conditions satisfied
         (!acc, maybeJoined) = uniqElt(
           context,
           next_id,
@@ -2246,14 +2246,14 @@ fun join_set_minus_minus(
         !cur1 = iter1.next();
         !cur2 = iter2.next()
       | LT() ->
-        // add only if satsified conditions
+        // add only if satisfied conditions
         if (validConditions(context, next_id, env, acc, elt1)) {
           !elt1.conditions = satisfyCondition(elt1.conditions);
           result.push(elt1)
         };
         !cur1 = iter1.next()
       | GT() ->
-        // add only if satsified conditions
+        // add only if satisfied conditions
         if (validConditions(context, next_id, env, acc, elt2)) {
           !elt2.conditions = satisfyCondition(elt2.conditions);
           result.push(elt2)
@@ -3011,7 +3011,7 @@ private class CheckMutPreservation(
         !parent_m.containsKey(i)
       );
       constraints = not_visible_by_parent.reduce(
-        (constrs, _, constr) -> constrs.add_contraint(constr),
+        (constrs, _, constr) -> constrs.add_constraint(constr),
         acc.constraints,
       );
       acc with {constraints}
@@ -3157,8 +3157,8 @@ private fun is_frozen_map(
 
 fun is_frozen_tfun_modifiers(mods: N.Tfun_modifiers): Bool {
   (purity, tracking) = mods;
-  invariant(!purity.isEmpty(), "imposible tfun");
-  invariant(!tracking.isEmpty(), "imposible tfun");
+  invariant(!purity.isEmpty(), "impossible tfun");
+  invariant(!tracking.isEmpty(), "impossible tfun");
   purity[0] is N.Fpure() && tracking[0] is N.Ftracked()
 }
 

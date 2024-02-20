@@ -124,7 +124,7 @@ Let's say ~FRIENDID~ is writing a comment on ~POSTID~. When ~FRIENDID~ was creat
 
 NOTE: we specify everyone can read FRIENDID's comments.
 
-And when ~POSTID~ was created these rules were writen:
+And when ~POSTID~ was created these rules were written:
 
 | from_table    | to_table | from_col | id     | permission | user_group                  |
 |---------------+----------+----------+--------+------------+-----------------------------|
@@ -325,7 +325,7 @@ reference on the auctions table so there's no equation to specify.
 
 Let's communicate who won an auction. We want to share derived data in
 the form of a reactive view with some users. We define the ~winners~
-vitual view on the server:
+virtual view on the server:
 
 #+BEGIN_SRC sql
   CREATE REACTIVE VIEW winners AS
@@ -374,7 +374,7 @@ Let's see how this works with another use case. We'll choose a fairly
 arbitrary rule that (perhaps) isn't realistic but demonstrates you can
 express complex privacy rules:
 
-- only users that have bidded on an auction, and the auction creator,
+- only users that have bid on an auction, and the auction creator,
   can see the total count of bids
 
 First we need the total count:
@@ -399,7 +399,7 @@ First we need the total count:
       ON auction_bidders.auction = total_bids_per_auction.auction
 #+END_SRC
 
-We get a table with the total bids that references an auction and a bidder. So we just set the privac rules as:
+We get a table with the total bids that references an auction and a bidder. So we just set the privacy rules as:
 
 | from_table         | to_table | from_col | id            | permission | user_group                              |
 |--------------------+----------+----------+---------------+------------+-----------------------------------------|

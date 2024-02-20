@@ -322,8 +322,8 @@ base class Expr_ {
   /*  lvalue = rvalue or (lvalue : type) = rvalue
    *  Note that since the LHS must already be defined, the lvalue could in
    *  some sense be seen as an rvalue (hence the way we allow typing)
-   *  But since the only valid forms of the LHS are syntatically lvalues, we
-   *  keep it that way in the grammar as a convience
+   *  But since the only valid forms of the LHS are syntactically lvalues, we
+   *  keep it that way in the grammar as a convenience
    */
   | Dot(Expr, Name)
   | StaticDot(Expr, Name)

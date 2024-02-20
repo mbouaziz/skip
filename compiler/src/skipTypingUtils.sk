@@ -172,7 +172,7 @@ const empty_acc: Acc = Acc{
   mismatched_variance_bounds => SortedMap[],
 };
 
-// tparam prefix for uknown type argument existentials
+// tparam prefix for unknown type argument existentials
 const unknown_prefix: String = "!$!unknown:";
 // tparam prefix for mismatched variance existentials
 const mismatched_prefix: String = "!$!mismatched_variance:";
@@ -294,7 +294,7 @@ fun freeze(caller_pos: FileRange, acc: Acc, x: N.Type_): N.Type_ {
 
 /* Strip off hte outer most mutability modifier to make it immutable
  *
- * Currently this operation is done by the unsafe operater
+ * Currently this operation is done by the unsafe operator
  * unsafe_chill_trust_me
  *
  * BIG TODO we need some sort of linear check to prove this chilling statically
@@ -746,7 +746,7 @@ class RelationalConstraint(
   }
 }
 
-// This cosntraint checks that a given type is frozen for valid subtying on
+// This constraint checks that a given type is frozen for valid subtying on
 // immutable objects. This could be a relational check, but the error message
 // would be super awful
 class MutPreservationConstraint(
@@ -829,7 +829,7 @@ class LocalMutableConstraint(
     };
     mode match {
     | N.Efrozen _ -> void
-    | mut @ N.EffectiveNotFrozen _ -> this.error_local_mutable_contstraint(mut)
+    | mut @ N.EffectiveNotFrozen _ -> this.error_local_mutable_constraint(mut)
     };
     acc
   }
@@ -844,7 +844,7 @@ class LocalMutableConstraint(
     acc
   }
 
-  private fun error_local_mutable_contstraint(
+  private fun error_local_mutable_constraint(
     mutability: N.EffectiveNotFrozen,
   ): void {
     this.level match {
@@ -919,7 +919,7 @@ value class Constraints(
     this
   }
 
-  fun add_contraint(c: Constraint): this {
+  fun add_constraint(c: Constraint): this {
     c match {
     | t @ TypingConstraint _ ->
       !this.typing = List.Cons(t, this.typing);
@@ -1023,7 +1023,7 @@ value class Constraints(
   ): Acc {
     constraints = this.typing;
     len = constraints.size();
-    // grab the relational constraints for call contraints as described above
+    // grab the relational constraints for call constraints as described above
     (!constraints, _) = constraints.takeAndDrop(len - last_constraint);
     constraints.foldl(
       (acc, c) -> c.solve_call(context, next_id, last_tvar, env, acc),
@@ -1041,7 +1041,7 @@ value class Constraints(
    * same machinery as needed to avoid sending tvars to the backend.
    *
    * TODO kill this with fire. We forward tvars to properly solve constraints
-   * We could probbably remove all this shenanigans if we try to keep a
+   * We could probably remove all this shenanigans if we try to keep a
    * canonical form for constraints
    */
   private static fun check_constraint_consistency(
@@ -1154,7 +1154,7 @@ value class Constraints(
   }
 }
 
-// Check for solveable constraints on methods. If they are not solveable,
+// Check for solvable constraints on methods. If they are not solvable,
 // the method doesn't need to be implemented by the child in question
 fun solvableWhenparams(
   context: mutable SKStore.Context,
@@ -1171,8 +1171,8 @@ fun solvableWhenparams(
   // Due to conditional constraints on traits, we often don't have enough
   // information
   for ((lhs, rhss) in whenclauses) {
-    unresovledInnerTvars = isCDTparam(tps, lhs) || !hasCDTparam(tps, lhs);
-    if (unresovledInnerTvars) continue;
+    unresolvedInnerTvars = isCDTparam(tps, lhs) || !hasCDTparam(tps, lhs);
+    if (unresolvedInnerTvars) continue;
     for (rhs in rhss) {
       traits = ktraits(context, acc.subst, rhs);
       if (hasConditionalTrait(context, acc.subst, traits, lhs)) return None();
@@ -1702,7 +1702,7 @@ fun suggested_join_fix(
   ty2: N.Type_,
 ): List<(FileRange, String)> {
   (var1, var2) match {
-  // Nothing to suggest, these types are innherintely incompatible
+  // Nothing to suggest, these types are inherently incompatible
   | (None(), _)
   | (_, None())
   | (Some(Ast.Vminus()), Some(Ast.Vminus()))
@@ -1759,7 +1759,7 @@ fun suggested_join_fix(
       fst_msg = "These types were found to be fixed upper bounds and could not be changed to a compatible type.\nTo make these types compatible, annotate as this type: ";
       snd_msg = "Also annotate here as this type: ";
       (ty1_str == new_ty_str, ty2_str == new_ty_str) match {
-      // Annotatation needed on both types
+      // Annotation needed on both types
       | (false, false) ->
         List[(ty1.i0, fst_msg + new_ty_str), (ty2.i0, snd_msg + new_ty_str)]
       // Annotation needed just on the first type
@@ -1827,7 +1827,7 @@ fun types_error<T>(
               fpos,
               "This type is immutable, and immutable types must be deeply frozen. To make it mutable, preface it with 'mutable', or for generics try removing any 'frozen' constraint.",
             ),
-            // Find any susggested
+            // Find any suggested
             suggested_frozen_fix(ty, "To keep it immutable, try "),
           ),
         ),
@@ -2084,7 +2084,7 @@ fun join_exn(
 }
 
 /*****************************************************************************/
-/* Helpers to manipulate the upper_bounds of type paremeters. */
+/* Helpers to manipulate the upper_bounds of type parameters. */
 /*****************************************************************************/
 
 fun reset_tparam_bounds_for_tset_tpromoted(
@@ -2128,7 +2128,7 @@ value class TparamConstraints private {
     this.uppers.maybeGet(id).default(Array[])
   }
 
-  // addition encapsoilate any changes needed for canonicalized constraints
+  // addition encapsulate any changes needed for canonicalized constraints
   fun addAdditionalTparamConstraints(
     context: mutable SKStore.Context,
     env: Env,
@@ -2188,7 +2188,7 @@ value class TparamConstraints private {
    * We then find that alpha => -U, meaning that T has an upperbound of U
    * Then we find that beta => +T, meaning that U has a lowerbound of T
    * If we found that alpha => .U, meaning that
-   * TODO we dont currently track lowerbounds
+   * TODO we don't currently track lowerbounds
    */
   fun addWhenparamConstraints(
     context: mutable SKStore.Context,
@@ -2922,7 +2922,7 @@ fun classname_ty(
       SkipError.error(
         pos,
         "Traits do not have a Class<_> object, " +
-          "and their static members cannot be accssed directly",
+          "and their static members cannot be accessed directly",
       )
     };
     make_tobject(context, env, acc, pos, ty)
@@ -2959,7 +2959,7 @@ fun bind_this_type(
     mode = fkind match {
     | N.FKStatic _
     | N.FKFrozen _ ->
-      invariant_violation("ICE imposible match bind_this_type")
+      invariant_violation("ICE impossible match bind_this_type")
     | N.FKChilled() -> N.Mchilled()
     | N.FKReadonly(fr) -> N.Mreadonly(fr)
     | N.FKMutable(fr) -> N.Mmutable(fr)
@@ -3347,7 +3347,7 @@ fun createExistentialName(fr: FileRange): N.Name {
   (fr, "Unknown")
 }
 
-/* For any unknown type arguments, add a new type parameter to the enverionment
+/* For any unknown type arguments, add a new type parameter to the environment
  */
 fun create_existentials(
   context: mutable SKStore.Context,
@@ -3459,7 +3459,7 @@ fun reconstrain_child(
   | (_, N.Tparam(_, _, tparam_id, _)) -> Some(tparam_id)
   | _ -> None()
   };
-  effecitively_empty = id ~>
+  effectively_empty = id ~>
     acc.tparam_constraints.findUppers(id).all(ty ->
       ty match {
       | (_, N.Tfrozen _)
@@ -3471,7 +3471,7 @@ fun reconstrain_child(
   tparam_id match {
   // If the tparam does not have upper bounds
   // Refine the generic by adding the constraints as upper bounds
-  | Some(id) if (effecitively_empty(id)) ->
+  | Some(id) if (effectively_empty(id)) ->
     add_additional_tparam_constraints(context, env, acc, id, ty_constraints)
   // If the tparam DOES have upper bounds
   // They must be MORE specific to satisfy the constraints,
@@ -3522,7 +3522,7 @@ fun build_parents(env: Env, acc: Acc, obj_ty: N.Type_): SSet {
 }
 
 /* For any type argument with a mismatched variance in the parents extends list
- * i.e. an invariant type ends up in co/contravariant postion
+ * i.e. an invariant type ends up in co/contravariant position
  * Replace it with an existential to prevent unsound behavior
  */
 fun fix_mismatched_variance<Ta>(

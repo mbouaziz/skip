@@ -294,7 +294,7 @@ class MuxedSocket(
     val onClose: onSocketCloseFn,
     val onError: onSocketErrorFn,
     val getDecryptedKey: (MuxAuthMsg) -> ByteArray = { _ ->
-      throw RuntimeException("Acting as a client initated socket")
+      throw RuntimeException("Acting as a client initiated socket")
     },
     val isClient: Boolean = false,
     val log: MuxedSocketLogger = { _, _, _ -> },

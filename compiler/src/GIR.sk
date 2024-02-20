@@ -256,7 +256,7 @@ class GMethodDef{
   // takes as tparams the tparams for the containing class followed by the
   // tparams for this method.
 
-  // FIXME: Should this take LazyGClass? That way the reciever isn't forced
+  // FIXME: Should this take LazyGClass? That way the receiver isn't forced
   // to create a LiteralLazyGClass to make a GTapply.
   function: ?((mutable SKStore.Context, LazyGClass) ~> LazyGFun),
   tparams: Array<GTparam>,

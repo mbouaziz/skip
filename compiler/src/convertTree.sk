@@ -14,7 +14,7 @@ class Converter{filename: String} {
     this.filename + tree.toDebugString();
   }
 
-  // Generic functions go here so tehy aren't in the let rec
+  // Generic functions go here so they aren't in the let rec
   fun convertOpt<T>(tree: ParseTree, converter: ParseTree -> T): ?T {
     tree match {
     | ParseTree.EmptyTree _ -> None()
@@ -29,7 +29,7 @@ class Converter{filename: String} {
     tree match {
     | ParseTree.ParseTreeList{elements} -> elements.map(convertElement)
     | _ ->
-      invariant_violation("Expectd parse tree list: " + this.treeToString(tree))
+      invariant_violation("Expected parse tree list: " + this.treeToString(tree))
     }
   }
 
@@ -322,7 +322,7 @@ class Converter{filename: String} {
     }
   }
 
-  fun covnertWhenTypeClause(tree: ParseTree): SkipAst.When_type_clause {
+  fun convertWhenTypeClause(tree: ParseTree): SkipAst.When_type_clause {
     tree match {
     | ParseTree.WhenTypeClauseTree{subtype, supertypes} ->
       (this.convertType_(subtype), this.convertConstraints(supertypes))
@@ -348,7 +348,7 @@ class Converter{filename: String} {
   fun convertWhenParameters(tree: ParseTree): Array<SkipAst.When_type_clause> {
     tree match {
     | ParseTree.WhenParametersTree{elements} ->
-      elements.getList().map(this.covnertWhenTypeClause)
+      elements.getList().map(this.convertWhenTypeClause)
     | ParseTree.EmptyTree _ -> Array[]
     | _ ->
       invariant_violation(
@@ -2115,7 +2115,7 @@ class Converter{filename: String} {
     | ParseTree.TypeInitializerTree{typeSpecifier} ->
       invariant(
         constraint.isEmpty(),
-        "Cannot have contraints on non-abstract type constant",
+        "Cannot have constraints on non-abstract type constant",
       );
       SkipAst.TydDefined(this.convertType_(typeSpecifier))
     | _ ->

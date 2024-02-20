@@ -189,7 +189,7 @@ mutable class Compiler{
   }
 
   mutable fun expandGroupBy(core: P.SelectCore): P.SelectCore {
-    // Tranforms:
+    // Transforms:
     // 'select ... from ... group by ...'
     // ==> 'select * from (select ... from ... group by ...)'
     core match {

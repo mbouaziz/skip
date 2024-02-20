@@ -78,7 +78,7 @@ mapping of class map -> column in the pattern matrix.
    set of constructors is complete for the type that we expect in that column,
    or in other words, from @is_complete_sig on down. When we enter
    @is_complete_sig we do a couple things to prepare our patterns before we
-   start exmamining them:
+   start examining them:
    a.1. We get the root constructors for the patterns in the pattern matrix (@get_root_constructors);
    a.2. then filter out all the wildcard matches;
    a.3. and finally separate the remaining patterns into constant patterns, and other patterns.
@@ -654,7 +654,7 @@ fun prep_pattern(
 }
 
 /* Take a pattern and shove the things in @args into it. This is used in our
- * counterexample generation process to reconstruct patterns after the recuwrsive step. */
+ * counterexample generation process to reconstruct patterns after the recursive step. */
 fun rebuild_constr(
   context: mutable SKStore.Context,
   env: mutable Env,
@@ -1253,7 +1253,7 @@ fun dedup_constrs(pats: List<Indexed_pattern>): List<Indexed_pattern> {
   build_seen(pats)
 }
 
-// Expand no params to all wildcars
+// Expand no params to all wildcards
 fun expand_no_params(
   context: mutable SKStore.Context,
   pos: FileRange,
@@ -1299,13 +1299,13 @@ fun concretize_ctors(
           child_tid = TAst.Tid_object((pos, str_name));
           child_params = parent_params match {
           | None() -> expand_no_params(context, pos, child_tid, None())
-          | Some(pparms) ->
+          | Some(pparams) ->
             normalized = normalize_param_patterns(
               context,
               pos,
               child_tid,
               orig_tid,
-              pparms,
+              pparams,
             );
             Some(normalized)
           };
@@ -1878,7 +1878,7 @@ fun useful_pat_exists_result(
   pats match {
   | List.Nil() ->
     // Defaults to NotInSet since the result of the whole list is
-    // NotInSet iff all eleements were not in the set
+    // NotInSet iff all elements were not in the set
     (NotInSet(), env)
   | List.Cons((pat, _), rest) ->
     (is_rest_useful, new_env) = is_rest_pat_useful(
@@ -2072,7 +2072,7 @@ fun generate_non_matching(
 
 /* Determines if a match is exhaustive. There are three mains phases for this function:
    - phase 1: Determine if the patterns in @mbl are non-overlapping (i.e., no unused patterns).
-   - phase 2: Determing if the patterns in @mbl are exhaustive
+   - phase 2: Determining if the patterns in @mbl are exhaustive
    - phase 3: If the patterns are not exhaustive, generate a counterexample.
 */
 fun check_useful(

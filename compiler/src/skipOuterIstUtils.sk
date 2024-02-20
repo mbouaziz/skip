@@ -2185,7 +2185,7 @@ fun iterate_stmt(
   }
 }
 
-/* Search for expresssions */
+/* Search for expressions */
 type Search_result = IterationControl;
 
 const not_found_stop: IterationControl = NoChildren();
@@ -2348,7 +2348,7 @@ fun create_derived_classes(class_defs: UMap<O.ClassDef>): SMap<SSet> {
 // - ids must be uniquely assigned to all KClasses (non-base, aka leaf) classes.
 // - base classes and traits are assigned -1 as they should never be switch targets
 // - all of the leaf classes of a given base class should be assigned
-//   sequential Ids. This improves the odds that the underlying code generater
+//   sequential Ids. This improves the odds that the underlying code generator
 //   can turn the switch into a contiguous jump table.
 //
 // Assign ids, by iterating over the classes with no base, then assign ids to

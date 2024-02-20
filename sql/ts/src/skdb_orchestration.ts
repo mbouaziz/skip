@@ -137,10 +137,10 @@ function encodeProtoMsg(msg: ProtoMsg): ArrayBuffer {
 
       const buf = new ArrayBuffer(
         20 +
-          msg.table.length * 4 +
-          msg.expectedColumns.length * 4 +
-          msg.filterExpr.length * 4 +
-          serialisedParams.length * 4,
+        msg.table.length * 4 +
+        msg.expectedColumns.length * 4 +
+        msg.filterExpr.length * 4 +
+        serialisedParams.length * 4,
       );
       const uint8View = new Uint8Array(buf);
       const dataView = new DataView(buf);
@@ -956,7 +956,7 @@ export class MuxedSocket {
         }
         switch (msg.type) {
           case "auth":
-            throw new Error("Unexepected auth message from server");
+            throw new Error("Unexpected auth message from server");
           case "goaway":
             this.onSocketError(msg.errorCode, msg.msg);
             break;
@@ -968,7 +968,7 @@ export class MuxedSocket {
               break;
             }
 
-            // TODO: is the watermark condition necesary? we don't want to
+            // TODO: is the watermark condition necessary? we don't want to
             // reuse streams but this doesn't allow for creating them with
             // non-deterministic scheduling. if we don't accept them,
             // should probably send a stream reset
@@ -1423,7 +1423,7 @@ class SKDBServer implements RemoteSKDB {
     const uri = SKDBServer.getDbSocketUri(endpoint, db);
 
     const policy: ResiliencyPolicy = {
-      notifyFailedStream() {},
+      notifyFailedStream() { },
       async shouldReconnect(socket: ResilientMuxedSocket): Promise<boolean> {
         // perform an active check
         return !socket.isSocketResponsive();
@@ -1609,20 +1609,20 @@ class SKDBServer implements RemoteSKDB {
                 if (count > 0) {
                   console.warn(
                     "[skdb] %d row updates were rejected by the server. " +
-                      "Query table %s to examine the rejected rows.",
+                    "Query table %s to examine the rejected rows.",
                     count,
                     currentTable,
                   );
                   console.info(
                     "[skdb] Rejected updates are caused by writes that violate " +
-                      "access rules. These rules are checked locally at write time so " +
-                      "must have changed concurrently. You can watchChanges on %s " +
-                      "if you wish to handle this with application logic.",
+                    "access rules. These rules are checked locally at write time so " +
+                    "must have changed concurrently. You can watchChanges on %s " +
+                    "if you wish to handle this with application logic.",
                     currentTable,
                   );
                   console.info(
                     "[skdb] To silence skdb warnings you can pass " +
-                      "`{ disableWarnings: true }` to createSkdb.",
+                    "`{ disableWarnings: true }` to createSkdb.",
                   );
                 }
                 count = 0;

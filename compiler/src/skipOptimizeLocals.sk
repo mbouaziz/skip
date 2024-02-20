@@ -182,7 +182,7 @@ fun binding_info_of_context(context: Context, name: String): O.BindingInfo {
 // with:
 //   return e
 //
-// Note that this optimization works backwards throught control flow.
+// Note that this optimization works backwards through control flow.
 // For example:
 //   if (c) { $t = e1 } else { $t = e2 }; return $t
 // will get optimized to:
@@ -374,7 +374,7 @@ fun trim_statement_to_side_effects(stmt: O.Stmt): O.Stmt {
   stmt match {
   | O.SingleExpr(e) -> trim_expression_to_effectful_statement(e)
   | O.Return _ ->
-    invariant_violation("Use make_return_context for return statments")
+    invariant_violation("Use make_return_context for return statements")
   | O.JumpTo _ -> invariant_violation("JumpTo must be handled specially")
   | O.Seq _ ->
     invariant_violation("Seq should be handled by optimize_statements")

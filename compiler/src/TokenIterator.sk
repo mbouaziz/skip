@@ -26,7 +26,7 @@ module Lexer;
 //
 // NOTE: I'm hoping that TokenIterator plus preserving all Tokens in the
 // ParseTrees will be a convenient API to build the formatter. If that proves
-// incorrect we can adjust the API. A reasonable alterantive will be to
+// incorrect we can adjust the API. A reasonable alternative will be to
 // include leading and trailing trivia directly in Tokens.
 mutable class TokenIterator{
   tokens: Array<Token.Token>,

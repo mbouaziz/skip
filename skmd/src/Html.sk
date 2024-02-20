@@ -248,7 +248,7 @@ fun convert(entities: Vector<Entity>): Vector<HTMLElement> {
       };
       tag = kind match {
       | BulletList _ -> "ul"
-      | OrederedList _ -> "ol"
+      | OrderedList _ -> "ol"
       };
       elements.push(HTMLElement(tag, Map[], htmlEntities.chill()));
       !idx = idx - 1

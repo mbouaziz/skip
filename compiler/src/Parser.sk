@@ -491,7 +491,7 @@ mutable base class Parser{
     returnParseTreeList(this.createRangeBefore(), elements);
   }
 
-  // Returns the list of elements, and the list of seprators.
+  // Returns the list of elements, and the list of separators.
   // There will be one less separator than element.
   mutable fun parseSeparatedListElements(
     separatorKind: TokenKind.TokenKind,
@@ -735,7 +735,7 @@ fun validateTreeRanges(tree: ParseTree, filename: String): void {
     };
     if (child.range.start < start) {
       invariant_violation(
-        `${filename}: Child tree ${child.toDebugString()} overlaps with its predeccessor in parent ${tree.toDebugString()}`,
+        `${filename}: Child tree ${child.toDebugString()} overlaps with its predecessor in parent ${tree.toDebugString()}`,
       );
     };
     !start = child.range.end;

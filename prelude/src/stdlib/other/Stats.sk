@@ -57,9 +57,9 @@ fun removeOutliers<T: Orderable>(
 ): Sequence<T> {
   invariant(outlierFraction < 0.5, "Outlier fraction must be less than 0.5");
   size = s.size();
-  numIndeces = (size.toFloat() * outlierFraction).toInt();
-  firstN = size - numIndeces;
-  lastN = size - (2 * numIndeces) - 1;
+  numIndices = (size.toFloat() * outlierFraction).toInt();
+  firstN = size - numIndices;
+  lastN = size - (2 * numIndices) - 1;
   s.sorted().values().take(firstN).drop(lastN).collect(Vector)
 }
 

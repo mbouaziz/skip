@@ -383,7 +383,7 @@ private mutable base class GeneratorBase {
   }
 }
 
-// This is a special class that acts a standin for all the generator
+// This is a special class that acts a stand-in for all the generator
 // subclasses of Iterator that might be created by the back end. Its
 // existence, and the fact that it is private, prevents users from ever
 // doing an incorrectly "exhaustive" match on "Iterator".

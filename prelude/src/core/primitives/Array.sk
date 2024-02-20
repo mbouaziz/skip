@@ -306,7 +306,7 @@ mutable native class .Array<+T>
     | size ->
       concatStringSequence(
         if (separator.isEmpty()) {
-          // TODO: It would be nice to specalize this for Array<String>
+          // TODO: It would be nice to specialize this for Array<String>
           this.map(x -> x.toString())
         } else {
           Array::fillBy(size * 2 - 1, i -> {

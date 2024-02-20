@@ -734,7 +734,7 @@ mutable class .UnorderedMap<+K: Hashable & Equality, +V>(
     })
   }
 
-  // Internal helper for iteration guarding against concurrent modifiction.
+  // Internal helper for iteration guarding against concurrent modification.
   @always_inline
   readonly fun eachWhileImpl(f: UnorderedMapSlot<K, V> -> void): void {
     slots = this.slots;

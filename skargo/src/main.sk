@@ -395,7 +395,7 @@ fun execInit(args: Cli.ParseResults): void {
   }
 }
 
-/********* Udapte **********/
+/********* Update **********/
 
 fun update(): (Cli.Command, Cli.ParseResults ~> void) {
   (

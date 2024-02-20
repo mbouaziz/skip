@@ -28,7 +28,7 @@ class Tag(name: String, version: ?Int) uses Orderable {
       invariant_violation("Invalid tag string " + str)
     };
     v = components.maybeGet(1).map(v -> v.toInt());
-    v.each(vn -> invariant(vn >= 0, "Tag version nust be positive"));
+    v.each(vn -> invariant(vn >= 0, "Tag version must be positive"));
     Tag(components[0], v)
   }
 

@@ -1063,7 +1063,7 @@ mutable class .Map<+K: Hashable & Equality, +V>(
     }
   }
 
-  // Internal helper for iteration guarding against concurrent modifiction.
+  // Internal helper for iteration guarding against concurrent modification.
   @always_inline
   readonly fun eachWhileImpl(f: MapEntry<K, V> -> Bool): void {
     slots = this.slots;

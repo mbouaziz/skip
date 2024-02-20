@@ -239,15 +239,15 @@ mutable base class BlockEntity extends Entity {
 base class ListKind uses Equality, HasClassName, Show {
   children =
   | BulletList(c: Char, kind: Int)
-  | OrederedList(size: Int)
+  | OrderedList(size: Int)
 
   fun count(): Int
   | BulletList(_, kind) -> kind + 1
-  | OrederedList(size) -> size + 2
+  | OrderedList(size) -> size + 2
 
   fun toString(): String
   | BulletList(c, kind) -> `ul-${c}-${kind}`
-  | OrederedList(size) -> `ol-${size}`
+  | OrderedList(size) -> `ol-${size}`
 }
 
 mutable class ParagraphBlock(
@@ -453,7 +453,7 @@ mutable class ListBlock(
         line.isChar('.', count) &&
         line.isWhitespace(count + 1)
       ) {
-        return Some(OrederedList(count))
+        return Some(OrderedList(count))
       }
     };
     optKind

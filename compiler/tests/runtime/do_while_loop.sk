@@ -69,7 +69,7 @@ fun main(): void {
       (do {
         throw MyExn()
       } while (true) else {
-        invariant_violation("imposible")
+        invariant_violation("impossible")
       })
   } catch {
   | e @ MyExn() -> print_string(e.getMessage())

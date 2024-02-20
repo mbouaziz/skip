@@ -88,7 +88,7 @@ mutable class .Random private (
     // Use the highest N bits (which have more entropy than low bits), where N
     // is the minimum number of bits necessary to fit `range`. This retains as
     // much randomness as possible from the input. To ensure an even distribution
-    // of vaues within the range, use a loop to reject values >= range (rather
+    // of values within the range, use a loop to reject values >= range (rather
     // than a modulo operation).
     shift = range.clz();
     while ({

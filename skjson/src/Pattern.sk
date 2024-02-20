@@ -15,7 +15,7 @@ module SKJSON;
 // So why are we not using regular expressions? Sigh ... Because of
 // wasm.  We could use JS regular expressions of course, but that
 // would mean going back and forth with string encodings, which is
-// really inefficient. The other option would be to embbed a regular
+// really inefficient. The other option would be to embed a regular
 // expression engine, but that would mean pulling in a huge
 // dependency, and code size matters ...
 //

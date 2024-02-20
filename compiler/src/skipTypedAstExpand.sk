@@ -97,7 +97,7 @@ fun type__(
   // that was found to be unsafe
   | N.Tparam(_, _, id, _) if (id.startsWith(TU.mismatched_prefix)) ->
     type(context, env, subst, env.mismatched_variance_bounds[id]).i1
-  // Uknown type arg existentials are replaced with their upper bound post
+  // Unknown type arg existentials are replaced with their upper bound post
   // typing. The upper bound must be a concrete/physical type and not a ktrait
   // If no bound is found, we give Tanything
   | N.Tparam(_, _, id, _) if (id.startsWith(TU.unknown_prefix)) ->
@@ -124,7 +124,7 @@ fun type__(
     if (tparams.isEmpty()) N.Tanything() else {
       N.Tset(var, mode, tparams, Array[])
     }
-  // Arbitarily take the first element of the tset to provide easy compilation
+  // Arbitrarily take the first element of the tset to provide easy compilation
   // For the NBE, if another elt is needed, we add a cast
   | N.Tset(var, mode, tparams, inter) ->
     elt = inter[0];

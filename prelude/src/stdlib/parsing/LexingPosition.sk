@@ -14,7 +14,7 @@ module Lexer;
 // Tracks absolute position.
 // Tracks line/column Position.
 //
-// peek() operations allow interogating characters at or after the current
+// peek() operations allow interrogating characters at or after the current
 // location. Peek()ing beyond the end of the input text is permitted and returns
 // null(0) characters.
 //

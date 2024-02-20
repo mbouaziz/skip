@@ -1335,7 +1335,7 @@ mutable base class .RewriteBase{
         orig = optinfo.getBlock(this.nextBlockID);
 
         // Slow (and imperfect) check that block contents did not change.
-        // It's imperfect because non-CSE classes don't implement a throrough
+        // It's imperfect because non-CSE classes don't implement a thorough
         // equality check. Still, it's something.
         instrsSame = (instrBuf.size() == orig.instrs.size());
         if (instrsSame) {

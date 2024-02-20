@@ -60,8 +60,8 @@ class LinksImpl implements Links {
   SKIP_getenv!: (skName: ptr) => ptr | null;
   SKIP_unsetenv!: (skName: ptr) => void;
 
-  SKIP_glock() {}
-  SKIP_gunlock() {}
+  SKIP_glock() { }
+  SKIP_gunlock() { }
 
   complete = (utils: Utils, exports: object) => {
     this.SKIP_etry = utils.etry;

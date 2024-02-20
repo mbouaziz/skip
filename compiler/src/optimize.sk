@@ -251,7 +251,7 @@ private fun optimizeOne(
 
               // Perhaps passes that were stalled waiting for some other
               // function are now unstuck, because the code was optimized
-              // in a way that no longer thas that dependency.
+              // in a way that no longer has that dependency.
               !unfinishedPasses = 0;
               unfinishedDependencies.clear();
 
@@ -428,7 +428,7 @@ private fun findUnfinishedDependencyCycleMember(
     } if (
       Config::kOptPrerequisites.and(donePasses) != Config::kOptPrerequisites
     ) ->
-      // This function hasn't even done its prerequite passes, it's
+      // This function hasn't even done its prerequisite passes, it's
       // definitely too early to declare it "done".
       void
     | _ ->

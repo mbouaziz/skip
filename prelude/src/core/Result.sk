@@ -67,7 +67,7 @@ base class Result<+T, +E> {
   | Failure _ -> true
   | _ -> false
 
-  // Returns the value if thhis is a Success(), otherwise throws.
+  // Returns the value if this is a Success(), otherwise throws.
   fun fromSuccess(message: String = "fromSuccess() called on Failure"): T
   | Success(value) -> value
   | _ -> invariant_violation(message)

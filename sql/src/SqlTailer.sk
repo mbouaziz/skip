@@ -229,7 +229,7 @@ fun tailSub(
       // produce checkpoint for flushing and committing
       if (init || producedAnyOutput) {
         // always do this on first iteration to ensure we output a
-        // checkpoint without delay so that the downstreams knows that
+        // checkpoint without delay so that the downstream knows that
         // it has received everything without waiting for the condvar
         // timeout
         writer.write(":" + context.tick.value.toString() + "\n");

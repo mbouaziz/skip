@@ -329,7 +329,7 @@ mutable class .RegisterPromote{
 
             p = objFlags[obj.id];
             if (p.isLocalAlloc && !p.escapes) {
-              // This is optimzable since this SetField is deletable if
+              // This is optimizable since this SetField is deletable if
               // the object turns out not to escape later.
               p.!canOptimizeIfDoesNotEscape = true;
               !maybeOptimizable = true

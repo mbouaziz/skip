@@ -1086,7 +1086,7 @@ mutable class .Vector<+T> private (
     this.!generation_PRIVATE = this.generation_PRIVATE + generationSkip
   }
 
-  // Internal helper for iteration guarding against concurrent modifiction.
+  // Internal helper for iteration guarding against concurrent modification.
   @always_inline
   readonly fun eachWhileImpl(f: T -> Bool): void {
     inner = this.inner;
@@ -1112,7 +1112,7 @@ mutable class .Vector<+T> private (
     }) void;
   }
 
-  // Internal helper for iteration guarding against concurrent modifiction.
+  // Internal helper for iteration guarding against concurrent modification.
   @always_inline
   untracked readonly fun eachWhileImplUntracked(f: untracked T -> Bool): void {
     inner = this.inner;

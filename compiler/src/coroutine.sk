@@ -245,7 +245,7 @@ private mutable class .LowerCoroutine{
   }
 
   protected readonly fun liveBefore(): Bool {
-    // For Yield, we want the savepoint to save/restore values live AFTER
+    // For Yield, we want the safepoint to save/restore values live AFTER
     // the Yield, not before. The difference is the value being yielded
     // by the Yield instr; we should not save it into the coroutine state
     // only because the Yield instr itself needed it. We care about what

@@ -918,7 +918,7 @@ mutable class SkipParser{
     }
   }
 
-  // Parses a sequence of modifieres.
+  // Parses a sequence of modifiers.
   // Reports errors on duplicates.
   mutable fun parseModifierList(peekElement: mutable this -> Bool): ParseTree {
     modifiers = this.parseList(peekElement, parser -> parser.parseModifier());
@@ -1244,7 +1244,7 @@ mutable class SkipParser{
     | TokenKind.TYPE_IDENTIFIER() ->
       this.parseQualifiedTypeName()
     | _ ->
-      this.errorResult(errorExpectedClassSpecfier, "Class specifier expected")
+      this.errorResult(errorExpectedClassSpecifier, "Class specifier expected")
     }
   }
 
@@ -1256,7 +1256,7 @@ mutable class SkipParser{
     | TokenKind.PERIOD() -> this.parseGlobalQualifiedTypeName()
     | TokenKind.TYPE_IDENTIFIER() -> this.parseQualifiedTypeName()
     | _ ->
-      this.errorResult(errorExpectedClassSpecfier, "Class specifier expected")
+      this.errorResult(errorExpectedClassSpecifier, "Class specifier expected")
     };
     conditions = this.parseWhenParameters();
     ParseTree.ConditionalUseTree{
@@ -1736,7 +1736,7 @@ mutable class SkipParser{
       if (hasConstraint) {
         this.addErrorAtTree(
           initializer,
-          errorNoInitializerWithTypeConstantContraint,
+          errorNoInitializerWithTypeConstantConstraint,
           "Type constant initializer not permitted on a type constant with a constraint. Did you mean to use a 'default' clause instead?",
         );
       };
@@ -2976,7 +2976,7 @@ mutable class SkipParser{
               this.addErrorAtTree(
                 colonTypeSpecifier,
                 errorTypeSpecifierInTuple,
-                "Type specifier not permitted on tuple elemement",
+                "Type specifier not permitted on tuple element",
               );
             };
             name
@@ -3612,7 +3612,7 @@ mutable class SkipParser{
   }
 
   // compound-binding:
-  //    lvalue  =.  postfix-expresion-suffix
+  //    lvalue  =.  postfix-expression-suffix
   // TODO: postfix-expression-suffix needs a definition
   mutable fun parseCompoundBinding(left: ParseTree): ParseTree {
     this.ensureExpressionIsLValue(left);
@@ -4881,7 +4881,7 @@ mutable class SkipParser{
     }
   }
 
-  // There are ambiguities between expresions and several grammar productions -
+  // There are ambiguities between expressions and several grammar productions -
   //    paren-expression
   //    annotated-expression
   //    tuple-expression
@@ -5164,7 +5164,7 @@ const errorExpectedFunClassConst: Int = 105;
 const errorExpectedFunctionName: Int = 106;
 const errorExpectedTypeParameter: Int = 107;
 const errorExpectedParameters: Int = 108;
-const errorExpectedClassSpecfier: Int = 109;
+const errorExpectedClassSpecifier: Int = 109;
 const errorExpectedClassMember: Int = 110;
 const errorExpectedMethodBody: Int = 111;
 const errorExpectedIdentifier: Int = 112;
@@ -5233,7 +5233,7 @@ const errorMissingBar: Int = 174;
 const errorCommaPatternList: Int = 175;
 const errorNoTernary: Int = 176;
 const errorMatchBeforeExpression: Int = 177;
-const errorNoInitializerWithTypeConstantContraint: Int = 178;
+const errorNoInitializerWithTypeConstantConstraint: Int = 178;
 const errorNoAsClauseInIsAs: Int = 179;
 const errorNoNamePatternInIsAs: Int = 180;
 const errorNamedArgumentInIsAs: Int = 181;

@@ -220,7 +220,7 @@ fun pat_matches(
  * inherited through different paths.
  *
  * TODO only support algebraic branches on children clauses
- * This will GREATLY simplify the logic for resolving conflics.
+ * This will GREATLY simplify the logic for resolving conflicts.
  * I suggest a full rewrite once the change is made
  *
  * Reference:
@@ -433,7 +433,7 @@ fun resolve_conflict<Tc>(
   ) if (cname == parent_cls.i1) ->
     check_redeclare_abstract(cpos, child_cls, parent, from_, child);
     add_item(A.Explicit(), orig_map)
-  /* The parent class defines it, but the user has specificied we should pick
+  /* The parent class defines it, but the user has specified we should pick
    * it from a different class. */
   | A.Body(A.BFrom(A.Tclass(cname))) ->
     check_override(kind, child_cls, child, parent_cls, parent);
@@ -794,10 +794,10 @@ fun param_bindings(
   | A.NoParams() ->
     SkipError.error(
       pos,
-      "No constructor for class. Expected no paramaters in algebraic branch",
+      "No constructor for class. Expected no parameters in algebraic branch",
     )
   | A.NativeConstruct(fr) ->
-    emsg = "Native constructor for class. Expected no paramaters in algebraic branch";
+    emsg = "Native constructor for class. Expected no parameters in algebraic branch";
     nmsg = "Declared native here";
     SkipError.errorl(List[(pos, emsg), (fr, nmsg)])
   | A.HasParams(cp) ->
@@ -1055,7 +1055,7 @@ fun inherit_trait(
   tc_name = make_class_name(tc_cident);
   (tc_pos, _) = tc_name;
   tc_class = getClass(context, tc_name);
-  // conditionas are applied to anything inherited from the trait
+  // conditions are applied to anything inherited from the trait
   // hence these bans
   if (!p.conditions.isEmpty() && !tc_class.consts.isEmpty()) {
     const_fr = tc_class.consts.values().next().fromSome().name.i0;
@@ -1204,7 +1204,7 @@ fun inherit_extends(
             (pos, `Cyclic class hierarchy. Class '${name}' extends itself`),
             (
               inst.i0,
-              `Self-inheritence caused by extending class '${inst.i1}'`,
+              `Self-inheritance caused by extending class '${inst.i1}'`,
             ),
           ],
         )
@@ -1311,7 +1311,7 @@ fun replace_inst_type_(cd: A.Class_def, t: A.Type__): A.Type__ {
   | A.Tabstract _ ->
     t
   | A.Tinst() ->
-    /* build tparams for substuted type */
+    /* build tparams for substituted type */
     args = cd.tparams.map(p -> {
       (_, id, n, _) = p;
       (n.i0, A.Tapply(A.Tparam(n, id), Array[]))
@@ -1650,7 +1650,7 @@ fun merge_ordered_params(
     to_map(childA),
   );
   /* final field list is [child fields] @ [parent fields]
-     with all but leftmost occurence of common ancestor
+     with all but leftmost occurrence of common ancestor
      fields removed. */
   newParams = mutable Vector[];
   index = 0;
@@ -1958,7 +1958,7 @@ fun inherit_methods(
   /* If a class cannot have mutable instantiations, we drop mutable and readonly
    * modifiers from inherited members
    * TODO The downside of this is that base classes tend to need to always
-   * be marked as mutable in the case that some child somwhere needs a mutable
+   * be marked as mutable in the case that some child somewhere needs a mutable
    * instance
    */
   update_kind = if (chilled_only) {

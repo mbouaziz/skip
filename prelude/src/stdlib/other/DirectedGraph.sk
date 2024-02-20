@@ -14,7 +14,7 @@ module DirectedGraph;
 // An Edge is an ordered pair of vertices, a head and a tail.
 // Note that the edges in a graph need not be unique.
 //
-// The tail of an edge is said to be a direct succcessor of the head of that
+// The tail of an edge is said to be a direct successor of the head of that
 // edge.
 //
 // A path is a sequence of edges where the tail of each edge is the head of

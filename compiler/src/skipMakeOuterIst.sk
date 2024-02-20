@@ -339,7 +339,7 @@ fun lazy_initializer_opt(e_opt: ?TAst.Expr): ?O.Initializer {
 
 // Warning: this is called from the on-demand lowering pipeline in
 // SkipLowerOuterIst. It shouldn't be called from here, because the
-// lowering passes won't be run on the resulting outerist.
+// lowering passes won't be run on the resulting outerIst.
 fun initializer(new_id: () -> Int, expr: TAst.Expr): O.Initializer {
   O.OuterInit(expr_const(new_id, expr))
 }
@@ -566,7 +566,7 @@ fun parameters_type(
 
 // Warning: this is called from the on-demand lowering pipeline in
 // SkipLowerOuterIst.  It shouldn't be called from here, because the
-// lowering passes won't be run on the resulting outerist.
+// lowering passes won't be run on the resulting outerIst.
 fun body(new_id: () -> Int, st: TAst.Expr): O.Body {
   O.OuterBody(fun_body(new_id, st))
 }

@@ -9,7 +9,7 @@ module ParseTree;
 
 // A ParseTree is (almost) a Concrete Syntax Tree (as opposed to an Abstract
 // Syntax Tree). On an error free parse, the resulting ParseTree includes
-// every Token in the input, exactly once, and in the order they occured
+// every Token in the input, exactly once, and in the order they occurred
 // in the input tokens. The Parser validates this invariant.
 //
 // Each production in the language is represented by a derived class.
@@ -480,9 +480,9 @@ mutable base class CodeMod {
   mutable overridable fun transform(
     tree: ParseTree.ParseTree,
   ): (ParseTree.ParseTree, Vector<Subst>) {
-    (afterChildren, childSubstitions) = this.transformChildren(tree);
+    (afterChildren, childSubstitutions) = this.transformChildren(tree);
     this.transformTree(afterChildren) match {
-    | None() -> (afterChildren, childSubstitions)
+    | None() -> (afterChildren, childSubstitutions)
     | Some(transformedTree) ->
       // We want to ensure that no comments are lost during this transformDeclaration
       missingComments = Set::mcreateFromItems(
@@ -561,9 +561,9 @@ mutable class ReplaceTokenCodeMod{
   mutable fun transform(
     tree: ParseTree.ParseTree,
   ): (ParseTree.ParseTree, Vector<Subst>) {
-    (afterChildren, childSubstitions) = this.transformChildren(tree);
+    (afterChildren, childSubstitutions) = this.transformChildren(tree);
     this.transformTree(afterChildren) match {
-    | None() -> (afterChildren, childSubstitions)
+    | None() -> (afterChildren, childSubstitutions)
     | Some(transformedTree) ->
       (transformedTree, Vector[(tree.getRangeWithComments(), transformedTree)])
     }

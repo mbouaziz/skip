@@ -38,7 +38,7 @@ class TestCase private {name: String, tests: UnorderedMap<String, () ~> void>} {
     print_string("Skip Test Harness");
     print_string("");
     print_string("  --gtest_list_tests");
-    print_string("  --gtest_filter=POSTIVE_PATTERNS[-NEGATIVE_PATTERNS]");
+    print_string("  --gtest_filter=POSITIVE_PATTERNS[-NEGATIVE_PATTERNS]");
   }
 
   fun list_tests(): void {

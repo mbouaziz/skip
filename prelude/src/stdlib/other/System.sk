@@ -6,7 +6,7 @@
  */
 
 // Type system operator 'unsafe_chill_trust_me' takes an object type and strips
-// any outer mutability. For exmaple,
+// any outer mutability. For example,
 //   unsafe_chill_trust_me(v : mutable Vector<mutable Vector<Int>>): Vector<mutable Vector<Int>>
 // This is a hack until we have linear types
 // native fun unsafe_chill_trust_me<T>(T): T with outer mutability made immutable;

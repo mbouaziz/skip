@@ -471,7 +471,7 @@ fun sbr_expr_(env: mutable LocalsInfo, ex: T.Expr): T.Expr {
       !fvs = fvs.map((_, b) -> sbr_binding(env, b));
       SkipTypingUtils.is_mutable(SkipTypingUtils.empty_acc, ty, false) match {
       | N.MnotFrozen _ -> void
-      | N.Echilled _ -> SkipError.error(pos, "ICE lambda shouldnt be chilled")
+      | N.Echilled _ -> SkipError.error(pos, "ICE lambda should not be chilled")
       | N.Efrozen() -> check_captured_locals(fvs, "Pure lambda ")
       };
       T.Lambda(sbr_frozen_params(env, params), fvs, sbr_expr(env, e1), yields)

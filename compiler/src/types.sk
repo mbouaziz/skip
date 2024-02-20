@@ -131,7 +131,7 @@ base class Mutability uses Show, Orderable, Hashable {
   children =
   // Can be changed via this reference.
   | Mutable()
-  // This object and everything reachable from it canont be changed via
+  // This object and everything reachable from it cannot be changed via
   // this reference, but maybe can be changed via another reference.
   | Readonly()
   // This object and everything reachable from it cannot be changed by

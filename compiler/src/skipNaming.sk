@@ -2882,7 +2882,7 @@ fun get_name_(pos: FileRange, x: N.Type_): A.Name {
  *
  * A fully defined type constant, type T = X; can always be accessed
  *
- * A constrianed type constant, type T: X, or type T: X default Y, can only
+ * A constrained type constant, type T: X, or type T: X default Y, can only
  * be accessed within that class, or on a type constant chain from another
  * abstract/constrained type constant
  */
@@ -2908,7 +2908,7 @@ fun get_typedef_type(
       List[
         (tpos, "Only `this` can use abstract type constants in constraints"),
 
-        (tn.i0, "This type is, or contains, an uninistantiated type constant"),
+        (tn.i0, "This type is, or contains, an uninstantiated type constant"),
       ],
     )
   | (A.TydAbstract _, Tyd_value(tpos), _) ->
@@ -2916,7 +2916,7 @@ fun get_typedef_type(
       List[
         (tpos, "Type constant values cannot use abstract type constants"),
 
-        (tn.i0, "This type is, or contains, an uninistantiated type constant"),
+        (tn.i0, "This type is, or contains, an uninstantiated type constant"),
       ],
     )
   | (A.TydAbstract _, Not_tabstract(), false) ->
@@ -2992,12 +2992,12 @@ fun make_this_targs(sk_this: A.Class_def): Array<N.Type_> {
 }
 
 /*****************************************************************************/
-/* Infering mutability */
+/* Inferring mutability */
 /*****************************************************************************/
 
 /* We add ': frozen' constraints to tparams when the compiler would error
  * if the constraint wasn't there.
- * This sort of propogation of constraints is only for simple cases
+ * This sort of propagation of constraints is only for simple cases
  * and does not consider the constraints of another class
  * For example
  *
@@ -3103,12 +3103,12 @@ fun infer_frozen_type_(
 ): SMap<FileRange> {
   (pos, _) = x;
   N.unfold_tnamed(x).i1 match {
-  | N.Tnamed _ -> invariant_violation("ICE imposible since unfolded")
+  | N.Tnamed _ -> invariant_violation("ICE impossible since unfolded")
   | N.Tlambda _
   | N.Tvar _ ->
-    invariant_violation("ICE imposible user written type")
+    invariant_violation("ICE impossible user written type")
 
-  // Arrises from type constants
+  // Arises from type constants
   | N.Tanything()
   | N.TnonNullable _
   | N.Tfrozen _
@@ -3120,8 +3120,8 @@ fun infer_frozen_type_(
     SkipError.error(pos, "ICE infer_frozen_type should not have been promoted")
   | N.Tapply(mode, _, tyl) ->
     new_frozen = mode match {
-    // the inner tparams dont need to be frozen for async/memoized
-    // but this type is going error later so dont add the frozen constraint
+    // the inner tparams don't need to be frozen for async/memoized
+    // but this type is going error later so don't add the frozen constraint
     // to avoid other confusion
     | N.MnotFrozen _ -> None()
     | N.Mchilled() -> Some(pos)

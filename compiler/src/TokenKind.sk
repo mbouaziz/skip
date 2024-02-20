@@ -17,7 +17,7 @@ class ERROR() extends TokenKind {
 
 class BEGINNING_OF_FILE() extends TokenKind {
   fun toString(): String {
-    "begining of file"
+    "beginning of file"
   }
 }
 

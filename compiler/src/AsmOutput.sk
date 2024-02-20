@@ -707,7 +707,7 @@ fun removeRedundantDefs(defs: mutable AsmOutput.AsmDefIDToAsmDef): void {
   }
 }
 
-// Are two AsmDefs indistguishable? For example, two functions with the
+// Are two AsmDefs indistinguishable? For example, two functions with the
 // same assembly text and references to other isomorphic functions.
 private fun defsIsomorphic(
   x: AsmDef,
@@ -3502,7 +3502,7 @@ private fun llvmWrite(instr: Stmt, asm: mutable FunAsmDefBuilder): void {
     //
     // If it doesn't match any short string, then we check to see if it's
     // a long string. If not, go to he default case, Otherwise, do an
-    // integer swtich on the 64-bit size+hash header to see which string
+    // integer switch on the 64-bit size+hash header to see which string
     // might match. For each case we then do an actual string equality check
     // to make sure it's the string we were looking for, handling collisions
     // where multiple case statements have the same header.

@@ -754,7 +754,7 @@ mutable class MatchCompiler(
     }
   }
 
-  /* The same thing is done here as in @generate_switch, just outputing
+  /* The same thing is done here as in @generate_switch, just outputting
    * typeswitches instead. */
   readonly fun generateTypeSwitch(
     context: mutable SKStore.Context,

@@ -25,7 +25,7 @@ module LowerConst;
 //
 // - Even though const initializers are lazy, we forcibly run them all
 //   on startup (before main()), and then set a global variable saying that
-//   ALL consts are initalized. We do this for two reasons:
+//   ALL consts are initialized. We do this for two reasons:
 //
 //   - This guarantees that no side effects, such as exceptions, will happen
 //     lazily at a surprising time.
@@ -512,7 +512,7 @@ fun lowerAllConsts(env: GlobalEnv, config: Config.Config): GlobalEnv {
   fields = fieldsBuf.toArray();
   layout = Some(OuterIstToIR.layoutOneStandaloneClass(fields, env, config));
 
-  // Udpate our global singleton class to know about its new fields.
+  // Update our global singleton class to know about its new fields.
   globals = tConstSingleton.sclass(env) with {fields, layout};
 
   env with {

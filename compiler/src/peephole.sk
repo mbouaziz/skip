@@ -986,7 +986,7 @@ private fun peepholeGetField(peep: GetField, s: mutable Peephole): Instr {
   s.getInstr(peep.obj) match {
   | ConstantObject{typ, values} ->
     // Reading a field from a compile-time constant Object yields a
-    // campile-time constant.
+    // compile-time constant.
     sc = typ.exampleSClass(s.env);
     c = values[sc.getFieldIndex(peep.field, peep.pos)];
     s.getConstant(c with {id => s.iid()})

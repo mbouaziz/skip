@@ -1702,7 +1702,7 @@ mutable class Specializer{
 
   // method lookup:
   // 1. if a method is defined on the receiver class itself, use that
-  // definition uncoditionally
+  // definition unconditionally
   // 2. otherwise, we expect the method to have an entry in the source
   // table - use the definition found in the source class
   //

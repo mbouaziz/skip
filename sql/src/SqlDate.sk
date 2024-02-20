@@ -124,7 +124,7 @@ mutable class DateTime(mutable date: SKDate.Calendar) {
       | "months" | "month" ->
         this.!date = this.date.addMonths(plusMinus.val(nbr))
       | "years" | "year" -> this.!date = this.date.addYears(plusMinus.val(nbr))
-      | _ -> errorEval("Unexepected token: " + word)
+      | _ -> errorEval("Unexpected token: " + word)
       }
     }
   }

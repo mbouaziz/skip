@@ -745,7 +745,7 @@ base class Node<+T> {
 }
 
 // RawStorage Alias
-// Thesee aliases here are to make it easier to switch to using an Option
+// These aliases here are to make it easier to switch to using an Option
 // during development
 
 type RawStorage<T> = Unsafe.RawStorage<T>;

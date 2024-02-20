@@ -188,7 +188,7 @@ fun solve_constraints_msg(
   acc.constraints.solve_msg(context, next_id, msg, env, acc)
 }
 
-/* solves the constraitns up to the last constraint (judged by length of the
+/* solves the constraints up to the last constraint (judged by length of the
  * constraints)
  */
 fun solve_call_constraints(
@@ -1987,7 +1987,7 @@ fun check_constructor_call(
       cp.final_ match {
       | Some _ -> cp
       | None() ->
-        msg1 = `Invalid Concrete<_> instantiation for ${cname}. To instanatiate a Concrete<_> of a base class, the constructor must be final`;
+        msg1 = `Invalid Concrete<_> instantiation for ${cname}. To instantiate a Concrete<_> of a base class, the constructor must be final`;
         msg2 = "The constructor was declared as non-final here";
         SkipError.errorl(List[(pos, msg1), (cp.pos, msg2)])
       }
@@ -3470,7 +3470,7 @@ fun lam_parameter(
   bacc: (Bool, TUtils.Acc),
   n_ty: N.Lam_parameter,
 ): ((Bool, TUtils.Acc), (N.Name, N.Type_)) {
-  // Bool is unnneded since if one parameter is annotated, they all are
+  // Bool is unneeded since if one parameter is annotated, they all are
   (_, acc) = bacc;
   (n, tyopt) = n_ty;
   tyopt match {
@@ -4247,7 +4247,7 @@ fun ordered_expr(
   (acc1, (i, e1))
 }
 
-// Join types across cross patern binding
+// Join types across cross pattern binding
 fun bind_pattern_local(
   context: mutable SKStore.Context,
   next_id: () -> Int,
@@ -4322,7 +4322,7 @@ fun check_pattern(
 
 /* In the native back end, we specialize all generics currently. As such
  * unknown type arguments cause a big problem with determining the size
- * of the values stored therein. To make this actually compileable, we block
+ * of the values stored therein. To make this actually compilable, we block
  * these unknown type arguments from leaking during the pattern match.
  * We accomplish this by making sure the type doesn't appear in the type of any
  * new local bound in the pattern
@@ -5158,7 +5158,7 @@ fun check_field_kind(
     msg = mode match {
     | N.Mchilled() -> "Cannot access a mutable member on an non-mutable object"
     | N.Mreadonly _ -> "Cannot access a mutable method on a readonly object"
-    | _ -> invariant_violation("ICE impposible match")
+    | _ -> invariant_violation("ICE impossible match")
     };
     SkipError.errorl(
       List[
@@ -5230,7 +5230,7 @@ fun specialize_this_type(
 /*****************************************************************************/
 /* TODO lambdas are currently solved in the order they are written
  * we should instead solve lambdas in a dependencies order, that is if one
- * lambda is used inside another, the captured lambda should be sovled first
+ * lambda is used inside another, the captured lambda should be solved first
  */
 fun solve_lambdas(
   context: mutable SKStore.Context,
@@ -5446,7 +5446,7 @@ fun check_implement(
   acc: TUtils.Acc,
   child_class: N.Class_def,
   parent_name: N.Name,
-  childs_parent_targs: Array<N.Type_>,
+  children_parent_targs: Array<N.Type_>,
   parent_info: N.Parent,
 ): TUtils.Acc {
   if (parent_info.effective_source.i1 != child_class.name.i1) return acc;
@@ -5456,15 +5456,15 @@ fun check_implement(
   parent_class = SkipNaming.getClass(context, parent_name);
   check_missing_fields(env, child_class, parent_class);
   parent_tparam_idents = parent_class.tparams.map(N.tparam_ident);
-  parent_subst = N.make_subst(pos, parent_tparam_idents, childs_parent_targs);
-  old_tparam_constriants = acc.tparam_constraints;
+  parent_subst = N.make_subst(pos, parent_tparam_idents, children_parent_targs);
+  old_tparam_constraints = acc.tparam_constraints;
   !acc = TUtils.bind_tparam_constraints(
     context,
     env,
     acc,
     parent_class.tparams,
   );
-  initial_tparam_constriants = acc.tparam_constraints;
+  initial_tparam_constraints = acc.tparam_constraints;
   for (conds in parent_info.conditions) {
     !acc = TUtils.add_whenparams(context, next_id, env, acc, conds);
     !acc = check_fields(
@@ -5479,9 +5479,9 @@ fun check_implement(
       parent_class,
       parent_class.fields,
     );
-    !acc.tparam_constraints = initial_tparam_constriants
+    !acc.tparam_constraints = initial_tparam_constraints
   };
-  !acc.tparam_constraints = old_tparam_constriants;
+  !acc.tparam_constraints = old_tparam_constraints;
   acc
 }
 
@@ -5603,7 +5603,7 @@ fun check_fields(
           child_deferred,
         );
         f_psubst = (acc, x) -> TUtils.type_subst(parent_subst, acc, x);
-        childs_view_parent_whenparams = parent_field.whenparams.map(x -> {
+        children_view_parent_whenparams = parent_field.whenparams.map(x -> {
           (ty, tyl) = x;
           (f_psubst(acc, ty), tyl.map(ty -> f_psubst(acc, ty)))
         });
@@ -5622,9 +5622,9 @@ fun check_fields(
           next_id,
           env,
           acc,
-          childs_view_parent_whenparams,
+          children_view_parent_whenparams,
         );
-        all_child_whenparams = childs_view_parent_whenparams.concat(
+        all_child_whenparams = children_view_parent_whenparams.concat(
           child_field.whenparams,
         );
         !acc = TUtils.add_whenparams(
@@ -5731,7 +5731,7 @@ fun check_fields(
           parent_kind,
           child_class.tparams,
           child_fdtsubst_expanded,
-          childs_view_parent_whenparams,
+          children_view_parent_whenparams,
           child_field.whenparams,
           child_field.source.i1 == child_class.name.i1,
         );
@@ -5872,9 +5872,9 @@ fun make_inst_from_extends(
   }
 }
 
-/* To check conditional constraitns, we check that the child's constraints are
+/* To check conditional constraints, we check that the child's constraints are
  * satisfied, in the context of the parent. In other words, introduce all the
- * constraitns known to the parent, then solve the child's constraitns on its
+ * constraints known to the parent, then solve the child's constraints on its
  * method, as if it was being called
  */
 fun check_whenparams(
@@ -5887,7 +5887,7 @@ fun check_whenparams(
   parent_kind: N.FieldKind,
   child_tparams: Array<N.Type_parameter>,
   child_fdtsubst_expanded: SMap<N.Type_>,
-  childs_view_parent_whenparams: Array<N.Whenclause>,
+  children_view_parent_whenparams: Array<N.Whenclause>,
   child_whenparams: Array<N.Whenclause>,
   child_is_source: Bool,
 ): TUtils.Acc {
@@ -5914,7 +5914,7 @@ fun check_whenparams(
     next_id,
     env,
     acc,
-    childs_view_parent_whenparams,
+    children_view_parent_whenparams,
   );
   filtered_subst = child_fdtsubst_expanded.filter((_, ty) ->
     ty.i1 match {
@@ -5978,16 +5978,16 @@ fun check_compatible_kind(
   // chilled and frozen are equivalent, any mismatch will be caught by
   // the constraints added to the tparams for frozen
   | (N.FKChilledThis _, N.FKChilledThis _)
-  // chilled|frozen overriden by chilled or readonly
+  // chilled|frozen overridden by chilled or readonly
   | (N.FKChilledThis _, N.FKReadonly _)
-  // mutable overriden by readonly
+  // mutable overridden by readonly
   | (N.FKMutable _, N.FKReadonly _) ->
     void
-  // mutable|readonly overriden by chilled
+  // mutable|readonly overridden by chilled
   | (N.FKMutable _, N.FKChilled _)
   | (N.FKReadonly _, N.FKChilled _) if (child_class.isChilledOnly()) ->
     void
-  // chilled|mutable|readonly overriden by frozen
+  // chilled|mutable|readonly overridden by frozen
   | (N.FKMutable _, N.FKChilledThis _)
   | (N.FKReadonly _, N.FKChilledThis _) if (child_class.isFrozenOnly()) ->
     void
@@ -6079,7 +6079,7 @@ fun check_implement_deferred(
  * - if dynamic in a deferred context
  *
  * TODO these rules are very confusing. We should reuse the 'macro' keyword to
- * mean body-deffered. and keep deferred just for the signature. So if you
+ * mean body-deferred. and keep deferred just for the signature. So if you
  * want the body to do some weird deferred things, you use 'macro'
  */
 fun check_deferred_call(
@@ -6125,7 +6125,7 @@ fun check_deferred_call(
     assert(fdt.kind is N.FKStatic _);
     (tobject, fdt.deferred_, fdt.abstract) match {
     | ("Concrete", _, _) if (is_tystatic) ->
-      // clasof(this)
+      // classof(this)
       void
     | ("Concrete", _, _) if (env.deferred_body) ->
       // deferred method
@@ -6242,7 +6242,7 @@ fun check_deferred_construct(
     | (_, Some(def_pos)) ->
       SkipError.errorl(
         List[
-          (pos, "Invalid object instantation. This constructor is deferred"),
+          (pos, "Invalid object instantiation. This constructor is deferred"),
           (def_pos, "It is 'deferred' because of this field"),
           (cpos, msg),
         ],

@@ -1859,7 +1859,7 @@ class Converter private (
   // them normally, but we need BaseMetaImpl classes to not inherit any that
   // they don't implement (those methods would not be callable by the front
   // end). But it's not enough to only put those only in the ConcreteMeta
-  // hierarchy, since some BaseMeta class could provide an implmentation.
+  // hierarchy, since some BaseMeta class could provide an implementation.
   private fun createBaseMeta(
     context: mutable SKStore.Context,
     name: BaseMetaLazyGClass,

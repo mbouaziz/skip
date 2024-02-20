@@ -174,7 +174,7 @@ mutable private class VTableBuilderIterator(
   mutable index: Int = 0,
 ) {
   // Advance to the first legal offset at or after 'begin'.
-  // Assumes "begin" is monotonically nondecreasing across calls.
+  // Assumes "begin" is monotonically non-decreasing across calls.
   //
   // Returns:
   // - the next legal bit offset >= begin

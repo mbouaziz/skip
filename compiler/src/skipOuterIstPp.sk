@@ -377,7 +377,7 @@ fun indent_stmt(o: mutable BufferedPrinter.Out, s: O.Stmt): void {
 
 /* Should not terminate in a newline */
 /* NOTE: the output of this function (printed to string) is
- * relied on by SkipLowerMatches.hash_clause to be distict
+ * relied on by SkipLowerMatches.hash_clause to be distinct
  * for distinct assignment statements. Informally this seems
  * likely to always be the case, but it is now explicitly
  * relied on (and tested for). */
