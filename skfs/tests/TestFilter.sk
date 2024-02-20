@@ -52,7 +52,7 @@ class FilterTestConfig private {
   keyRange: Int,
   numberOfFilesPerKeyRange: Int,
   probabilityOfFilteredFile: Int,
-  numberOfRepeatitionPerFileRange: Int,
+  numberOfRepetitionPerFileRange: Int,
   filterCapacityRange: Int,
   probabilityOfDeleteAtCapacity: Int,
   probabilityOfDeleteNotAtCapacity: Int,
@@ -65,7 +65,7 @@ class FilterTestConfig private {
     keyRange: Int = 10,
     numberOfFilesPerKeyRange: Int = 4,
     probabilityOfFilteredFile: Int = 50,
-    numberOfRepeatitionPerFileRange: Int = 3,
+    numberOfRepetitionPerFileRange: Int = 3,
     filterCapacityRange: Int = 5,
     probabilityOfDeleteAtCapacity: Int = 90,
     probabilityOfDeleteNotAtCapacity: Int = 10,
@@ -81,7 +81,7 @@ class FilterTestConfig private {
     invariant(
       probabilityOfFilteredFile > 0 && probabilityOfFilteredFile <= 100,
     );
-    invariant(numberOfRepeatitionPerFileRange >= 1);
+    invariant(numberOfRepetitionPerFileRange >= 1);
     invariant(filterCapacityRange >= 1);
     invariant(
       probabilityOfDeleteAtCapacity >= 0 &&
@@ -99,7 +99,7 @@ class FilterTestConfig private {
       keyRange,
       numberOfFilesPerKeyRange,
       probabilityOfFilteredFile,
-      numberOfRepeatitionPerFileRange,
+      numberOfRepetitionPerFileRange,
       filterCapacityRange,
       probabilityOfDeleteAtCapacity,
       probabilityOfDeleteNotAtCapacity,
@@ -203,7 +203,7 @@ fun randomWrite(
     for (_ in Range(1, rand.random(1, config.numberOfFilesPerKeyRange))) {
       file = RepeatFile(
         alwaysInsert || genBool(rand, config.probabilityOfFilteredFile),
-        rand.random(1, config.numberOfRepeatitionPerFileRange),
+        rand.random(1, config.numberOfRepetitionPerFileRange),
       );
       files.push(file);
     };
