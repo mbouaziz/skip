@@ -6,7 +6,7 @@
 
 // The obstack is structured as a linked list of pages. The size of the page is
 // determined by PAGE_SIZE. If an Obstack_alloc attempts to allocate something
-// larger than an obstack page, then the size of the page will the exactly
+// larger than an obstack page, then the size of the page will be exactly
 // the size of the allocation (plus meta-data). Every time a page runs out of
 // space, we allocate a new page, and we maintain a pointer to the old page.
 

@@ -1,5 +1,5 @@
 /*****************************************************************************/
-/* Module implemeting a HashMap. */
+/* Module implementing a HashMap. */
 /*****************************************************************************/
 
 value class HashMap<+K: Hashable, +V>(map: SortedMap<Int, V>) {

@@ -6,7 +6,7 @@ module SKStore;
 
 base class Dir extends File {
   /**
-   * Returns true is the directory is an Input.
+   * Returns true if the directory is an Input.
    */
   fun isInput(): Bool;
 

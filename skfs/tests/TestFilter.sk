@@ -6,7 +6,7 @@
 // decide to have, let's say, a capacity of 5, the filtering method
 // will only return the first 5 elements. Although that is completely
 // trivial to write in a non-incremental mode (just stop after you
-// outputed 5 files), it's actually a lot more complicated than it
+// outputted 5 files), it's actually a lot more complicated than it
 // seems in an incremental environment. Especially in one where you
 // have to deal with ranges of values to filter over etc ...
 //
@@ -16,7 +16,7 @@
 // the following (the same to test the rest of SKStore): we know that
 // we want things to incrementally "update". But we also know that,
 // semantically, the result of the update should be exactly the same
-// had we recomputed everything from scratch. So that's exaclty what
+// had we recomputed everything from scratch. So that's exactly what
 // we are doing in this test. We perform an operation, and then check
 // that the state we end up in is exactly the same as the
 // "recompute-from-scratch" state (as we did in the StressTest for
