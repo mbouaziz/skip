@@ -544,24 +544,18 @@ private fun createGCType(
   // m_kind
   pushField(kByteConstants[kind]);
 
-  // m_unused_tilesPerMask
-  pushField(kByteConstants[0]);
-
-  // m_unused_hasName
-  pushField(kByteConstants[0]);
-
-  // m_unused_uninternedMetadataByteSize
+  // m_unused_padding1
   pushField(ConstantInt{id => InstrID::none, typ => tInt16, value => 0});
 
-  // m_unused_internedMetadataByteSize
-  pushField(ConstantInt{id => InstrID::none, typ => tInt16, value => 0});
+  // m_unused_padding2
+  pushField(ConstantInt{id => InstrID::none, typ => tInt32, value => 0});
 
   // m_userByteSize
   pushField(
     ConstantInt{id => InstrID::none, typ => tInt, value => userByteSize},
   );
 
-  // m_unused_padding
+  // m_unused_padding3
   pushField(ConstantInt{id => InstrID::none, typ => tInt, value => 0});
 
   if (fieldBitOffset % 64 != 0) {

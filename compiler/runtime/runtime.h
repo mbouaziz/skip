@@ -163,12 +163,10 @@ sk_value3_t sk_stack3_pop(sk_stack3_t* st);
 typedef struct {
   uint8_t m_refsHintMask;
   uint8_t m_kind;  // either kSkipGcKindClass or kSkipGcKindArray
-  uint8_t m_unused_tilesPerMask;
-  uint8_t m_unused_hasName;
-  uint16_t m_unused_uninternedMetadataByteSize;
-  uint16_t m_unused_internedMetadataByteSize;
+  uint16_t m_unused_padding1;
+  uint32_t m_unused_padding2;
   SkipInt m_userByteSize;
-  SkipInt m_unused_padding;
+  SkipInt m_unused_padding3;
   SkipInt m_refMask[0];
   // a 0-terminated name follows if m_unused_hasName is true
 } SKIP_gc_type_t;
