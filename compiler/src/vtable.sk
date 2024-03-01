@@ -555,9 +555,6 @@ private fun createGCType(
     ConstantInt{id => InstrID::none, typ => tInt, value => userByteSize},
   );
 
-  // m_unused_padding3
-  pushField(ConstantInt{id => InstrID::none, typ => tInt, value => 0});
-
   if (fieldBitOffset % 64 != 0) {
     sc.die("bad vtable entry alignment")
   };
