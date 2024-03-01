@@ -164,13 +164,13 @@ typedef struct {
   uint8_t m_refsHintMask;
   uint8_t m_kind;  // either kSkipGcKindClass or kSkipGcKindArray
   uint8_t m_unused_tilesPerMask;
-  uint8_t m_hasName;
+  uint8_t m_unused_hasName;
   uint16_t m_uninternedMetadataByteSize;
   uint16_t m_unused_internedMetadataByteSize;
   SkipInt m_userByteSize;
   SkipInt m_unused_padding;
   SkipInt m_refMask[0];
-  // a 0-terminated name follows if m_hasName is true
+  // a 0-terminated name follows if m_unused_hasName is true
 } SKIP_gc_type_t;
 
 /* The uninterned_metadata_byte_size is the size preceding the pointer to a

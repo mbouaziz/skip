@@ -549,8 +549,8 @@ private fun createGCType(
   // m_unused_tilesPerMask
   pushField(kByteConstants[0]);
 
-  // m_hasName
-  pushField(kByteConstants[if (provideName) 1 else 0]);
+  // m_unused_hasName
+  pushField(kByteConstants[0]);
 
   // m_uninternedMetadataByteSize
   pushField(
