@@ -473,7 +473,7 @@ private fun createGCType(
   env: GlobalEnv,
   config: Config.Config,
 ): ConstantStruct {
-  (userByteSize, hasGCPointers, uninternedMetaSize, kind) = sc.arraySlot match {
+  (userByteSize, hasGCPointers, kind) = sc.arraySlot match {
   | None() ->
     // This is a non-Vector type.
 
@@ -492,7 +492,6 @@ private fun createGCType(
     (
       userSize, // userByteSize
       hasGCPointers,
-      config.ptrByteSize, // sizeof(RObjMetadata)
       0, // kSkipGcKindClass
     )
   | Some(slotInfo) ->
@@ -507,7 +506,6 @@ private fun createGCType(
     (
       userSize, // userByteSize
       hasGCPointers,
-      2 * config.ptrByteSize, // uninternedMetaSize
       1, // kSkipGcKindArray
     ) // kSkipGcRefsHintFrozenRefs
   };
@@ -552,14 +550,8 @@ private fun createGCType(
   // m_unused_hasName
   pushField(kByteConstants[0]);
 
-  // m_uninternedMetadataByteSize
-  pushField(
-    ConstantInt{
-      id => InstrID::none,
-      typ => tInt16,
-      value => uninternedMetaSize,
-    },
-  );
+  // m_unused_uninternedMetadataByteSize
+  pushField(ConstantInt{id => InstrID::none, typ => tInt16, value => 0});
 
   // m_unused_internedMetadataByteSize
   pushField(ConstantInt{id => InstrID::none, typ => tInt16, value => 0});

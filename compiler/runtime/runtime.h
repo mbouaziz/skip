@@ -165,7 +165,7 @@ typedef struct {
   uint8_t m_kind;  // either kSkipGcKindClass or kSkipGcKindArray
   uint8_t m_unused_tilesPerMask;
   uint8_t m_unused_hasName;
-  uint16_t m_uninternedMetadataByteSize;
+  uint16_t m_unused_uninternedMetadataByteSize;
   uint16_t m_unused_internedMetadataByteSize;
   SkipInt m_userByteSize;
   SkipInt m_unused_padding;
