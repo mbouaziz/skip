@@ -57,6 +57,10 @@ base class Option<+T> uses
   | None() -> x
   | Some(y) -> y
 
+  fun bind<T2>[T : T2](x : ?T2): ?T2
+  | None() -> x
+  | some @ Some _ -> some
+
   // For Some() values, returns the result of calling the predicate on the
   // contained value. Returns false for None() values.
   fun test(p: T -> Bool): Bool

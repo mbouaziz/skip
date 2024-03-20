@@ -33,25 +33,25 @@ base class Arg{name:String,
     this with {_positional => value}
   }
 
-  fun getDefault(): ?Value;
   overridable fun isNegatable(): Bool {
     false
   }
   overridable fun isRequired(): Bool {
     false
   }
+  fun getDefault(): ?Value;
 
   static fun string(name:String): StringArg {
-    StringArg{name, defaultConstructor => v ~> StringValue(v)}
+    StringArg{name, valConstructor => v ~> StringValue(v)}
   }
   static fun int(name:String): IntArg {
-    IntArg{name, defaultConstructor => v ~> IntValue(v)}
+    IntArg{name, valConstructor => v ~> IntValue(v)}
   }
   static fun bool(name:String): BoolArg {
-    BoolArg{name, defaultConstructor => v ~> BoolValue(v)}
+    BoolArg{name, valConstructor => v ~> BoolValue(v)}
   }
   static fun array(name:String):ArrayArg {
-    ArrayArg{name, defaultConstructor => v ~> ArrayValue(v)}
+    ArrayArg{name, valConstructor => v ~> ArrayValue(v)}
   }
 }
 
@@ -60,17 +60,22 @@ base class TypedArg<T:frozen>{
   // Other than BoolArgs only
   _default: ?T = None(),
   _required: Bool = false,
-  defaultConstructor : T ~> TypedValue<T>
+  valConstructor : T ~> TypedValue<T>
 } extends Arg {
   fun default(value : T): this {
     this with {_default => Some(value)}
   }
+  fun baseDefault(): TypedValue<T>;
+  fun mkVal(possibleValue:?T): TypedValue<T> {
+    possibleValue.bind(this._default).map(this.valConstructor).default(this.baseDefault())
+  }
   fun getDefault(): ?Value {
-    this._default.map(this.defaultConstructor)
+    this._default.map(this.valConstructor)
   }
 }
 
 base class ValuedArg<T:frozen> extends TypedArg<T> {
+  fun baseDefault(): TypedValue<T> { MissingValue() }
   fun required(value: Bool = true): this {
     this with {_required => value}
   }
@@ -89,6 +94,7 @@ class ArrayArg extends ValuedArg<Array<String>> {
 }
 
 class BoolArg{_negatable: Bool = false} extends TypedArg<Bool> {
+  fun baseDefault(): TypedValue<Bool> { BoolValue(false) }
   fun negatable(value: Bool = true): this {
     this with {_negatable => value}
   }
