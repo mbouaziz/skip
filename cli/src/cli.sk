@@ -42,16 +42,16 @@ base class Arg{name:String,
   }
 
   static fun string(name:String): StringArg {
-    StringArg{name}
+    StringArg{name, defaultConstructor => v ~> StringValue(v)}
   }
   static fun int(name:String): IntArg {
-    IntArg{name}
+    IntArg{name, defaultConstructor => v ~> IntValue(v)}
   }
   static fun bool(name:String): BoolArg {
-    BoolArg{name}
+    BoolArg{name, defaultConstructor => v ~> BoolValue(v)}
   }
   static fun array(name:String):ArrayArg {
-    ArrayArg{name}
+    ArrayArg{name, defaultConstructor => v ~> ArrayValue(v)}
   }
 }
 
@@ -60,11 +60,13 @@ base class TypedArg<T:frozen>{
   // Other than BoolArgs only
   _default: ?T = None(),
   _required: Bool = false,
+  defaultConstructor : T ~> TypedValue<T>
 } extends Arg {
-  // mkVal : T => Value;
-
   fun default(value : T): this {
     this with {_default => Some(value)}
+  }
+  fun getDefault(): ?Value {
+    this._default.map(this.defaultConstructor)
   }
 }
 
@@ -76,33 +78,17 @@ base class ValuedArg<T:frozen> extends TypedArg<T> {
   fun isRequired(): Bool { this._required }
 }
 
-class StringArg extends ValuedArg<String> {
-  fun getDefault(): ?Value {
-    this._default.map(v -> StringValue(v))
-  }
-}
+class StringArg extends ValuedArg<String> { }
 
-class IntArg extends ValuedArg<Int> {
-  fun getDefault(): ?Value {
-    this._default.map(v -> IntValue(v))
-  }
-}
+class IntArg extends ValuedArg<Int> { }
 
 class ArrayArg extends ValuedArg<Array<String>> {
-  fun getDefault(): ?Value {
-    this._default.map(v -> ArrayValue(v))
-  }
-
   fun env(_name: String): this {
     invariant_violation("TODO")
   }
 }
 
 class BoolArg{_negatable: Bool = false} extends TypedArg<Bool> {
-  fun getDefault(): ?Value {
-    this._default.map(v -> BoolValue(v))
-  }
-
   fun negatable(value: Bool = true): this {
     this with {_negatable => value}
   }
