@@ -58,10 +58,14 @@ base class Arg{name:String,
 base class TypedArg<T:frozen>{
   // NOTE: The following parameters cannot be placed in subclasses, since `name` is required.
   // Other than BoolArgs only
-  _default: ?TypedValue<T> = None(),
+  _default: ?T = None(),
   _required: Bool = false,
 } extends Arg {
-  fun getDefault(): ?Value { this._default }
+  // mkVal : T => Value;
+
+  fun default(value : T): this {
+    this with {_default => Some(value)}
+  }
 }
 
 base class ValuedArg<T:frozen> extends TypedArg<T> {
@@ -73,20 +77,20 @@ base class ValuedArg<T:frozen> extends TypedArg<T> {
 }
 
 class StringArg extends ValuedArg<String> {
-  fun default(value: String): this {
-    this with {_default => Some(StringValue(value))}
+  fun getDefault(): ?Value {
+    this._default.map(v -> StringValue(v))
   }
 }
 
 class IntArg extends ValuedArg<Int> {
-  fun default(value: Int): this {
-    this with {_default => Some(IntValue(value))}
+  fun getDefault(): ?Value {
+    this._default.map(v -> IntValue(v))
   }
 }
 
 class ArrayArg extends ValuedArg<Array<String>> {
-  fun default(value: Array<String>): this {
-    this with {_default => Some(ArrayValue(value))}
+  fun getDefault(): ?Value {
+    this._default.map(v -> ArrayValue(v))
   }
 
   fun env(_name: String): this {
@@ -95,8 +99,8 @@ class ArrayArg extends ValuedArg<Array<String>> {
 }
 
 class BoolArg{_negatable: Bool = false} extends TypedArg<Bool> {
-  fun default(value: Bool): this {
-    this with {_default => Some(BoolValue(value))}
+  fun getDefault(): ?Value {
+    this._default.map(v -> BoolValue(v))
   }
 
   fun negatable(value: Bool = true): this {
