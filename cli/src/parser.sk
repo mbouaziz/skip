@@ -335,12 +335,10 @@ private fun parse(
         } else {
           env_var = arg._env.map(v -> Environ.var(v));
           value = arg match {
-          | a @ StringArg _ -> env_var.map(v -> StringValue(v)).default(a.getDefault().default(MissingValue()))
-          | a @ IntArg _ -> env_var.map(v -> IntValue(v.toInt())).default(a.getDefault().default(MissingValue()))
-          | a @ BoolArg _ ->
-            env_var.map(b -> BoolValue(b != "no" && b != "false" && b != "0")).default(a.getDefault().default(BoolValue(false)))
-          | a @ ArrayArg _ ->
-            env_var.map(_ -> invariant_violation("Unexpected argument type.")).default(a.getDefault().default(MissingValue()))
+          | a @ StringArg _ -> a.mkVal(env_var)
+          | a @ IntArg _ -> a.mkVal(env_var.map(v -> v.toInt()))
+          | a @ BoolArg _ -> a.mkVal(env_var.map(b -> (b != "no" && b != "false" && b != "0")))
+          | a @ ArrayArg _ -> (a.mkVal(env_var.map(_ -> invariant_violation("Unexpected argument type."))):Value)
           };
           values.set(arg.name, value)
         }
