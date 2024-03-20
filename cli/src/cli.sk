@@ -58,7 +58,7 @@ base class Arg{name:String,
 base class TypedArg<T:frozen>{
   // NOTE: The following parameters cannot be placed in subclasses, since `name` is required.
   // Other than BoolArgs only
-  _default: ?Value = None(),
+  _default: ?TypedValue<T> = None(),
   _required: Bool = false,
 } extends Arg {
   fun getDefault(): ?Value { this._default }
