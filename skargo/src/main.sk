@@ -12,13 +12,13 @@ fun main(): void {
   cmd = Cli.Command("skargo")
     .about("Skip's package manager")
     .arg(
-      Cli.BoolArg("version")
+      Cli.Arg::bool("version")
         .short("V")
         .long("version")
         .about("Print version info and exit"),
     )
     .arg(
-      Cli.BoolArg("verbose")
+      Cli.Arg::bool("verbose")
         .short("v")
         .long("verbose")
         .about("Use verbose output")
@@ -91,24 +91,24 @@ fun build(): (Cli.Command, Cli.ParseResults ~> void) {
     Cli.Command("build")
       .short("b")
       .about("Compile a local package")
-      .arg(Cli.StringArg("target").about("Build for the target triple"))
+      .arg(Cli.Arg::string("target").about("Build for the target triple"))
       .arg(
-        Cli.StringArg("target-dir").about(
+        Cli.Arg::string("target-dir").about(
           "Directory for all generated artifacts",
         ),
       )
       .arg(
-        Cli.StringArg("profile").about(
+        Cli.Arg::string("profile").about(
           "Build artifacts with the specified profile",
         ),
       )
       .arg(
-        Cli.BoolArg("release")
+        Cli.Arg::bool("release")
           .short("r")
           .long("release")
           .about("Build artifacts in release mode, with optimizations"),
       )
-      .arg(Cli.StringArg("bin").about("Build only the specified binary")),
+      .arg(Cli.Arg::string("bin").about("Build only the specified binary")),
     args ~> envCmd(args, execBuild),
   )
 }
@@ -170,36 +170,36 @@ fun test(): (Cli.Command, Cli.ParseResults ~> void) {
       .short("t")
       .about("Run the tests")
       .arg(
-        Cli.StringArg("filter")
+        Cli.Arg::string("filter")
           .positional()
           .about("If specified, only run tests with names matching the filter"),
       )
       .arg(
-        Cli.IntArg("jobs")
+        Cli.Arg::int("jobs")
           .long("jobs")
           .short("j")
           .default(nproc())
           .about("Number of parallel jobs, defaults to # of CPUs"),
       )
-      .arg(Cli.StringArg("target").about("Check for the target triple"))
+      .arg(Cli.Arg::string("target").about("Check for the target triple"))
       .arg(
-        Cli.StringArg("target-dir").about(
+        Cli.Arg::string("target-dir").about(
           "Directory for all generated artifacts",
         ),
       )
       .arg(
-        Cli.StringArg("profile").about(
+        Cli.Arg::string("profile").about(
           "Build artifacts with the specified profile",
         ),
       )
       .arg(
-        Cli.BoolArg("release")
+        Cli.Arg::bool("release")
           .short("r")
           .long("release")
           .about("Build artifacts in release mode, with optimizations"),
       )
-      .arg(Cli.BoolArg("list").about("Display the list of available tests"))
-      .arg(Cli.StringArg("junitxml").about("Generate a JUnit XML report")),
+      .arg(Cli.Arg::bool("list").about("Display the list of available tests"))
+      .arg(Cli.Arg::string("junitxml").about("Generate a JUnit XML report")),
     args ~> envCmd(args, execTest),
   )
 }
@@ -240,19 +240,19 @@ fun check(): (Cli.Command, Cli.ParseResults ~> void) {
       .about(
         "Analyze the current package and report errors, but don't build object files",
       )
-      .arg(Cli.StringArg("target").about("Check for the target triple"))
+      .arg(Cli.Arg::string("target").about("Check for the target triple"))
       .arg(
-        Cli.StringArg("target-dir").about(
+        Cli.Arg::string("target-dir").about(
           "Directory for all generated artifacts",
         ),
       )
       .arg(
-        Cli.StringArg("profile").about(
+        Cli.Arg::string("profile").about(
           "Build artifacts with the specified profile",
         ),
       )
       .arg(
-        Cli.BoolArg("release")
+        Cli.Arg::bool("release")
           .short("r")
           .long("release")
           .about("Build artifacts in release mode, with optimizations"),
@@ -281,19 +281,19 @@ fun clean(): (Cli.Command, Cli.ParseResults ~> void) {
   (
     Cli.Command("clean")
       .about("Remove the target directory")
-      .arg(Cli.StringArg("target").about("Build for the target triple"))
+      .arg(Cli.Arg::string("target").about("Build for the target triple"))
       .arg(
-        Cli.StringArg("target-dir").about(
+        Cli.Arg::string("target-dir").about(
           "Directory for all generated artifacts",
         ),
       )
       .arg(
-        Cli.StringArg("profile").about(
+        Cli.Arg::string("profile").about(
           "Build artifacts with the specified profile",
         ),
       )
       .arg(
-        Cli.BoolArg("release")
+        Cli.Arg::bool("release")
           .short("r")
           .long("release")
           .about("Build artifacts in release mode, with optimizations"),
@@ -350,12 +350,12 @@ fun init(): (Cli.Command, Cli.ParseResults ~> void) {
     Cli.Command("init")
       .about("Create a new skargo package")
       .arg(
-        Cli.StringArg("path")
+        Cli.Arg::string("path")
           .default(".")
           .about("Directory where to perform the initialization"),
       )
       .arg(
-        Cli.StringArg("test-harness")
+        Cli.Arg::string("test-harness")
           .short("t")
           .long("test-harness")
           .about("Specify the test harness"),
@@ -415,7 +415,7 @@ fun help(): (Cli.Command, Cli.ParseResults ~> void) {
   (
     Cli.Command("help")
       .arg(
-        Cli.StringArg("command")
+        Cli.Arg::string("command")
           .positional()
           .about(
             "If specified, the subcommand for which help is to be displayed",
@@ -449,18 +449,18 @@ fun runner(): (Cli.Command, Cli.ParseResults ~> void) {
       .short("r")
       .about("Run the built host binary of the local package")
       .arg(
-        Cli.StringArg("profile").about(
+        Cli.Arg::string("profile").about(
           "Run the binary with the specified profile",
         ),
       )
       .arg(
-        Cli.BoolArg("release")
+        Cli.Arg::bool("release")
           .short("r")
           .long("release")
           .about("Run the binary in release mode"),
       )
-      .arg(Cli.StringArg("bin").about("Run the specified binary"))
-      .arg(Cli.StringArg("path").about("Path of the package to run"))
+      .arg(Cli.Arg::string("bin").about("Run the specified binary"))
+      .arg(Cli.Arg::string("path").about("Path of the package to run"))
       .extra(),
     execRun,
   )

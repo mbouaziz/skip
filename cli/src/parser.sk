@@ -14,20 +14,25 @@ base class ArgumentError extends Exception uses Equality {
   | DuplicateValueError(arg) -> `Multiple values provided for argument ${arg}.`
 }
 
-base class Value uses Show, Equality {
-  children =
-  | BoolValue(Bool)
-  | StringValue(String)
-  | IntValue(Int)
-  | ArrayValue(Array<String>)
-  | MissingValue()
-
+base class Value uses Show, Equality {}
+base class TypedValue<T> extends Value {
   fun toString(): String
   | MissingValue() -> "(no value)"
   | BoolValue(v) -> v.toString()
   | StringValue(v) -> `"${v}"`
   | IntValue(v) -> v.toString()
   | ArrayValue(v) -> "[" + v.map(x -> `"${x}"`).join(", ") + "]"
+}
+base class DefinedTypedValue<T>(v : T) extends TypedValue<T> {}
+
+class BoolValue extends DefinedTypedValue<Bool> {}
+class StringValue extends DefinedTypedValue<String> {}
+class IntValue extends DefinedTypedValue<Int> {}
+class ArrayValue extends DefinedTypedValue<Array<String>> {}
+
+class MissingValue<T>() extends TypedValue<T> {
+  fun ==(_other: Value): Bool { false }
+  fun !=(_other: Value): Bool { false }
 }
 
 class ParseResults{
@@ -47,7 +52,7 @@ class ParseResults{
   fun maybeGetString(name: String): ?String {
     this.values.maybeGet(name) match {
     | Some(StringValue(v)) -> Some(v)
-    | Some(MissingValue()) -> None()
+    | Some(MissingValue _) -> None()
     | Some(_) -> invariant_violation(`Argument ${name} is not a string`)
     | None() -> invariant_violation(`Argument ${name} is undefined`)
     }
@@ -63,7 +68,7 @@ class ParseResults{
   fun maybeGetInt(name: String): ?Int {
     this.values.maybeGet(name) match {
     | Some(IntValue(v)) -> Some(v)
-    | Some(MissingValue()) -> None()
+    | Some(MissingValue _) -> None()
     | Some(_) -> invariant_violation(`Argument ${name} is not an int`)
     | None() -> invariant_violation(`Argument ${name} is undefined`)
     }
@@ -79,7 +84,7 @@ class ParseResults{
   fun maybeGetArray(name: String): ?Array<String> {
     this.values.maybeGet(name) match {
     | Some(ArrayValue(v)) -> Some(v)
-    | Some(MissingValue()) -> None()
+    | Some(MissingValue _) -> None()
     | Some(_) -> invariant_violation(`Argument ${name} is not an array`)
     | None() -> invariant_violation(`Argument ${name} is undefined`)
     }
@@ -143,13 +148,6 @@ private fun updateValue(
   Success(void)
 }
 
-private fun defaultValue(arg: Arg): Value {
-  arg match {
-  | ValuedArg _ -> arg._default.default(MissingValue())
-  | BoolArg _ -> arg._default.default(BoolValue(false))
-  }
-}
-
 private fun parse(
   cmd: Command,
   iterator: mutable Iterator<String>,
@@ -195,7 +193,7 @@ private fun parse(
       if (arg._short.isSome()) {
         options.add(`-${arg._short.fromSome()}`, arg);
         if (arg._long.isNone()) {
-          if (arg._negatable) {
+          if (arg.isNegatable()) {
             invariant_violation(
               `Argument ${arg.name} cannot be negatable without a long name`,
             )
@@ -213,7 +211,7 @@ private fun parse(
         )
       };
       options.add(`--${longFlag}`, arg);
-      if (arg._negatable) {
+      if (arg.isNegatable()) {
         options.add(`--no-${longFlag}`, arg);
       };
     }
@@ -331,20 +329,20 @@ private fun parse(
   if (error.isNone()) {
     for (arg in cmd._args) {
       if (!values.containsKey(arg.name)) {
-        if (arg._required) {
+        if (arg.isRequired()) {
           !error = Some(MissingArgumentError(arg.name));
           break void
         } else {
           env_var = arg._env.map(v -> Environ.var(v));
           value = arg match {
-          | StringArg _ -> env_var.map(v -> StringValue(v))
-          | IntArg _ -> env_var.map(v -> IntValue(v.toInt()))
-          | BoolArg _ ->
-            env_var.map(b -> BoolValue(b != "no" && b != "false" && b != "0"))
-          | _ ->
-            env_var.map(_ -> invariant_violation("Unexpected argument type."))
+          | a @ StringArg _ -> env_var.map(v -> StringValue(v)).default(a._default.default(MissingValue()))
+          | a @ IntArg _ -> env_var.map(v -> IntValue(v.toInt())).default(a._default.default(MissingValue()))
+          | a @ BoolArg _ ->
+            env_var.map(b -> BoolValue(b != "no" && b != "false" && b != "0")).default(a._default.default(BoolValue(false)))
+          | a @ ArrayArg _ ->
+            env_var.map(_ -> invariant_violation("Unexpected argument type.")).default(a._default.default(MissingValue()))
           };
-          values.set(arg.name, value.default(defaultValue(arg)))
+          values.set(arg.name, value)
         }
       }
     }

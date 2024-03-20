@@ -42,7 +42,7 @@ private fun usageUsage(
   } else {
     // Cannot have both positional args and subcommands.
     for (arg in positionalArgs) {
-      argString = if (arg._required) {
+      argString = if (arg.isRequired()) {
         `<${arg.name}>`
       } else {
         `[${arg.name}]`
@@ -67,7 +67,7 @@ private fun usagePositionalArgs(positionalArgs: Sequence<Cli.Arg>): String {
     positionalArgs.map(arg ->
       Array[
         Some(`<${arg.name}>`),
-        arg._default.map(v -> `[default: ${v}]`),
+        arg.getDefault().map(v -> `[default: ${v}]`),
         arg._about,
       ]
     ),

@@ -206,13 +206,13 @@ fun main(): void {
   cmd = Cli.Command("sknpm")
     .about("Skip's npm package builder")
     .arg(
-      Cli.BoolArg("version")
+      Cli.Arg::bool("version")
         .short("V")
         .long("version")
         .about("Print version info and exit"),
     )
     .arg(
-      Cli.BoolArg("verbose")
+      Cli.Arg::bool("verbose")
         .short("v")
         .long("verbose")
         .about("Use verbose output")
@@ -267,7 +267,7 @@ fun checker(): (Cli.Command, Cli.ParseResults ~> void) {
       .short("c")
       .about("Run tsc on ts source files")
       .arg(
-        Cli.BoolArg("test")
+        Cli.Arg::bool("test")
           .short("t")
           .long("test")
           .about("Run tsc on ts tests files, with build package"),
@@ -305,28 +305,28 @@ fun build(): (Cli.Command, Cli.ParseResults ~> void) {
       .short("b")
       .about("Build the npm package")
       .arg(
-        Cli.StringArg("target-dir").about(
+        Cli.Arg::string("target-dir").about(
           "Directory for all generated artifacts",
         ),
       )
       .arg(
-        Cli.StringArg("profile").about(
+        Cli.Arg::string("profile").about(
           "Build artifacts with the specified profile",
         ),
       )
       .arg(
-        Cli.BoolArg("release")
+        Cli.Arg::bool("release")
           .short("r")
           .long("release")
           .about("Build artifacts in release mode, with optimizations"),
       )
       .arg(
-        Cli.StringArg("npm-out").about(
+        Cli.Arg::string("npm-out").about(
           "Directory for all generated npm package",
         ),
       )
       .arg(
-        Cli.StringArg("html").about(
+        Cli.Arg::string("html").about(
           "Build minimal html support for specified launcher",
         ),
       ),
@@ -359,31 +359,31 @@ fun test(): (Cli.Command, Cli.ParseResults ~> void) {
       .short("t")
       .about("Run the tests")
       .arg(
-        Cli.ArrayArg("target")
+        Cli.Arg::array("target")
           .positional()
           .about(
             "If specified, only run tests for the specified test targets (defined in target.json)",
           ),
       )
       .arg(
-        Cli.ArrayArg("filter")
+        Cli.Arg::array("filter")
           .short("f")
           .long("filter")
           .about("If specified, only run tests with names matching the filter"),
       )
       .arg(
-        Cli.StringArg("target-dir").about(
+        Cli.Arg::string("target-dir").about(
           "Directory for all generated artifacts",
         ),
       )
       .arg(
-        Cli.StringArg("profile").about(
+        Cli.Arg::string("profile").about(
           "Build artifacts with the specified profile",
         ),
       )
-      .arg(Cli.StringArg("junitxml").about("Generate a JUnit XML report"))
+      .arg(Cli.Arg::string("junitxml").about("Generate a JUnit XML report"))
       .arg(
-        Cli.BoolArg("release")
+        Cli.Arg::bool("release")
           .short("r")
           .long("release")
           .about("Build artifacts in release mode, with optimizations"),
@@ -1155,21 +1155,21 @@ fun runner(): (Cli.Command, Cli.ParseResults ~> void) {
       .short("r")
       .about("Call npm run on generated npm package")
       .arg(
-        Cli.StringArg("target-dir").about(
+        Cli.Arg::string("target-dir").about(
           "Directory for all generated artifacts",
         ),
       )
-      .arg(Cli.StringArg("profile").about("Run for the specified profile"))
+      .arg(Cli.Arg::string("profile").about("Run for the specified profile"))
       .arg(
-        Cli.BoolArg("release")
+        Cli.Arg::bool("release")
           .short("r")
           .long("release")
           .about("Run for release profile"),
       )
-      .arg(Cli.StringArg("bin").about("Run the specified binary"))
-      .arg(Cli.StringArg("path").about("Path of the package to run"))
+      .arg(Cli.Arg::string("bin").about("Run the specified binary"))
+      .arg(Cli.Arg::string("path").about("Path of the package to run"))
       .arg(
-        Cli.StringArg("npm-out").about(
+        Cli.Arg::string("npm-out").about(
           "Directory for all generated npm package",
         ),
       )
@@ -1236,22 +1236,22 @@ fun publish(): (Cli.Command, Cli.ParseResults ~> void) {
       .short("p")
       .about("Call npm publish on generated npm package")
       .arg(
-        Cli.StringArg("target-dir").about(
+        Cli.Arg::string("target-dir").about(
           "Directory for all generated artifacts",
         ),
       )
-      .arg(Cli.StringArg("profile").about("Publish with the specified profile"))
+      .arg(Cli.Arg::string("profile").about("Publish with the specified profile"))
       .arg(
-        Cli.BoolArg("release")
+        Cli.Arg::bool("release")
           .short("r")
           .long("release")
           .about("Publish with release profile"),
       )
-      .arg(Cli.StringArg("bin").about("Publish for specified binary"))
-      .arg(Cli.StringArg("npmVersion").about("Publish with specified version"))
-      .arg(Cli.BoolArg("force").short("f").about("Do not check version"))
+      .arg(Cli.Arg::string("bin").about("Publish for specified binary"))
+      .arg(Cli.Arg::string("npmVersion").about("Publish with specified version"))
+      .arg(Cli.Arg::bool("force").short("f").about("Do not check version"))
       .arg(
-        Cli.StringArg("npm-out").about(
+        Cli.Arg::string("npm-out").about(
           "Directory for all generated npm package",
         ),
       )
