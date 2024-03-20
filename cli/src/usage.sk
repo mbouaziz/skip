@@ -67,7 +67,7 @@ private fun usagePositionalArgs(positionalArgs: Sequence<Cli.Arg>): String {
     positionalArgs.map(arg ->
       Array[
         Some(`<${arg.name}>`),
-        arg._default.map(v -> `[default: ${v}]`),
+        arg.getDefault().map(v -> `[default: ${v}]`),
         arg._about,
       ]
     ),

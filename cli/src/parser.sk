@@ -177,11 +177,11 @@ private fun updateValue(
 
 private fun defaultValue(arg: Arg): Value {
   if (arg._repeatable) {
-    arg._default.default(ArrayValue(Array[]))
+    arg.getDefault().default(ArrayValue(Array[]))
   } else {
     arg match {
-    | ValuedArg _ -> arg._default.default(MissingValue())
-    | BoolArg _ -> arg._default.default(BoolValue(false))
+    | ValuedArg _ -> arg.getDefault().default(MissingValue())
+    | BoolArg _ -> arg.getDefault().default(BoolValue(false))
     }
   }
 }
