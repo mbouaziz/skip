@@ -1,0 +1,21 @@
+{
+  "name": "skstate",
+  "private": true,
+  "engines": {
+    "node": ">=20.7.0"
+  },
+  "module": "index.ts",
+  "type": "module",
+  "author": "SkipLabs",
+  "devDependencies": {
+    "@types/node": "^20.8.8",
+    "@types/bun": "latest",
+    "typescript": "^5.4.3"
+  },
+  "dependencies": {
+    "typed-skdb": "file:../typed-skdb"
+  },
+  "scripts": {
+    "run": "bun run ./index.ts"
+  }
+}
