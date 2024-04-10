@@ -42,23 +42,40 @@ type Row<S extends DBSchema, T extends keyof S, C extends Array<PossibleColumnNa
 type Rows<S extends DBSchema, T extends keyof S, C extends Array<PossibleColumnNames<S, T>>> = Array<Row<S, T, C>>;
 type tableOf<X> = string & keyof X;
 type RestRow<S extends DBSchema, T extends keyof S, K extends PartialRow<S, T>> = Omit<FullRow<S, T>, keyof K>;
+type OrderOrder = "ASC" | "DESC";
+type SelectOrderItem<S extends DBSchema, T extends keyof S> = [
+    PossibleColumnNames<S, T>
+] | [PossibleColumnNames<S, T>, OrderOrder];
+type SelectOrder<S extends DBSchema, T extends keyof S> = Array<SelectOrderItem<S, T>>;
+type SelectOptions<S extends DBSchema, T extends keyof S> = {
+    order?: SelectOrder<S, T>;
+    limit?: number;
+};
 export declare class ConnectedDB<const S extends DBSchema> {
     private readonly schema;
     private readonly localDb;
     constructor(schema: S, localDb: SKDB);
     private exec;
+    private watch;
+    private watchChanges;
+    private execTransac;
+    private prepareInsert;
     insert<const T extends tableOf<S>>(table: T, row: FullRow<S, T>): Promise<SKDBTable>;
-    delete<const T extends tableOf<S>>(table: T, where: string | null, params: Params | undefined): Promise<SKDBTable>;
-    update<const T extends tableOf<S>>(table: T, row: PartialRow<S, T>, where: string | null, params: Params | undefined): Promise<SKDBTable>;
-    insertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(table: T, rowKey: K, rowRest: RestRow<S, T, K>): Promise<void>;
+    private prepareDelete;
+    delete<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Promise<SKDBTable>;
+    update<const T extends tableOf<S>>(table: T, row: PartialRow<S, T>, where?: string, params?: Params): Promise<SKDBTable>;
+    insertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(table: T, rowKey: K, rowRest: RestRow<S, T, K>): Promise<SKDBTable>;
+    private buildSelectQueryGen;
     private buildSelectQuery;
-    watchSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string | null, params: Params, onChange: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void): WatchReturnType;
-    watchSelectChanges<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string | null, params: Params, init: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void, update: (this: ConnectedDB<S>, added: Rows<S, T, C>, removed: Rows<S, T, C>) => void): WatchReturnType;
-    useSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string | null, params: Params, defaultRows?: Rows<S, T, C>): Rows<S, T, C>;
-    useSelectMaybeSingle<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string | null, params: Params, defaultRow?: Row<S, T, C> | undefined): Row<S, T, C> | undefined;
-    useSelectSingle<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string | null, params: Params, defaultRow: Row<S, T, C>): Row<S, T, C>;
-    useSelectMaybeScalar<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(table: T, column: C, where: string | null, params: Params, defaultValue?: ColumnType<S, T, C> | undefined): ColumnType<S, T, C> | undefined;
-    useSelectScalar<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(table: T, column: C, where: string | null, params: Params, defaultValue: ColumnType<S, T, C>): ColumnType<S, T, C>;
+    select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params?: Params, options?: SelectOptions<S, T>): Promise<Rows<S, T, C>>;
+    selectCount<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Promise<number>;
+    watchSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params: Params, onChange: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void, options?: SelectOptions<S, T>): WatchReturnType;
+    watchSelectChanges<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params: Params, init: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void, update: (this: ConnectedDB<S>, added: Rows<S, T, C>, removed: Rows<S, T, C>) => void, options?: SelectOptions<S, T>): WatchReturnType;
+    useSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where?: string, params?: Params, defaultRows?: Rows<S, T, C>, options?: SelectOptions<S, T>): Rows<S, T, C>;
+    useSelectMaybeSingle<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where?: string, params?: Params, defaultRow?: Row<S, T, C>, options?: SelectOptions<S, T>): Row<S, T, C> | undefined;
+    useSelectSingle<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params: Params, defaultRow: Row<S, T, C>, options?: SelectOptions<S, T>): Row<S, T, C>;
+    useSelectMaybeScalar<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(table: T, column: C, where?: string, params?: Params, defaultValue?: ColumnType<S, T, C>, options?: SelectOptions<S, T>): ColumnType<S, T, C> | undefined;
+    useSelectScalar<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(table: T, column: C, where: string, params: Params, defaultValue: ColumnType<S, T, C>, options?: SelectOptions<S, T>): ColumnType<S, T, C>;
 }
 export declare function connectAndMirror<const S extends DBSchema>(db: DBToConnect<S>): Promise<ConnectedDB<S>>;
 type SKDBPropName = "skdb";

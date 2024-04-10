@@ -1,54 +1,49 @@
 
 import { connectAndMirror } from "typed-skdb";
-import fs from "node:fs";
-import * as util from "node:util";
+import fsPromises from "node:fs/promises";
 
 const skdb = await connectAndMirror({
     database: "mappings",
     schema: {
-        readFileRequest: [
-            ["path", "TEXT", "NOT NULL"],
-            ["status", "TEXT", "NOT NULL"]
-        ],
         readFile: [
             ["path", "TEXT", "NOT NULL"],
-            ["magic", "TEXT", "NOT NULL"],
-            ["bottom_addr", "TEXT", "NOT NULL"]
+            ["offset", "TEXT", "NOT NULL"],
+            ["progress", "INTEGER", "NOT NULL"],
+            ["value", "TEXT"]
         ]
     }
 });
 
 console.log("CONNECTED");
 
-function uint64ToString(bi: bigint): string {
-    const s = bi.toString(16);
-    return "0x" + "0000000000000000".slice(s.length) + s;
-}
-
-async function onNewReadFileRequest(path: string): Promise<void> {
-    console.log(`New request: ${path}`);
+async function onNewReadFileRequest(path: string, offset: string): Promise<void> {
+    console.log(`New request: ${path} @ ${offset}`);
     try {
-        await skdb.update("readFileRequest", { status: "processing" }, "path = @path AND status = 'new'", { path });
-        const fd = await util.promisify(fs.open)(path, "r");
-        console.log(`Opened ${path}: ${fd}`);
-        const buffer = new BigUint64Array(2);
-        const { bytesRead } = await util.promisify(fs.read)(fd, buffer, 0, 16, 0);
+        const existingResult = await skdb.selectCount("readFile", "path = @path AND offset = @offset AND progress > 0", { path, offset });
+        if (existingResult > 0) {
+            console.log(`Abandoning ${path} @ ${offset}`);
+            return;
+        }
+        await skdb.insert("readFile", { path, offset, progress: 1, value: null });
+        const fh = await fsPromises.open(path, "r");
+        const buffer = new BigUint64Array(1);
+        // @ts-ignore
+        const { bytesRead } = await fh.read(buffer, 0, 8, Number(offset));
+        await fh.close();
         console.log(`Read ${bytesRead} bytes`);
-        const [biMagic, biBottomAddr] = buffer;
-        console.log(`Updated 1. Will update 2 with magic ${biMagic} (${Number(biMagic)}) and length ${biBottomAddr} (${Number(biBottomAddr)})`);
-        await skdb.insertOrUpdateWithKey("readFile", { path }, { magic: uint64ToString(biMagic), bottom_addr: uint64ToString(biBottomAddr) });
-        console.log(`Updated 2`);
-        await skdb.delete("readFileRequest", "path = @path", { path });
+        const r = (bytesRead < 8) ?
+            { progress: 2, value: `Read ${bytesRead} bytes instead of 8` } :
+            { progress: 3, value: buffer[0].toString() };
+        await skdb.insertOrUpdateWithKey("readFile", { path, offset }, r);
     } catch (error) {
         console.error(error);
-        const status = `Error: ${error}`;
-        await skdb.update("readFileRequest", { status }, "path = @path", { path });
+        await skdb.insertOrUpdateWithKey("readFile", { path, offset }, { progress: 2, value: `${error}` });
     }
 }
-async function onNewReadFileRequests(added: { path: string }[], _removed?: any): Promise<void> {
-    await Promise.all(added.map(({ path }) => onNewReadFileRequest(path)));
+async function onNewReadFileRequests(added: { path: string, offset: string }[], _removed?: any): Promise<void> {
+    await Promise.all(added.map(({ path, offset }) => onNewReadFileRequest(path, offset)));
 }
 const watchReadFile = skdb.watchSelectChanges(
-    "readFileRequest", ["path"], "status = 'new'", {}, onNewReadFileRequests, onNewReadFileRequests
+    "readFile", ["path", "offset"], "progress = 0", {}, onNewReadFileRequests, onNewReadFileRequests
 )
 await Promise.all([watchReadFile]);
