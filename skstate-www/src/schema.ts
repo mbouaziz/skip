@@ -1,12 +1,9 @@
 export const schema = {
-    readFileRequest: [
-        ["path", "TEXT", "NOT NULL"],
-        ["status", "TEXT", "NOT NULL"]
-    ],
     readFile: [
         ["path", "TEXT", "NOT NULL"],
-        ["magic", "TEXT", "NOT NULL"],
-        ["bottom_addr", "TEXT", "NOT NULL"],
+        ["offset", "TEXT", "NOT NULL"],
+        ["progress", "INTEGER", "NOT NULL"],
+        ["value", "TEXT"]
     ],
 } as const;
 
