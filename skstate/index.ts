@@ -42,7 +42,7 @@ async function onNewReadFileRequest(path: string, offset: number): Promise<void>
 async function onNewReadFileRequests(added: { path: string, offset: number }[], _removed?: any): Promise<void> {
     await Promise.all(added.map(({ path, offset }) => onNewReadFileRequest(path, offset)));
 }
-const watchReadFile = skdb.execWatchSelectChanges(
+const watchReadFile = skdb.watchSelectChanges(
     "readFile", ["path", "offset"], "progress = 0", {}, onNewReadFileRequests, onNewReadFileRequests
 )
 await Promise.all([watchReadFile]);
