@@ -35,7 +35,7 @@ async function requestReadWord(
   offset: number,
   nb: number = 1,
 ) {
-  await skdb.execInsert(
+  return await skdb.execInsert(
     "readFile",
     Array.from({ length: nb }, (_, i) => ({
       path,
@@ -188,20 +188,14 @@ function FTableElement(
 function Ginfo(props: WithSKDB<Schema, { path: string; offset: number }>) {
   const ftable = [];
   for (let i = 0; i < 64; i++) {
+    const offset = props.offset + i * 8;
     ftable.push(
-      <FTableElement {...props} offset={props.offset + i * 8} index={i} />,
+      <FTableElement key={offset} {...props} offset={offset} index={i} />,
     );
   }
   return (
     <>
       <LoadAllRow name="Free table" {...props} n={64} />
-      <tr>
-        <td>{hi(props.offset)}</td>
-        <td>Free table</td>
-        <td>
-          <LoadLink {...props} n={64} />
-        </td>
-      </tr>
       {ftable}
     </>
   );

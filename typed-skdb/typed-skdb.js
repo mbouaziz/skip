@@ -143,8 +143,8 @@ export class ConnectedDB {
         if (Array.isArray(r)) {
             const preParams = [];
             for (const i in r) {
-                values.push(this.schema[table].map(([colName]) => `@${colName}-${i}`));
-                preParams.push(Object.entries(r[i]).map(([c, v]) => [`${c}-${i}`, v]));
+                values.push(this.schema[table].map(([colName]) => `@${colName}_${i}`));
+                preParams.push(Object.entries(r[i]).map(([c, v]) => [`${c}_${i}`, v]));
             }
             params = Object.fromEntries(preParams.flat());
         }
