@@ -57,8 +57,15 @@ declare class Query<T> {
     readonly ofSKDBTable: (t: SKDBTable) => T;
     constructor(query: string, params: Params, ofSKDBTable: (t: SKDBTable) => T);
     static void(query: string, params: Params): Query<void>;
+    mapResult<U>(f: (x: T) => U): Query<U>;
     static transac(qs: Query<void>[]): Query<void>;
     followedBy(this: Query<void>, next: Query<void>): Query<void>;
+    maybeSingle<T>(this: Query<T[]>): Query<T | undefined>;
+    mustRow<T>(this: Query<T | undefined>): Query<T>;
+    mustSingle<T>(this: Query<T[]>): Query<T>;
+    getColumn<const C extends string, T>(this: Query<Record<C, T>[]>, column: C): Query<T[]>;
+    maybeColumn<const C extends string, T>(this: Query<Record<C, T> | undefined>, column: C): Query<T | undefined>;
+    maybeScalar<const C extends string, T>(this: Query<Record<C, T>[]>, column: C): Query<T | undefined>;
 }
 export declare class ConnectedDB<const S extends DBSchema> {
     private readonly schema;
@@ -74,7 +81,8 @@ export declare class ConnectedDB<const S extends DBSchema> {
     use<T>(q: Query<T>, initial: T): T;
     private buildSelectQueryGen;
     private buildSelectQuery;
-    select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params?: Params, options?: SelectOptions<S, T>): Query<Rows<S, T, C>>;
+    select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where?: string, params?: Params, options?: SelectOptions<S, T>): Query<Rows<S, T, C>>;
+    selectOneField<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(table: T, column: C, where?: string, params?: Params, options?: SelectOptions<S, T>): Query<ColumnType<S, T, C>[]>;
     selectCount<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Query<number>;
     insert<const T extends tableOf<S>>(table: T, r: FullRow<S, T> | FullRow<S, T>[]): Query<void>;
     delete<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Query<void>;
@@ -83,7 +91,7 @@ export declare class ConnectedDB<const S extends DBSchema> {
     execInsert<const T extends tableOf<S>>(table: T, r: FullRow<S, T> | FullRow<S, T>[]): Promise<void>;
     execDelete<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Promise<void>;
     execInsertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(table: T, rowKey: K, rowRest: RestRow<S, T, K>): Promise<void>;
-    execSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params?: Params, options?: SelectOptions<S, T>): Promise<Rows<S, T, C>>;
+    execSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where?: string, params?: Params, options?: SelectOptions<S, T>): Promise<Rows<S, T, C>>;
     execSelectCount<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Promise<number>;
     watchSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params: Params, onChange: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void, options?: SelectOptions<S, T>): WatchReturnType;
     watchSelectChanges<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params: Params, init: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void, update: (this: ConnectedDB<S>, added: Rows<S, T, C>, removed: Rows<S, T, C>) => void, options?: SelectOptions<S, T>): WatchReturnType;

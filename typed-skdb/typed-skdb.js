@@ -34,6 +34,9 @@ class Query {
     static void(query, params) {
         return new Query(query, params, ignore);
     }
+    mapResult(f) {
+        return new Query(this.query, this.params, t => f(this.ofSKDBTable(t)));
+    }
     static transac(qs) {
         const query = qs.map(({ query }) => query).join("; ");
         // FIXME: this is shamelessly merging params
@@ -42,6 +45,24 @@ class Query {
     }
     followedBy(next) {
         return Query.transac([this, next]);
+    }
+    maybeSingle() {
+        return this.mapResult(getMaybeSingleRow);
+    }
+    mustRow() {
+        return this.mapResult(getMustRow);
+    }
+    mustSingle() {
+        return this.maybeSingle().mustRow();
+    }
+    getColumn(column) {
+        return this.mapResult(rows => rows.map(row => row?.[column]));
+    }
+    maybeColumn(column) {
+        return this.mapResult(row => row?.[column]);
+    }
+    maybeScalar(column) {
+        return this.maybeSingle().maybeColumn(column);
     }
 }
 ;
@@ -71,7 +92,7 @@ function getMust(what, maybe) {
     return maybe;
 }
 function getMustRow(maybeRow) { return getMust("row", maybeRow); }
-function getMustVal(maybeVal) { return getMust("value", maybeVal); }
+//function getMustVal<T>(maybeVal?: T): T { return getMust("value", maybeVal); }
 export class ConnectedDB {
     schema;
     localDb;
@@ -137,9 +158,12 @@ export class ConnectedDB {
         const what = columns.join(", ");
         return this.buildSelectQueryGen(table, what, where, options);
     }
-    select(table, columns, where, params = {}, options) {
+    select(table, columns, where = "", params = {}, options) {
         const query = this.buildSelectQuery(table, columns, where, options);
         return new Query(query, params, rowsOfSKDBTable);
+    }
+    selectOneField(table, column, where, params, options) {
+        return this.select(table, [column], where, params, options).mapResult(rows => rows.map(row => row?.[column]));
     }
     selectCount(table, where, params = {}) {
         const query = this.buildSelectQueryGen(table, "COUNT(*)", where);
@@ -222,23 +246,20 @@ export class ConnectedDB {
     async watchSelectChanges(table, columns, where, params, init, update, options) {
         return await this.watchChanges(this.select(table, columns, where, params, options), init, update);
     }
-    useSelect(table, columns, where = "", params = {}, defaultRows = [], options = {}) {
+    useSelect(table, columns, where, params, defaultRows = [], options) {
         return this.use(this.select(table, columns, where, params, options), defaultRows);
     }
     useSelectMaybeSingle(table, columns, where, params, defaultRow, options) {
-        const defaultRows = defaultRow === undefined ? undefined : [defaultRow];
-        return getMaybeSingleRow(this.useSelect(table, columns, where, params, defaultRows, options));
+        return this.use(this.select(table, columns, where, params, options).maybeSingle(), defaultRow);
     }
     useSelectSingle(table, columns, where, params, defaultRow, options) {
-        return getMustRow(this.useSelectMaybeSingle(table, columns, where, params, defaultRow, options));
+        return this.use(this.select(table, columns, where, params, options).mustSingle(), defaultRow);
     }
     useSelectMaybeScalar(table, column, where, params, defaultValue, options) {
-        const defaultRow = defaultValue === undefined ? undefined : { [column]: defaultValue };
-        const row = this.useSelectMaybeSingle(table, [column], where, params, defaultRow, options);
-        return row?.[column];
+        return this.use(this.selectOneField(table, column, where, params, options).maybeSingle(), defaultValue);
     }
     useSelectScalar(table, column, where, params, defaultValue, options) {
-        return getMustVal(this.useSelectMaybeScalar(table, column, where, params, defaultValue, options));
+        return this.use(this.selectOneField(table, column, where, params, options).mustSingle(), defaultValue);
     }
 }
 export async function connectAndMirror(db) {

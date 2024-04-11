@@ -131,6 +131,14 @@ class Query<T> {
         return new Query(query, params, ignore);
     }
 
+    public mapResult<U>(f: (x: T) => U): Query<U> {
+        return new Query(
+            this.query,
+            this.params,
+            t => f(this.ofSKDBTable(t))
+        );
+    }
+
     public static transac(qs: Query<void>[]): Query<void> {
         const query = qs.map(({ query }) => query).join("; ");
         // FIXME: this is shamelessly merging params
@@ -140,6 +148,30 @@ class Query<T> {
 
     public followedBy(this: Query<void>, next: Query<void>): Query<void> {
         return Query.transac([this, next]);
+    }
+
+    public maybeSingle<T>(this: Query<T[]>): Query<T | undefined> {
+        return this.mapResult(getMaybeSingleRow);
+    }
+
+    public mustRow<T>(this: Query<T | undefined>): Query<T> {
+        return this.mapResult(getMustRow);
+    }
+
+    public mustSingle<T>(this: Query<T[]>): Query<T> {
+        return this.maybeSingle().mustRow();
+    }
+
+    public getColumn<const C extends string, T>(this: Query<Record<C, T>[]>, column: C): Query<T[]> {
+        return this.mapResult(rows => rows.map(row => row?.[column]));
+    }
+
+    public maybeColumn<const C extends string, T>(this: Query<Record<C, T> | undefined>, column: C): Query<T | undefined> {
+        return this.mapResult(row => row?.[column]);
+    }
+
+    public maybeScalar<const C extends string, T>(this: Query<Record<C, T>[]>, column: C): Query<T | undefined> {
+        return this.maybeSingle().maybeColumn(column);
     }
 };
 
@@ -175,7 +207,7 @@ function getMust<T>(what: string, maybe?: T): T {
 }
 
 function getMustRow<T>(maybeRow?: T): T { return getMust("row", maybeRow); }
-function getMustVal<T>(maybeVal?: T): T { return getMust("value", maybeVal); }
+//function getMustVal<T>(maybeVal?: T): T { return getMust("value", maybeVal); }
 
 export class ConnectedDB<const S extends DBSchema> {
     constructor(
@@ -268,12 +300,22 @@ export class ConnectedDB<const S extends DBSchema> {
     public select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
         table: T,
         columns: C,
-        where: string,
+        where: string = "",
         params: Params = {},
         options?: SelectOptions<S, T>,
     ): Query<Rows<S, T, C>> {
         const query = this.buildSelectQuery(table, columns, where, options);
         return new Query(query, params, rowsOfSKDBTable);
+    }
+
+    public selectOneField<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(
+        table: T,
+        column: C,
+        where?: string,
+        params?: Params,
+        options?: SelectOptions<S, T>,
+    ): Query<ColumnType<S, T, C>[]> {
+        return this.select(table, [column], where, params, options).mapResult(rows => rows.map(row => row?.[column]));
     }
 
     public selectCount<const T extends tableOf<S>>(
@@ -285,7 +327,6 @@ export class ConnectedDB<const S extends DBSchema> {
         const query = this.buildSelectQueryGen(table, "COUNT(*)", where);
         return new Query<number>(query, params, scalarOfSKDBTable);
     }
-
 
     /* Query builders */
 
@@ -392,7 +433,7 @@ export class ConnectedDB<const S extends DBSchema> {
     public async execSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
         table: T,
         columns: C,
-        where: string,
+        where?: string,
         params?: Params,
         options?: SelectOptions<S, T>,
     ): Promise<Rows<S, T, C>> {
@@ -434,10 +475,10 @@ export class ConnectedDB<const S extends DBSchema> {
     public useSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
         table: T,
         columns: C,
-        where: string = "",
-        params: Params = {},
+        where?: string,
+        params?: Params,
         defaultRows: Rows<S, T, C> = [],
-        options: SelectOptions<S, T> = {},
+        options?: SelectOptions<S, T>,
     ): Rows<S, T, C> {
         return this.use(this.select(table, columns, where, params, options), defaultRows);
     }
@@ -450,8 +491,7 @@ export class ConnectedDB<const S extends DBSchema> {
         defaultRow?: Row<S, T, C>,
         options?: SelectOptions<S, T>,
     ): Row<S, T, C> | undefined {
-        const defaultRows = defaultRow === undefined ? undefined : [defaultRow];
-        return getMaybeSingleRow(this.useSelect(table, columns, where, params, defaultRows, options));
+        return this.use(this.select(table, columns, where, params, options).maybeSingle(), defaultRow);
     }
 
     public useSelectSingle<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
@@ -462,7 +502,7 @@ export class ConnectedDB<const S extends DBSchema> {
         defaultRow: Row<S, T, C>,
         options?: SelectOptions<S, T>,
     ): Row<S, T, C> {
-        return getMustRow(this.useSelectMaybeSingle(table, columns, where, params, defaultRow, options));
+        return this.use(this.select(table, columns, where, params, options).mustSingle(), defaultRow);
     }
 
     public useSelectMaybeScalar<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(
@@ -473,9 +513,7 @@ export class ConnectedDB<const S extends DBSchema> {
         defaultValue?: ColumnType<S, T, C>,
         options?: SelectOptions<S, T>,
     ): ColumnType<S, T, C> | undefined {
-        const defaultRow = defaultValue === undefined ? undefined : { [column]: defaultValue } as Row<S, T, [C]>;
-        const row = this.useSelectMaybeSingle(table, [column], where, params, defaultRow, options);
-        return row?.[column];
+        return this.use(this.selectOneField(table, column, where, params, options).maybeSingle(), defaultValue);
     }
 
     public useSelectScalar<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(
@@ -486,7 +524,7 @@ export class ConnectedDB<const S extends DBSchema> {
         defaultValue: ColumnType<S, T, C>,
         options?: SelectOptions<S, T>,
     ): ColumnType<S, T, C> {
-        return getMustVal(this.useSelectMaybeScalar(table, column, where, params, defaultValue, options));
+        return this.use(this.selectOneField(table, column, where, params, options).mustSingle(), defaultValue);
     }
 }
 
