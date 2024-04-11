@@ -285,12 +285,29 @@ export class ConnectedDB<const S extends DBSchema> {
 
     public insert<const T extends tableOf<S>>(
         table: T,
-        row: FullRow<S, T>,
+        r: FullRow<S, T> | FullRow<S, T>[],
     ): Query<void> {
+        const queryParts = ["INSERT INTO"];
+        queryParts.push(table);
         const cols = this.schema[table].map(([colName]) => colName).join(", ");
-        const colParams = this.schema[table].map(([colName]) => `@${colName}`).join(", ");
-        const query = `INSERT INTO ${table} (${cols}, skdb_access) VALUES (${colParams}, 'read-write');`;
-        return voidQuery(query, row);
+        queryParts.push(`(${cols}, skdb_access)`);
+        queryParts.push("VALUES");
+        const values = [];
+        let params: Params;
+        if (Array.isArray(r)) {
+            const preParams = [];
+            for (const i in r) {
+                values.push(this.schema[table].map(([colName]) => `@${colName}-${i}`));
+                preParams.push(Object.entries(r[i]).map(([c, v]) => [`${c}-${i}`, v]));
+            }
+            params = Object.fromEntries(preParams.flat());
+        } else {
+            values.push(this.schema[table].map(([colName]) => `@${colName}`));
+            params = r;
+        }
+        queryParts.push(values.map(v => `(${v.join(", ")}, 'read-write')`).join(", "));
+        const query = queryParts.join(" ");
+        return voidQuery(query, params);
     }
 
     public delete<const T extends tableOf<S>>(
@@ -345,9 +362,9 @@ export class ConnectedDB<const S extends DBSchema> {
 
     public async execInsert<const T extends tableOf<S>>(
         table: T,
-        row: FullRow<S, T>
-    ) {
-        return await this.exec(this.insert(table, row));
+        r: FullRow<S, T> | FullRow<S, T>[]
+    ): Promise<void> {
+        return await this.exec(this.insert(table, r));
     }
 
     public async execDelete<const T extends tableOf<S>>(

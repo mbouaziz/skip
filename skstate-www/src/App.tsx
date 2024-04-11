@@ -35,14 +35,15 @@ async function requestReadWord(
   offset: number,
   nb: number = 1,
 ) {
-  for (let i = 0; i < nb; i++) {
-    await skdb.execInsert("readFile", {
+  await skdb.execInsert(
+    "readFile",
+    Array.from({ length: nb }, (_, i) => ({
       path,
       offset: offset + i * 8,
       progress: 0,
       value: null,
-    });
-  }
+    })),
+  );
 }
 
 function LoadLink(

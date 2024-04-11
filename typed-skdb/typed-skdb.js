@@ -132,11 +132,29 @@ export class ConnectedDB {
         return { query, params, ofSKDBTable: scalarOfSKDBTable };
     }
     /* Query builders */
-    insert(table, row) {
+    insert(table, r) {
+        const queryParts = ["INSERT INTO"];
+        queryParts.push(table);
         const cols = this.schema[table].map(([colName]) => colName).join(", ");
-        const colParams = this.schema[table].map(([colName]) => `@${colName}`).join(", ");
-        const query = `INSERT INTO ${table} (${cols}, skdb_access) VALUES (${colParams}, 'read-write');`;
-        return voidQuery(query, row);
+        queryParts.push(`(${cols}, skdb_access)`);
+        queryParts.push("VALUES");
+        const values = [];
+        let params;
+        if (Array.isArray(r)) {
+            const preParams = [];
+            for (const i in r) {
+                values.push(this.schema[table].map(([colName]) => `@${colName}-${i}`));
+                preParams.push(Object.entries(r[i]).map(([c, v]) => [`${c}-${i}`, v]));
+            }
+            params = Object.fromEntries(preParams.flat());
+        }
+        else {
+            values.push(this.schema[table].map(([colName]) => `@${colName}`));
+            params = r;
+        }
+        queryParts.push(values.map(v => `(${v.join(", ")}, 'read-write')`).join(", "));
+        const query = queryParts.join(" ");
+        return voidQuery(query, params);
     }
     delete(table, where = "", params = {}) {
         const queryParts = ["DELETE FROM"];
@@ -171,8 +189,8 @@ export class ConnectedDB {
         return transac([d, i]);
     }
     /* Pre-built compositions */
-    async execInsert(table, row) {
-        return await this.exec(this.insert(table, row));
+    async execInsert(table, r) {
+        return await this.exec(this.insert(table, r));
     }
     async execDelete(table, where, params) {
         return await this.exec(this.delete(table, where, params));
