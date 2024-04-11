@@ -1,5 +1,7 @@
 import { skdbDevServerDb, createLocalDbConnectedTo } from "skdb-dev";
+import { SKDBTable } from "skdb";
 import * as React from "react";
+function ignore(_) { }
 // TODO: use branded types to check this on the input schema
 function checkColumnName(_name) { }
 function checkTableName(_name) { }
@@ -20,8 +22,23 @@ function schemaToText(schema) {
 function schemaToMirrorDfns(schema) {
     return Object.entries(schema).map(([table, cols]) => ({ table, expectedColumns: typedColumnsToText(cols) }));
 }
-function logQuery(kind, query, params) {
-    const p = params === undefined || Object.keys(params).length === 0 ?
+function voidQuery(query, params) {
+    return { query, params, ofSKDBTable: ignore };
+}
+function transac(qs) {
+    const query = qs.map(({ query }) => query).join("; ");
+    // FIXME: this is shamelessly merging params
+    const params = qs.map(({ params }) => params).reduce((prev, cur) => ({ ...prev, ...cur }));
+    return voidQuery(query, params);
+}
+function rowsOfSKDBTable(t) {
+    return t;
+}
+function scalarOfSKDBTable(t) {
+    return Object.values(t[0])[0];
+}
+function logQuery(kind, { query, params }) {
+    const p = Object.keys(params).length === 0 ?
         "" :
         " with " + Object.entries(params).map(([k, v]) => `${k} => ${v}`).join(", ");
     // @ts-ignore
@@ -48,70 +65,39 @@ export class ConnectedDB {
         this.schema = schema;
         this.localDb = localDb;
     }
-    async exec(query, params) {
-        logQuery("EXEC", query, params);
-        return await this.localDb.exec(query, params);
+    /* Actions */
+    async exec(q) {
+        logQuery("EXEC", q);
+        const res = await this.localDb.exec(q.query, q.params);
+        return q.ofSKDBTable(res);
     }
-    async watch(query, params, onChange) {
-        logQuery("WATCH", query, params);
-        return await this.localDb.watch(query, params, onChange);
+    async watch(q, onChange) {
+        logQuery("WATCH", q);
+        const castedOnChange = (rows) => onChange.bind(this)(q.ofSKDBTable(rows));
+        return await this.localDb.watch(q.query, q.params, castedOnChange);
     }
-    async watchChanges(query, params, init, update) {
-        logQuery("WATCH CHANGES", query, params);
-        return await this.localDb.watchChanges(query, params, init, update);
+    async watchChanges(q, init, update) {
+        logQuery("WATCH CHANGES", q);
+        const castedInit = (rows) => init.bind(this)(q.ofSKDBTable(rows));
+        const castedUpdate = (added, removed) => update.bind(this)(q.ofSKDBTable(added), q.ofSKDBTable(removed));
+        return await this.localDb.watchChanges(q.query, q.params, castedInit, castedUpdate);
     }
-    async execTransac(preps) {
-        const q = preps.map(([q, _p]) => q).join("; ");
-        const p = preps.map(([_q, p]) => p).reduce((prev, cur) => ({ ...prev, ...cur }));
-        return this.exec(q, p);
-    }
-    prepareInsert(table, row) {
-        const cols = this.schema[table].map(([colName]) => colName).join(", ");
-        const colParams = this.schema[table].map(([colName]) => `@${colName}`).join(", ");
-        const query = `INSERT INTO ${table} (${cols}, skdb_access) VALUES (${colParams}, 'read-write');`;
-        return [query, row];
-    }
-    async insert(table, row) {
-        const [q, p] = this.prepareInsert(table, row);
-        return await this.exec(q, p);
-    }
-    prepareDelete(table, where = "", params) {
-        const queryParts = ["DELETE FROM"];
-        queryParts.push(table);
-        if (where !== "") {
-            queryParts.push("WHERE");
-            queryParts.push(where);
-        }
-        const query = queryParts.join(" ");
-        return [query, params];
-    }
-    async delete(table, where, params) {
-        const [q, p] = this.prepareDelete(table, where, params);
-        return await this.exec(q, p);
-    }
-    async update(table, row, where = "", params = {}) {
-        const queryParts = ["UPDATE"];
-        queryParts.push(table);
-        queryParts.push("SET");
-        // TODO: prefix colName to avoid conflicts with params
-        queryParts.push(Object.keys(row).map((colName) => `${colName} = @${colName}`).join(", "));
-        if (where !== "") {
-            queryParts.push("WHERE");
-            queryParts.push(where);
-        }
-        const query = queryParts.join(" ");
-        const paramsRecord = params instanceof Map ? Object.fromEntries(params) : params;
-        const allParams = { ...paramsRecord, ...row };
-        return await this.exec(query, allParams);
-    }
-    async insertOrUpdateWithKey(table, rowKey, rowRest) {
-        const deleteWhere = Object.keys(rowKey).map((colName) => `${colName} = @${colName}`).join(" AND ");
-        // await this.delete(table, deleteWhere, rowKey as Record<string, ParamValue>);
-        const row = { ...rowKey, ...rowRest };
-        // await this.insert(table, row as FullRow<S, T>);
-        const d = this.prepareDelete(table, deleteWhere, rowKey);
-        const i = this.prepareInsert(table, row);
-        return await this.execTransac([d, i]);
+    use(q, initial) {
+        const [state, setState] = React.useState(initial);
+        const deps = [this, q.query, Object.values(q.params)].flat(Infinity);
+        React.useEffect(() => {
+            let removeQuery = false;
+            const closeable = { close: () => { } };
+            this.watch(q, setState)
+                .then((handle) => {
+                if (removeQuery) {
+                    return handle.close();
+                }
+                closeable.close = handle.close;
+            });
+            return () => { removeQuery = true; closeable.close(); };
+        }, deps);
+        return state;
     }
     buildSelectQueryGen(table, what, where = "", options = {}) {
         const queryParts = ["SELECT"];
@@ -137,43 +123,77 @@ export class ConnectedDB {
         const what = columns.join(", ");
         return this.buildSelectQueryGen(table, what, where, options);
     }
-    async select(table, columns, where, params, options) {
+    select(table, columns, where, params = {}, options) {
         const query = this.buildSelectQuery(table, columns, where, options);
-        const result = await this.exec(query, params);
-        return result;
+        return { query, params, ofSKDBTable: rowsOfSKDBTable };
     }
-    async selectCount(table, where, params) {
+    selectCount(table, where, params = {}) {
         const query = this.buildSelectQueryGen(table, "COUNT(*)", where);
-        const result = await this.exec(query, params);
-        return Object.values(result[0])[0];
+        return { query, params, ofSKDBTable: scalarOfSKDBTable };
+    }
+    /* Query builders */
+    insert(table, row) {
+        const cols = this.schema[table].map(([colName]) => colName).join(", ");
+        const colParams = this.schema[table].map(([colName]) => `@${colName}`).join(", ");
+        const query = `INSERT INTO ${table} (${cols}, skdb_access) VALUES (${colParams}, 'read-write');`;
+        return voidQuery(query, row);
+    }
+    delete(table, where = "", params = {}) {
+        const queryParts = ["DELETE FROM"];
+        queryParts.push(table);
+        if (where !== "") {
+            queryParts.push("WHERE");
+            queryParts.push(where);
+        }
+        const query = queryParts.join(" ");
+        return voidQuery(query, params);
+    }
+    update(table, row, where = "", params = {}) {
+        const queryParts = ["UPDATE"];
+        queryParts.push(table);
+        queryParts.push("SET");
+        // TODO: prefix colName to avoid conflicts with params
+        queryParts.push(Object.keys(row).map((colName) => `${colName} = @${colName}`).join(", "));
+        if (where !== "") {
+            queryParts.push("WHERE");
+            queryParts.push(where);
+        }
+        const query = queryParts.join(" ");
+        const paramsRecord = params instanceof Map ? Object.fromEntries(params) : params;
+        const allParams = { ...paramsRecord, ...row };
+        return voidQuery(query, allParams);
+    }
+    insertOrUpdateWithKey(table, rowKey, rowRest) {
+        const deleteWhere = Object.keys(rowKey).map((colName) => `${colName} = @${colName}`).join(" AND ");
+        const row = { ...rowKey, ...rowRest };
+        const d = this.delete(table, deleteWhere, rowKey);
+        const i = this.insert(table, row);
+        return transac([d, i]);
+    }
+    /* Pre-built compositions */
+    async execInsert(table, row) {
+        return await this.exec(this.insert(table, row));
+    }
+    async execDelete(table, where, params) {
+        return await this.exec(this.delete(table, where, params));
+    }
+    async execInsertOrUpdateWithKey(table, rowKey, rowRest) {
+        return await this.exec(this.insertOrUpdateWithKey(table, rowKey, rowRest));
+    }
+    async execSelect(table, columns, where, params, options) {
+        return await this.exec(this.select(table, columns, where, params, options));
+    }
+    async execSelectCount(table, where, params) {
+        return await this.exec(this.selectCount(table, where, params));
     }
     async watchSelect(table, columns, where, params, onChange, options) {
-        const query = this.buildSelectQuery(table, columns, where, options);
-        const castedChange = (rows) => onChange.bind(this)(rows);
-        return await this.watch(query, params, castedChange);
+        return await this.watch(this.select(table, columns, where, params, options), onChange);
     }
     async watchSelectChanges(table, columns, where, params, init, update, options) {
-        const query = this.buildSelectQuery(table, columns, where, options);
-        const castedInit = (rows) => init.bind(this)(rows);
-        const castedUpdate = (added, removed) => update.bind(this)(added, removed);
-        return await this.watchChanges(query, params, castedInit, castedUpdate);
+        return await this.watchChanges(this.select(table, columns, where, params, options), init, update);
     }
     useSelect(table, columns, where = "", params = {}, defaultRows = [], options = {}) {
-        const [state, setState] = React.useState(defaultRows);
-        const deps = [this, table, columns, where, Object.values(params), Object.values(options)].flat(Infinity);
-        React.useEffect(() => {
-            let removeQuery = false;
-            const closeable = { close: () => { } };
-            this.watchSelect(table, columns, where, params, setState, options)
-                .then((handle) => {
-                if (removeQuery) {
-                    return handle.close();
-                }
-                closeable.close = handle.close;
-            });
-            return () => { removeQuery = true; closeable.close(); };
-        }, deps);
-        return state;
+        return this.use(this.select(table, columns, where, params, options), defaultRows);
     }
     useSelectMaybeSingle(table, columns, where, params, defaultRow, options) {
         const defaultRows = defaultRow === undefined ? undefined : [defaultRow];

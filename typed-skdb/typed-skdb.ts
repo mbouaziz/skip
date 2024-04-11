@@ -1,14 +1,22 @@
 
 import { skdbDevServerDb, createLocalDbConnectedTo } from "skdb-dev";
-import type { SKDB, SKDBTable } from "skdb";
+import { SKDBTable, type SKDB } from "skdb";
 import * as React from "react";
+
+/* Generic utilities */
+
+type PossiblyReadonly<T> = T | Readonly<T>
+
+function ignore(_: any): void { }
+
+/* Types from SKDB */
 
 type MirrorDefns = Parameters<SKDB['mirror']>;
 type ParamValue = string | number | boolean | null;
 type Params = Parameters<SKDB['watch']>[1];
 type WatchReturnType = ReturnType<SKDB['watch']>;
 
-type PossiblyReadonly<T> = T | Readonly<T>
+/* Here it starts */
 
 interface ColumnTypeToJSType {
     "INTEGER": number;
@@ -99,8 +107,6 @@ type tableOf<X> = string & keyof X;
 type RestRow<S extends DBSchema, T extends keyof S, K extends PartialRow<S, T>> =
     Omit<FullRow<S, T>, keyof K>;
 
-type Prepared = [string, Params | undefined];
-
 type OrderOrder = "ASC" | "DESC";
 
 type SelectOrderItem<S extends DBSchema, T extends keyof S> =
@@ -114,8 +120,34 @@ type SelectOptions<S extends DBSchema, T extends keyof S> = {
     limit?: number,
 };
 
-function logQuery(kind: string, query: string, params?: Params) {
-    const p = params === undefined || Object.keys(params).length === 0 ?
+type Query<T> = {
+    query: string;
+    params: Params;
+    ofSKDBTable: (t: SKDBTable) => T;
+};
+
+function voidQuery(query: string, params: Params): Query<void> {
+    return { query, params, ofSKDBTable: ignore };
+}
+
+function transac(qs: Query<void>[]): Query<void> {
+    const query = qs.map(({ query }) => query).join("; ");
+    // FIXME: this is shamelessly merging params
+    const params = qs.map(({ params }) => params).reduce((prev, cur) => ({ ...prev, ...cur }));
+    return voidQuery(query, params);
+}
+
+function rowsOfSKDBTable<const S extends DBSchema, const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
+    t: SKDBTable
+): Rows<S, T, C> {
+    return t as Array<Record<string, any>> as Rows<S, T, C>;
+}
+function scalarOfSKDBTable<T extends string | number>(t: SKDBTable): T {
+    return Object.values(t[0])[0];
+}
+
+function logQuery<T>(kind: string, { query, params }: Query<T>) {
+    const p = Object.keys(params).length === 0 ?
         "" :
         " with " + Object.entries(params).map(([k, v]) => `${k} => ${v}`).join(", ");
     // @ts-ignore
@@ -145,107 +177,50 @@ export class ConnectedDB<const S extends DBSchema> {
         private readonly localDb: SKDB) {
     }
 
-    private async exec(query: string, params?: Params) {
-        logQuery("EXEC", query, params);
-        return await this.localDb.exec(query, params);
+    /* Actions */
+
+    public async exec<T>(q: Query<T>): Promise<T> {
+        logQuery("EXEC", q);
+        const res = await this.localDb.exec(q.query, q.params);
+        return q.ofSKDBTable(res);
     }
 
-    private async watch(query: string, params: Params, onChange: (rows: SKDBTable) => void) {
-        logQuery("WATCH", query, params);
-        return await this.localDb.watch(query, params, onChange);
+    public async watch<T>(q: Query<T>, onChange: (this: ConnectedDB<S>, v: T) => void) {
+        logQuery("WATCH", q);
+        const castedOnChange = (rows: SKDBTable) => onChange.bind(this)(q.ofSKDBTable(rows));
+        return await this.localDb.watch(q.query, q.params, castedOnChange);
     }
 
-    private async watchChanges(
-        query: string,
-        params: Params,
-        init: (rows: SKDBTable) => void,
-        update: (added: SKDBTable, removed: SKDBTable) => void,
+    public async watchChanges<T>(
+        q: Query<T>,
+        init: (this: ConnectedDB<S>, v: T) => void,
+        update: (this: ConnectedDB<S>, added: T, removed: T) => void,
     ) {
-        logQuery("WATCH CHANGES", query, params);
-        return await this.localDb.watchChanges(query, params, init, update);
+        logQuery("WATCH CHANGES", q);
+        const castedInit = (rows: SKDBTable) => init.bind(this)(q.ofSKDBTable(rows));
+        const castedUpdate = (added: SKDBTable, removed: SKDBTable) => update.bind(this)(q.ofSKDBTable(added), q.ofSKDBTable(removed));
+        return await this.localDb.watchChanges(q.query, q.params, castedInit, castedUpdate);
     }
 
-    private async execTransac(preps: Prepared[]) {
-        const q = preps.map(([q, _p]) => q).join("; ");
-        const p = preps.map(([_q, p]) => p).reduce((prev, cur) => ({ ...prev, ...cur }));
-        return this.exec(q, p);
-    }
-
-    private prepareInsert<const T extends tableOf<S>>(
-        table: T,
-        row: FullRow<S, T>,
-    ): Prepared {
-        const cols = this.schema[table].map(([colName]) => colName).join(", ");
-        const colParams = this.schema[table].map(([colName]) => `@${colName}`).join(", ");
-        const query = `INSERT INTO ${table} (${cols}, skdb_access) VALUES (${colParams}, 'read-write');`;
-        return [query, row];
-    }
-
-    public async insert<const T extends tableOf<S>>(
-        table: T,
-        row: FullRow<S, T>
-    ) {
-        const [q, p] = this.prepareInsert(table, row);
-        return await this.exec(q, p);
-    }
-
-    private prepareDelete<const T extends tableOf<S>>(
-        table: T,
-        where: string = "",
-        params?: Params,
-    ): Prepared {
-        const queryParts = ["DELETE FROM"];
-        queryParts.push(table);
-        if (where !== "") {
-            queryParts.push("WHERE");
-            queryParts.push(where);
-        }
-        const query = queryParts.join(" ");
-        return [query, params];
-    }
-
-    public async delete<const T extends tableOf<S>>(
-        table: T,
-        where?: string,
-        params?: Params,
-    ) {
-        const [q, p] = this.prepareDelete(table, where, params);
-        return await this.exec(q, p);
-    }
-
-    public async update<const T extends tableOf<S>>(
-        table: T,
-        row: PartialRow<S, T>,
-        where: string = "",
-        params: Params = {},
-    ) {
-        const queryParts = ["UPDATE"];
-        queryParts.push(table);
-        queryParts.push("SET");
-        // TODO: prefix colName to avoid conflicts with params
-        queryParts.push(Object.keys(row).map((colName) => `${colName} = @${colName}`).join(", "));
-        if (where !== "") {
-            queryParts.push("WHERE");
-            queryParts.push(where);
-        }
-        const query = queryParts.join(" ");
-        const paramsRecord = params instanceof Map ? Object.fromEntries(params) : params;
-        const allParams: Params = { ...paramsRecord, ...row };
-        return await this.exec(query, allParams);
-    }
-
-    public async insertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(
-        table: T,
-        rowKey: K,
-        rowRest: RestRow<S, T, K>,
-    ) {
-        const deleteWhere = Object.keys(rowKey).map((colName) => `${colName} = @${colName}`).join(" AND ");
-        // await this.delete(table, deleteWhere, rowKey as Record<string, ParamValue>);
-        const row = { ...rowKey, ...rowRest };
-        // await this.insert(table, row as FullRow<S, T>);
-        const d = this.prepareDelete(table, deleteWhere, rowKey as Record<string, ParamValue>);
-        const i = this.prepareInsert(table, row as FullRow<S, T>);
-        return await this.execTransac([d, i]);
+    public use<T>(
+        q: Query<T>,
+        initial: T,
+    ): T {
+        const [state, setState] = React.useState(initial);
+        const deps = [this, q.query, Object.values(q.params)].flat(Infinity);
+        React.useEffect(() => {
+            let removeQuery = false;
+            const closeable = { close: () => { } };
+            this.watch(q, setState)
+                .then((handle) => {
+                    if (removeQuery) {
+                        return handle.close();
+                    }
+                    closeable.close = handle.close;
+                });
+            return () => { removeQuery = true; closeable.close(); };
+        }, deps);
+        return state;
     }
 
     private buildSelectQueryGen<const T extends tableOf<S>>(
@@ -284,27 +259,131 @@ export class ConnectedDB<const S extends DBSchema> {
         return this.buildSelectQueryGen(table, what, where, options);
     }
 
-    public async select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
+    public select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
+        table: T,
+        columns: C,
+        where: string,
+        params: Params = {},
+        options?: SelectOptions<S, T>,
+    ): Query<Rows<S, T, C>> {
+        const query = this.buildSelectQuery(table, columns, where, options);
+        return { query, params, ofSKDBTable: rowsOfSKDBTable };
+    }
+
+    public selectCount<const T extends tableOf<S>>(
+        table: T,
+        where?: string,
+        params: Params = {},
+        //options?: SelectOptions<S, T>,
+    ): Query<number> {
+        const query = this.buildSelectQueryGen(table, "COUNT(*)", where);
+        return { query, params, ofSKDBTable: scalarOfSKDBTable };
+    }
+
+
+    /* Query builders */
+
+    public insert<const T extends tableOf<S>>(
+        table: T,
+        row: FullRow<S, T>,
+    ): Query<void> {
+        const cols = this.schema[table].map(([colName]) => colName).join(", ");
+        const colParams = this.schema[table].map(([colName]) => `@${colName}`).join(", ");
+        const query = `INSERT INTO ${table} (${cols}, skdb_access) VALUES (${colParams}, 'read-write');`;
+        return voidQuery(query, row);
+    }
+
+    public delete<const T extends tableOf<S>>(
+        table: T,
+        where: string = "",
+        params: Params = {},
+    ): Query<void> {
+        const queryParts = ["DELETE FROM"];
+        queryParts.push(table);
+        if (where !== "") {
+            queryParts.push("WHERE");
+            queryParts.push(where);
+        }
+        const query = queryParts.join(" ");
+        return voidQuery(query, params);
+    }
+
+    public update<const T extends tableOf<S>>(
+        table: T,
+        row: PartialRow<S, T>,
+        where: string = "",
+        params: Params = {},
+    ): Query<void> {
+        const queryParts = ["UPDATE"];
+        queryParts.push(table);
+        queryParts.push("SET");
+        // TODO: prefix colName to avoid conflicts with params
+        queryParts.push(Object.keys(row).map((colName) => `${colName} = @${colName}`).join(", "));
+        if (where !== "") {
+            queryParts.push("WHERE");
+            queryParts.push(where);
+        }
+        const query = queryParts.join(" ");
+        const paramsRecord = params instanceof Map ? Object.fromEntries(params) : params;
+        const allParams: Params = { ...paramsRecord, ...row };
+        return voidQuery(query, allParams);
+    }
+
+    public insertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(
+        table: T,
+        rowKey: K,
+        rowRest: RestRow<S, T, K>,
+    ): Query<void> {
+        const deleteWhere = Object.keys(rowKey).map((colName) => `${colName} = @${colName}`).join(" AND ");
+        const row = { ...rowKey, ...rowRest };
+        const d = this.delete(table, deleteWhere, rowKey as Record<string, ParamValue>);
+        const i = this.insert(table, row as FullRow<S, T>);
+        return transac([d, i]);
+    }
+
+    /* Pre-built compositions */
+
+    public async execInsert<const T extends tableOf<S>>(
+        table: T,
+        row: FullRow<S, T>
+    ) {
+        return await this.exec(this.insert(table, row));
+    }
+
+    public async execDelete<const T extends tableOf<S>>(
+        table: T,
+        where?: string,
+        params?: Params,
+    ) {
+        return await this.exec(this.delete(table, where, params));
+    }
+
+    public async execInsertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(
+        table: T,
+        rowKey: K,
+        rowRest: RestRow<S, T, K>,
+    ) {
+        return await this.exec(this.insertOrUpdateWithKey(table, rowKey, rowRest));
+    }
+
+
+    public async execSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
         table: T,
         columns: C,
         where: string,
         params?: Params,
         options?: SelectOptions<S, T>,
     ): Promise<Rows<S, T, C>> {
-        const query = this.buildSelectQuery(table, columns, where, options);
-        const result = await this.exec(query, params);
-        return result as Array<Record<string, any>> as Rows<S, T, C>;
+        return await this.exec(this.select(table, columns, where, params, options));
     }
 
-    public async selectCount<const T extends tableOf<S>>(
+    public async execSelectCount<const T extends tableOf<S>>(
         table: T,
         where?: string,
         params?: Params,
         //options?: SelectOptions<S, T>,
     ): Promise<number> {
-        const query = this.buildSelectQueryGen(table, "COUNT(*)", where);
-        const result = await this.exec(query, params);
-        return Object.values(result[0])[0];
+        return await this.exec(this.selectCount(table, where, params));
     }
 
     public async watchSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
@@ -315,9 +394,7 @@ export class ConnectedDB<const S extends DBSchema> {
         onChange: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void,
         options?: SelectOptions<S, T>,
     ): WatchReturnType {
-        const query = this.buildSelectQuery(table, columns, where, options);
-        const castedChange = (rows: SKDBTable) => onChange.bind(this)(rows as Array<Record<string, any>> as Rows<S, T, C>);
-        return await this.watch(query, params, castedChange);
+        return await this.watch(this.select(table, columns, where, params, options), onChange);
     }
 
     public async watchSelectChanges<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
@@ -329,13 +406,7 @@ export class ConnectedDB<const S extends DBSchema> {
         update: (this: ConnectedDB<S>, added: Rows<S, T, C>, removed: Rows<S, T, C>) => void,
         options?: SelectOptions<S, T>,
     ): WatchReturnType {
-        const query = this.buildSelectQuery(table, columns, where, options);
-        const castedInit = (rows: SKDBTable) => init.bind(this)(rows as Array<Record<string, any>> as Rows<S, T, C>);
-        const castedUpdate = (added: SKDBTable, removed: SKDBTable) => update.bind(this)(
-            added as Array<Record<string, any>> as Rows<S, T, C>,
-            removed as Array<Record<string, any>> as Rows<S, T, C>
-        );
-        return await this.watchChanges(query, params, castedInit, castedUpdate);
+        return await this.watchChanges(this.select(table, columns, where, params, options), init, update);
     }
 
     public useSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
@@ -346,21 +417,7 @@ export class ConnectedDB<const S extends DBSchema> {
         defaultRows: Rows<S, T, C> = [],
         options: SelectOptions<S, T> = {},
     ): Rows<S, T, C> {
-        const [state, setState] = React.useState(defaultRows);
-        const deps = [this, table, columns, where, Object.values(params), Object.values(options)].flat(Infinity);
-        React.useEffect(() => {
-            let removeQuery = false;
-            const closeable = { close: () => { } };
-            this.watchSelect(table, columns, where, params, setState, options)
-                .then((handle) => {
-                    if (removeQuery) {
-                        return handle.close();
-                    }
-                    closeable.close = handle.close;
-                });
-            return () => { removeQuery = true; closeable.close(); };
-        }, deps);
-        return state;
+        return this.use(this.select(table, columns, where, params, options), defaultRows);
     }
 
     public useSelectMaybeSingle<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(

@@ -1,7 +1,7 @@
-import type { SKDB, SKDBTable } from "skdb";
+import { SKDBTable, type SKDB } from "skdb";
+type PossiblyReadonly<T> = T | Readonly<T>;
 type Params = Parameters<SKDB['watch']>[1];
 type WatchReturnType = ReturnType<SKDB['watch']>;
-type PossiblyReadonly<T> = T | Readonly<T>;
 interface ColumnTypeToJSType {
     "INTEGER": number;
     "TEXT": string;
@@ -51,24 +51,36 @@ type SelectOptions<S extends DBSchema, T extends keyof S> = {
     order?: SelectOrder<S, T>;
     limit?: number;
 };
+type Query<T> = {
+    query: string;
+    params: Params;
+    ofSKDBTable: (t: SKDBTable) => T;
+};
 export declare class ConnectedDB<const S extends DBSchema> {
     private readonly schema;
     private readonly localDb;
     constructor(schema: S, localDb: SKDB);
-    private exec;
-    private watch;
-    private watchChanges;
-    private execTransac;
-    private prepareInsert;
-    insert<const T extends tableOf<S>>(table: T, row: FullRow<S, T>): Promise<SKDBTable>;
-    private prepareDelete;
-    delete<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Promise<SKDBTable>;
-    update<const T extends tableOf<S>>(table: T, row: PartialRow<S, T>, where?: string, params?: Params): Promise<SKDBTable>;
-    insertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(table: T, rowKey: K, rowRest: RestRow<S, T, K>): Promise<SKDBTable>;
+    exec<T>(q: Query<T>): Promise<T>;
+    watch<T>(q: Query<T>, onChange: (this: ConnectedDB<S>, v: T) => void): Promise<{
+        close: () => Promise<void>;
+    }>;
+    watchChanges<T>(q: Query<T>, init: (this: ConnectedDB<S>, v: T) => void, update: (this: ConnectedDB<S>, added: T, removed: T) => void): Promise<{
+        close: () => Promise<void>;
+    }>;
+    use<T>(q: Query<T>, initial: T): T;
     private buildSelectQueryGen;
     private buildSelectQuery;
-    select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params?: Params, options?: SelectOptions<S, T>): Promise<Rows<S, T, C>>;
-    selectCount<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Promise<number>;
+    select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params?: Params, options?: SelectOptions<S, T>): Query<Rows<S, T, C>>;
+    selectCount<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Query<number>;
+    insert<const T extends tableOf<S>>(table: T, row: FullRow<S, T>): Query<void>;
+    delete<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Query<void>;
+    update<const T extends tableOf<S>>(table: T, row: PartialRow<S, T>, where?: string, params?: Params): Query<void>;
+    insertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(table: T, rowKey: K, rowRest: RestRow<S, T, K>): Query<void>;
+    execInsert<const T extends tableOf<S>>(table: T, row: FullRow<S, T>): Promise<void>;
+    execDelete<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Promise<void>;
+    execInsertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(table: T, rowKey: K, rowRest: RestRow<S, T, K>): Promise<void>;
+    execSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params?: Params, options?: SelectOptions<S, T>): Promise<Rows<S, T, C>>;
+    execSelectCount<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Promise<number>;
     watchSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params: Params, onChange: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void, options?: SelectOptions<S, T>): WatchReturnType;
     watchSelectChanges<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params: Params, init: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void, update: (this: ConnectedDB<S>, added: Rows<S, T, C>, removed: Rows<S, T, C>) => void, options?: SelectOptions<S, T>): WatchReturnType;
     useSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where?: string, params?: Params, defaultRows?: Rows<S, T, C>, options?: SelectOptions<S, T>): Rows<S, T, C>;

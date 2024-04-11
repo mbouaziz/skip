@@ -36,7 +36,7 @@ async function requestReadWord(
   nb: number = 1,
 ) {
   for (let i = 0; i < nb; i++) {
-    await skdb.insert("readFile", {
+    await skdb.execInsert("readFile", {
       path,
       offset: offset + i * 8,
       progress: 0,
