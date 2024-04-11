@@ -120,22 +120,28 @@ type SelectOptions<S extends DBSchema, T extends keyof S> = {
     limit?: number,
 };
 
-type Query<T> = {
-    query: string;
-    params: Params;
-    ofSKDBTable: (t: SKDBTable) => T;
+class Query<T> {
+    constructor(
+        public readonly query: string,
+        public readonly params: Params,
+        public readonly ofSKDBTable: (t: SKDBTable) => T,
+    ) { }
+
+    public static void(query: string, params: Params): Query<void> {
+        return new Query(query, params, ignore);
+    }
+
+    public static transac(qs: Query<void>[]): Query<void> {
+        const query = qs.map(({ query }) => query).join("; ");
+        // FIXME: this is shamelessly merging params
+        const params = qs.map(({ params }) => params).reduce((prev, cur) => ({ ...prev, ...cur }));
+        return Query.void(query, params);
+    }
+
+    public followedBy(this: Query<void>, next: Query<void>): Query<void> {
+        return Query.transac([this, next]);
+    }
 };
-
-function voidQuery(query: string, params: Params): Query<void> {
-    return { query, params, ofSKDBTable: ignore };
-}
-
-function transac(qs: Query<void>[]): Query<void> {
-    const query = qs.map(({ query }) => query).join("; ");
-    // FIXME: this is shamelessly merging params
-    const params = qs.map(({ params }) => params).reduce((prev, cur) => ({ ...prev, ...cur }));
-    return voidQuery(query, params);
-}
 
 function rowsOfSKDBTable<const S extends DBSchema, const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
     t: SKDBTable
@@ -267,7 +273,7 @@ export class ConnectedDB<const S extends DBSchema> {
         options?: SelectOptions<S, T>,
     ): Query<Rows<S, T, C>> {
         const query = this.buildSelectQuery(table, columns, where, options);
-        return { query, params, ofSKDBTable: rowsOfSKDBTable };
+        return new Query(query, params, rowsOfSKDBTable);
     }
 
     public selectCount<const T extends tableOf<S>>(
@@ -277,7 +283,7 @@ export class ConnectedDB<const S extends DBSchema> {
         //options?: SelectOptions<S, T>,
     ): Query<number> {
         const query = this.buildSelectQueryGen(table, "COUNT(*)", where);
-        return { query, params, ofSKDBTable: scalarOfSKDBTable };
+        return new Query<number>(query, params, scalarOfSKDBTable);
     }
 
 
@@ -307,7 +313,7 @@ export class ConnectedDB<const S extends DBSchema> {
         }
         queryParts.push(values.map(v => `(${v.join(", ")}, 'read-write')`).join(", "));
         const query = queryParts.join(" ");
-        return voidQuery(query, params);
+        return Query.void(query, params);
     }
 
     public delete<const T extends tableOf<S>>(
@@ -322,7 +328,7 @@ export class ConnectedDB<const S extends DBSchema> {
             queryParts.push(where);
         }
         const query = queryParts.join(" ");
-        return voidQuery(query, params);
+        return Query.void(query, params);
     }
 
     public update<const T extends tableOf<S>>(
@@ -343,7 +349,7 @@ export class ConnectedDB<const S extends DBSchema> {
         const query = queryParts.join(" ");
         const paramsRecord = params instanceof Map ? Object.fromEntries(params) : params;
         const allParams: Params = { ...paramsRecord, ...row };
-        return voidQuery(query, allParams);
+        return Query.void(query, allParams);
     }
 
     public insertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(
@@ -353,9 +359,8 @@ export class ConnectedDB<const S extends DBSchema> {
     ): Query<void> {
         const deleteWhere = Object.keys(rowKey).map((colName) => `${colName} = @${colName}`).join(" AND ");
         const row = { ...rowKey, ...rowRest };
-        const d = this.delete(table, deleteWhere, rowKey as Record<string, ParamValue>);
-        const i = this.insert(table, row as FullRow<S, T>);
-        return transac([d, i]);
+        return this.delete(table, deleteWhere, rowKey as Record<string, ParamValue>).followedBy(
+            this.insert(table, row as FullRow<S, T>));
     }
 
     /* Pre-built compositions */

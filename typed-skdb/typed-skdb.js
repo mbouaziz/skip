@@ -22,15 +22,29 @@ function schemaToText(schema) {
 function schemaToMirrorDfns(schema) {
     return Object.entries(schema).map(([table, cols]) => ({ table, expectedColumns: typedColumnsToText(cols) }));
 }
-function voidQuery(query, params) {
-    return { query, params, ofSKDBTable: ignore };
+class Query {
+    query;
+    params;
+    ofSKDBTable;
+    constructor(query, params, ofSKDBTable) {
+        this.query = query;
+        this.params = params;
+        this.ofSKDBTable = ofSKDBTable;
+    }
+    static void(query, params) {
+        return new Query(query, params, ignore);
+    }
+    static transac(qs) {
+        const query = qs.map(({ query }) => query).join("; ");
+        // FIXME: this is shamelessly merging params
+        const params = qs.map(({ params }) => params).reduce((prev, cur) => ({ ...prev, ...cur }));
+        return Query.void(query, params);
+    }
+    followedBy(next) {
+        return Query.transac([this, next]);
+    }
 }
-function transac(qs) {
-    const query = qs.map(({ query }) => query).join("; ");
-    // FIXME: this is shamelessly merging params
-    const params = qs.map(({ params }) => params).reduce((prev, cur) => ({ ...prev, ...cur }));
-    return voidQuery(query, params);
-}
+;
 function rowsOfSKDBTable(t) {
     return t;
 }
@@ -125,11 +139,11 @@ export class ConnectedDB {
     }
     select(table, columns, where, params = {}, options) {
         const query = this.buildSelectQuery(table, columns, where, options);
-        return { query, params, ofSKDBTable: rowsOfSKDBTable };
+        return new Query(query, params, rowsOfSKDBTable);
     }
     selectCount(table, where, params = {}) {
         const query = this.buildSelectQueryGen(table, "COUNT(*)", where);
-        return { query, params, ofSKDBTable: scalarOfSKDBTable };
+        return new Query(query, params, scalarOfSKDBTable);
     }
     /* Query builders */
     insert(table, r) {
@@ -154,7 +168,7 @@ export class ConnectedDB {
         }
         queryParts.push(values.map(v => `(${v.join(", ")}, 'read-write')`).join(", "));
         const query = queryParts.join(" ");
-        return voidQuery(query, params);
+        return Query.void(query, params);
     }
     delete(table, where = "", params = {}) {
         const queryParts = ["DELETE FROM"];
@@ -164,7 +178,7 @@ export class ConnectedDB {
             queryParts.push(where);
         }
         const query = queryParts.join(" ");
-        return voidQuery(query, params);
+        return Query.void(query, params);
     }
     update(table, row, where = "", params = {}) {
         const queryParts = ["UPDATE"];
@@ -179,14 +193,12 @@ export class ConnectedDB {
         const query = queryParts.join(" ");
         const paramsRecord = params instanceof Map ? Object.fromEntries(params) : params;
         const allParams = { ...paramsRecord, ...row };
-        return voidQuery(query, allParams);
+        return Query.void(query, allParams);
     }
     insertOrUpdateWithKey(table, rowKey, rowRest) {
         const deleteWhere = Object.keys(rowKey).map((colName) => `${colName} = @${colName}`).join(" AND ");
         const row = { ...rowKey, ...rowRest };
-        const d = this.delete(table, deleteWhere, rowKey);
-        const i = this.insert(table, row);
-        return transac([d, i]);
+        return this.delete(table, deleteWhere, rowKey).followedBy(this.insert(table, row));
     }
     /* Pre-built compositions */
     async execInsert(table, r) {

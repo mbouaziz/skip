@@ -51,11 +51,15 @@ type SelectOptions<S extends DBSchema, T extends keyof S> = {
     order?: SelectOrder<S, T>;
     limit?: number;
 };
-type Query<T> = {
-    query: string;
-    params: Params;
-    ofSKDBTable: (t: SKDBTable) => T;
-};
+declare class Query<T> {
+    readonly query: string;
+    readonly params: Params;
+    readonly ofSKDBTable: (t: SKDBTable) => T;
+    constructor(query: string, params: Params, ofSKDBTable: (t: SKDBTable) => T);
+    static void(query: string, params: Params): Query<void>;
+    static transac(qs: Query<void>[]): Query<void>;
+    followedBy(this: Query<void>, next: Query<void>): Query<void>;
+}
 export declare class ConnectedDB<const S extends DBSchema> {
     private readonly schema;
     private readonly localDb;
