@@ -7,7 +7,7 @@ const skdb = await connectAndMirror({
     schema: {
         readFile: [
             ["path", "TEXT", "NOT NULL"],
-            ["offset", "TEXT", "NOT NULL"],
+            ["offset", "INTEGER", "NOT NULL"],
             ["progress", "INTEGER", "NOT NULL"],
             ["value", "TEXT"]
         ]
@@ -16,19 +16,18 @@ const skdb = await connectAndMirror({
 
 console.log("CONNECTED");
 
-async function onNewReadFileRequest(path: string, offset: string): Promise<void> {
+async function onNewReadFileRequest(path: string, offset: number): Promise<void> {
     console.log(`New request: ${path} @ ${offset}`);
     try {
-        const existingResult = await skdb.selectCount("readFile", "path = @path AND offset = @offset AND progress > 0", { path, offset });
-        if (existingResult > 0) {
+        const existingComputation = await skdb.selectScalar("readFile", "COUNT", "path = @path AND offset = @offset AND progress > 0", { path, offset });
+        if (existingComputation > 0) {
             console.log(`Abandoning ${path} @ ${offset}`);
             return;
         }
         await skdb.insert("readFile", { path, offset, progress: 1, value: null });
         const fh = await fsPromises.open(path, "r");
         const buffer = new BigUint64Array(1);
-        // @ts-ignore
-        const { bytesRead } = await fh.read(buffer, 0, 8, Number(offset));
+        const { bytesRead } = await fh.read(buffer, 0, 8, offset);
         await fh.close();
         console.log(`Read ${bytesRead} bytes`);
         const r = (bytesRead < 8) ?
@@ -40,7 +39,7 @@ async function onNewReadFileRequest(path: string, offset: string): Promise<void>
         await skdb.insertOrUpdateWithKey("readFile", { path, offset }, { progress: 2, value: `${error}` });
     }
 }
-async function onNewReadFileRequests(added: { path: string, offset: string }[], _removed?: any): Promise<void> {
+async function onNewReadFileRequests(added: { path: string, offset: number }[], _removed?: any): Promise<void> {
     await Promise.all(added.map(({ path, offset }) => onNewReadFileRequest(path, offset)));
 }
 const watchReadFile = skdb.watchSelectChanges(

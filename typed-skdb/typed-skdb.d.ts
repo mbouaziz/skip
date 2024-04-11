@@ -2,6 +2,10 @@ import type { SKDB, SKDBTable } from "skdb";
 type Params = Parameters<SKDB['watch']>[1];
 type WatchReturnType = ReturnType<SKDB['watch']>;
 type PossiblyReadonly<T> = T | Readonly<T>;
+type IndexOf<A extends any[]> = Exclude<keyof A, keyof any[]>;
+type FieldsAndTypesToObject<A extends Array<[number | string | symbol, any]>> = {
+    [K in A[number][0]]: Extract<A[number], [K, any]>[1];
+};
 interface ColumnTypeToJSType {
     "INTEGER": number;
     "TEXT": string;
@@ -32,14 +36,19 @@ type GetColumnDescription<S extends DBSchema, T extends keyof S, K extends Possi
 type ColumnNullness<D extends columnDescription> = D extends PossiblyReadonly<[any, any, any, ...any[]]> ? D[2] : defaultNullness;
 type TypeOfColumnDescription<D extends columnDescription> = ColumnTypeToJSType[D[1]] | ColumnNullnessToJSType[ColumnNullness<D>];
 type ColumnType<S extends DBSchema, T extends keyof S, K extends PossibleColumnNames<S, T>> = TypeOfColumnDescription<GetColumnDescription<S, T, K>>;
+type CountType = number;
 type FullRow<S extends DBSchema, T extends keyof S> = {
     [K in S[T][number][0]]: ColumnType<S, T, K>;
 };
 type PartialRow<S extends DBSchema, T extends keyof S> = Partial<FullRow<S, T>>;
-type Row<S extends DBSchema, T extends keyof S, C extends Array<PossibleColumnNames<S, T>>> = {
-    [K in C[number]]: ColumnType<S, T, K>;
+type SelectExpr<S extends DBSchema, T extends keyof S> = "COUNT" | PossibleColumnNames<S, T>;
+type SelectExprType<S extends DBSchema, T extends keyof S, E extends SelectExpr<S, T>> = E extends "COUNT" ? CountType : ColumnType<S, T, E>;
+type FieldName<S extends DBSchema, T extends keyof S, I extends string | number, E extends SelectExpr<S, T>> = E extends "COUNT" ? `col<${I}>` : E;
+type RowFieldsAndTypes<S extends DBSchema, T extends keyof S, E extends Array<SelectExpr<S, T>>> = {
+    [I in keyof E]: I extends IndexOf<E> ? [FieldName<S, T, I, E[I]>, SelectExprType<S, T, E[I]>] : [I, E[I]];
 };
-type Rows<S extends DBSchema, T extends keyof S, C extends Array<PossibleColumnNames<S, T>>> = Array<Row<S, T, C>>;
+type Row<S extends DBSchema, T extends keyof S, E extends Array<SelectExpr<S, T>>> = FieldsAndTypesToObject<RowFieldsAndTypes<S, T, E>>;
+type Rows<S extends DBSchema, T extends keyof S, E extends Array<SelectExpr<S, T>>> = Array<Row<S, T, E>>;
 type tableOf<X> = string & keyof X;
 type RestRow<S extends DBSchema, T extends keyof S, K extends PartialRow<S, T>> = Omit<FullRow<S, T>, keyof K>;
 type OrderOrder = "ASC" | "DESC";
@@ -65,17 +74,19 @@ export declare class ConnectedDB<const S extends DBSchema> {
     delete<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Promise<SKDBTable>;
     update<const T extends tableOf<S>>(table: T, row: PartialRow<S, T>, where?: string, params?: Params): Promise<SKDBTable>;
     insertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(table: T, rowKey: K, rowRest: RestRow<S, T, K>): Promise<SKDBTable>;
-    private buildSelectQueryGen;
     private buildSelectQuery;
-    select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params?: Params, options?: SelectOptions<S, T>): Promise<Rows<S, T, C>>;
-    selectCount<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Promise<number>;
-    watchSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params: Params, onChange: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void, options?: SelectOptions<S, T>): WatchReturnType;
-    watchSelectChanges<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params: Params, init: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void, update: (this: ConnectedDB<S>, added: Rows<S, T, C>, removed: Rows<S, T, C>) => void, options?: SelectOptions<S, T>): WatchReturnType;
-    useSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where?: string, params?: Params, defaultRows?: Rows<S, T, C>, options?: SelectOptions<S, T>): Rows<S, T, C>;
-    useSelectMaybeSingle<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where?: string, params?: Params, defaultRow?: Row<S, T, C>, options?: SelectOptions<S, T>): Row<S, T, C> | undefined;
-    useSelectSingle<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where: string, params: Params, defaultRow: Row<S, T, C>, options?: SelectOptions<S, T>): Row<S, T, C>;
-    useSelectMaybeScalar<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(table: T, column: C, where?: string, params?: Params, defaultValue?: ColumnType<S, T, C>, options?: SelectOptions<S, T>): ColumnType<S, T, C> | undefined;
-    useSelectScalar<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(table: T, column: C, where: string, params: Params, defaultValue: ColumnType<S, T, C>, options?: SelectOptions<S, T>): ColumnType<S, T, C>;
+    select<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(table: T, exprs: E, where?: string, params?: Params, options?: SelectOptions<S, T>): Promise<Rows<S, T, E>>;
+    selectMaybeSingle<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(table: T, exprs: E, where?: string, params?: Params, options?: SelectOptions<S, T>): Promise<Row<S, T, E> | undefined>;
+    selectSingle<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(table: T, exprs: E, where?: string, params?: Params, options?: SelectOptions<S, T>): Promise<Row<S, T, E>>;
+    selectMaybeScalar<const T extends tableOf<S>, const E extends SelectExpr<S, T>>(table: T, expr: E, where?: string, params?: Params, options?: SelectOptions<S, T>): Promise<SelectExprType<S, T, E> | undefined>;
+    selectScalar<const T extends tableOf<S>, const E extends SelectExpr<S, T>>(table: T, expr: E, where?: string, params?: Params, options?: SelectOptions<S, T>): Promise<SelectExprType<S, T, E>>;
+    watchSelect<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(table: T, exprs: E, where: string, params: Params, onChange: (this: ConnectedDB<S>, rows: Rows<S, T, E>) => void, options?: SelectOptions<S, T>): WatchReturnType;
+    watchSelectChanges<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(table: T, exprs: E, where: string, params: Params, init: (this: ConnectedDB<S>, rows: Rows<S, T, E>) => void, update: (this: ConnectedDB<S>, added: Rows<S, T, E>, removed: Rows<S, T, E>) => void, options?: SelectOptions<S, T>): WatchReturnType;
+    useSelect<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(table: T, exprs: E, where?: string, params?: Params, defaultRows?: Rows<S, T, E>, options?: SelectOptions<S, T>): Rows<S, T, E>;
+    useSelectMaybeSingle<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(table: T, exprs: E, where?: string, params?: Params, defaultRow?: Row<S, T, E>, options?: SelectOptions<S, T>): Row<S, T, E> | undefined;
+    useSelectSingle<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(table: T, exprs: E, where: string, params: Params, defaultRow: Row<S, T, E>, options?: SelectOptions<S, T>): Row<S, T, E>;
+    useSelectMaybeScalar<const T extends tableOf<S>, const E extends SelectExpr<S, T>>(table: T, expr: E, where?: string, params?: Params, defaultValue?: SelectExprType<S, T, E>, options?: SelectOptions<S, T>): SelectExprType<S, T, E> | undefined;
+    useSelectScalar<const T extends tableOf<S>, const E extends SelectExpr<S, T>>(table: T, expr: E, where: string, params: Params, defaultValue: SelectExprType<S, T, E>, options?: SelectOptions<S, T>): SelectExprType<S, T, E>;
 }
 export declare function connectAndMirror<const S extends DBSchema>(db: DBToConnect<S>): Promise<ConnectedDB<S>>;
 type SKDBPropName = "skdb";

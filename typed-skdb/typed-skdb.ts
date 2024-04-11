@@ -8,7 +8,11 @@ type ParamValue = string | number | boolean | null;
 type Params = Parameters<SKDB['watch']>[1];
 type WatchReturnType = ReturnType<SKDB['watch']>;
 
-type PossiblyReadonly<T> = T | Readonly<T>
+type PossiblyReadonly<T> = T | Readonly<T>;
+type IndexOf<A extends any[]> = Exclude<keyof A, keyof any[]>;
+type FieldsAndTypesToObject<A extends Array<[number | string | symbol, any]>> = {
+    [K in A[number][0]]: Extract<A[number], [K, any]>[1];
+};
 
 interface ColumnTypeToJSType {
     "INTEGER": number;
@@ -68,43 +72,57 @@ export interface DBToConnect<S extends DBSchema> {
 type PossibleColumnNames<S extends DBSchema, T extends keyof S> = S[T][number][0];
 
 type GetColumnDescription<S extends DBSchema, T extends keyof S, K extends PossibleColumnNames<S, T>> =
-    Extract<S[T][number], PossiblyReadonly<[K, ...any[]]>>
+    Extract<S[T][number], PossiblyReadonly<[K, ...any[]]>>;
 
 type ColumnNullness<D extends columnDescription> =
     D extends PossiblyReadonly<[any, any, any, ...any[]]> ? D[2] : defaultNullness;
 
 type TypeOfColumnDescription<D extends columnDescription> =
-    ColumnTypeToJSType[D[1]] | ColumnNullnessToJSType[ColumnNullness<D>]
+    ColumnTypeToJSType[D[1]] | ColumnNullnessToJSType[ColumnNullness<D>];
 
 type ColumnType<S extends DBSchema, T extends keyof S, K extends PossibleColumnNames<S, T>> =
-    TypeOfColumnDescription<GetColumnDescription<S, T, K>>
+    TypeOfColumnDescription<GetColumnDescription<S, T, K>>;
+
+type CountType = number;
 
 type FullRow<S extends DBSchema, T extends keyof S> = {
     [K in S[T][number][0]]: ColumnType<S, T, K>
-}
+};
 
 type PartialRow<S extends DBSchema, T extends keyof S> =
-    Partial<FullRow<S, T>>
+    Partial<FullRow<S, T>>;
 
-type Row<S extends DBSchema, T extends keyof S, C extends Array<PossibleColumnNames<S, T>>> = {
-    [K in C[number]]: ColumnType<S, T, K>
+type SelectExpr<S extends DBSchema, T extends keyof S> =
+    "COUNT" | PossibleColumnNames<S, T>;
+
+type SelectExprType<S extends DBSchema, T extends keyof S, E extends SelectExpr<S, T>> =
+    E extends "COUNT" ? CountType : ColumnType<S, T, E>;
+
+type FieldName<S extends DBSchema, T extends keyof S, I extends string | number, E extends SelectExpr<S, T>> =
+    E extends "COUNT" ? `col<${I}>` : E;
+
+type RowFieldsAndTypes<S extends DBSchema, T extends keyof S, E extends Array<SelectExpr<S, T>>> = {
+    [I in keyof E]: I extends IndexOf<E> ? [FieldName<S, T, I, E[I]>, SelectExprType<S, T, E[I]>] : [I, E[I]];
 }
+
+type Row<S extends DBSchema, T extends keyof S, E extends Array<SelectExpr<S, T>>> =
+    FieldsAndTypesToObject<RowFieldsAndTypes<S, T, E>>;
 
 type Rows<S extends DBSchema,
     T extends keyof S,
-    C extends Array<PossibleColumnNames<S, T>>> = Array<Row<S, T, C>>;
+    E extends Array<SelectExpr<S, T>>> = Array<Row<S, T, E>>;
 
 type tableOf<X> = string & keyof X;
 
 type RestRow<S extends DBSchema, T extends keyof S, K extends PartialRow<S, T>> =
-    Omit<FullRow<S, T>, keyof K>
+    Omit<FullRow<S, T>, keyof K>;
 
 type Prepared = [string, Params | undefined];
 
 type OrderOrder = "ASC" | "DESC";
 
 type SelectOrderItem<S extends DBSchema, T extends keyof S> =
-    [PossibleColumnNames<S, T>] | [PossibleColumnNames<S, T>, OrderOrder]
+    [PossibleColumnNames<S, T>] | [PossibleColumnNames<S, T>, OrderOrder];
 
 type SelectOrder<S extends DBSchema, T extends keyof S> =
     Array<SelectOrderItem<S, T>>;
@@ -114,15 +132,42 @@ type SelectOptions<S extends DBSchema, T extends keyof S> = {
     limit?: number,
 };
 
-function paramsToString(params?: Params): string {
-    return params === undefined || Object.keys(params).length === 0 ?
+function logQuery(kind: string, query: string, params?: Params) {
+    const p = params === undefined || Object.keys(params).length === 0 ?
         "" :
         " with " + Object.entries(params).map(([k, v]) => `${k} => ${v}`).join(", ");
+    // @ts-ignore
+    console.log(`${kind}: ${query}${p};`);
 }
 
-function logQuery(kind: string, query: string, params?: Params) {
+function getMaybeSingleRow<T>(rows: T[]): T | undefined {
+    if (rows.length > 1) {
+        throw new Error(`Can't extract only row, got ${rows.length} rows`);
+    }
+    return rows[0];
+}
+
+function getMust<T>(what: string, maybe?: T): T {
+    if (maybe === undefined) {
+        throw new Error(`Can't extract only ${what}, got no ${what}s`);
+    }
+    return maybe;
+}
+
+function getMustRow<T>(maybeRow?: T): T { return getMust("row", maybeRow); }
+function getMustVal<T>(maybeVal?: T): T { return getMust("value", maybeVal); }
+
+function scalarFieldName<const S extends DBSchema, const T extends tableOf<S>, const E extends SelectExpr<S, T>>(
+    expr: E,
+): FieldName<S, T, 0, E> {
     // @ts-ignore
-    console.log(`${kind}: ${query}${paramsToString(params)};`);
+    return expr === "COUNT" ? "col<0>" : expr;
+}
+function getMaybeScalar<const S extends DBSchema, const T extends tableOf<S>, const E extends SelectExpr<S, T>>(
+    expr: E,
+    maybeRow?: Row<S, T, [E]>,
+): SelectExprType<S, T, E> | undefined {
+    return maybeRow?.[scalarFieldName(expr)];
 }
 
 export class ConnectedDB<const S extends DBSchema> {
@@ -234,12 +279,15 @@ export class ConnectedDB<const S extends DBSchema> {
         return await this.execTransac([d, i]);
     }
 
-    private buildSelectQueryGen<const T extends tableOf<S>>(
+    private buildSelectQuery<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(
         table: T,
-        what: string,
+        exprs: E,
         where: string = "",
         options: SelectOptions<S, T> = {},
     ): string {
+        const what = exprs.map(
+            (e) => (e === "COUNT") ? "COUNT(*)" : e
+        ).join(", ");
         const queryParts = ["SELECT"];
         queryParts.push(what);
         queryParts.push("FROM");
@@ -260,88 +308,107 @@ export class ConnectedDB<const S extends DBSchema> {
         return queryParts.join(" ");
     }
 
-    private buildSelectQuery<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
+    public async select<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(
         table: T,
-        columns: C,
-        where?: string,
-        options?: SelectOptions<S, T>,
-    ): string {
-        const what = columns.join(", ");
-        return this.buildSelectQueryGen(table, what, where, options);
-    }
-
-    public async select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
-        table: T,
-        columns: C,
-        where: string,
-        params?: Params,
-        options?: SelectOptions<S, T>,
-    ): Promise<Rows<S, T, C>> {
-        const query = this.buildSelectQuery(table, columns, where, options);
-        const result = await this.exec(query, params);
-        return result as Array<Record<string, any>> as Rows<S, T, C>;
-    }
-
-    public async selectCount<const T extends tableOf<S>>(
-        table: T,
+        exprs: E,
         where?: string,
         params?: Params,
-        //options?: SelectOptions<S, T>,
-    ): Promise<number> {
-        const query = this.buildSelectQueryGen(table, "COUNT(*)", where);
+        options?: SelectOptions<S, T>,
+    ): Promise<Rows<S, T, E>> {
+        const query = this.buildSelectQuery(table, exprs, where, options);
         const result = await this.exec(query, params);
-        if (result.length === 0) {
-            return 0;
-        } else {
-            return Object.values(result[0])[0];
-        }
+        return result as Array<Record<string, any>> as Rows<S, T, E>;
     }
 
-    public async watchSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
+    public async selectMaybeSingle<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(
         table: T,
-        columns: C,
+        exprs: E,
+        where?: string,
+        params?: Params,
+        options?: SelectOptions<S, T>,
+    ): Promise<Row<S, T, E> | undefined> {
+        const rows = await this.select(table, exprs, where, params, options);
+        return getMaybeSingleRow(rows);
+    }
+
+    public async selectSingle<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(
+        table: T,
+        exprs: E,
+        where?: string,
+        params?: Params,
+        options?: SelectOptions<S, T>,
+    ): Promise<Row<S, T, E>> {
+        const maybeRow = await this.selectMaybeSingle(table, exprs, where, params, options);
+        return getMustRow(maybeRow);
+    }
+
+    public async selectMaybeScalar<const T extends tableOf<S>, const E extends SelectExpr<S, T>>(
+        table: T,
+        expr: E,
+        where?: string,
+        params?: Params,
+        options?: SelectOptions<S, T>,
+    ): Promise<SelectExprType<S, T, E> | undefined> {
+        const maybeRow = await this.selectMaybeSingle(table, [expr], where, params, options);
+        return getMaybeScalar(expr, maybeRow);
+    }
+
+    public async selectScalar<const T extends tableOf<S>, const E extends SelectExpr<S, T>>(
+        table: T,
+        expr: E,
+        where?: string,
+        params?: Params,
+        options?: SelectOptions<S, T>,
+    ): Promise<SelectExprType<S, T, E>> {
+        const maybeScalar = await this.selectMaybeScalar(table, expr, where, params, options);
+        return getMustVal(maybeScalar);
+    }
+
+    public async watchSelect<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(
+        table: T,
+        exprs: E,
         where: string,
         params: Params,
-        onChange: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void,
+        onChange: (this: ConnectedDB<S>, rows: Rows<S, T, E>) => void,
         options?: SelectOptions<S, T>,
     ): WatchReturnType {
-        const query = this.buildSelectQuery(table, columns, where, options);
-        const castedChange = (rows: SKDBTable) => onChange.bind(this)(rows as Array<Record<string, any>> as Rows<S, T, C>);
+        const query = this.buildSelectQuery(table, exprs, where, options);
+        const castedChange = (rows: SKDBTable) => onChange.bind(this)(rows as Array<Record<string, any>> as Rows<S, T, E>);
         return await this.watch(query, params, castedChange);
     }
 
-    public async watchSelectChanges<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
+    public async watchSelectChanges<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(
         table: T,
-        columns: C,
+        exprs: E,
         where: string,
         params: Params,
-        init: (this: ConnectedDB<S>, rows: Rows<S, T, C>) => void,
-        update: (this: ConnectedDB<S>, added: Rows<S, T, C>, removed: Rows<S, T, C>) => void,
+        init: (this: ConnectedDB<S>, rows: Rows<S, T, E>) => void,
+        update: (this: ConnectedDB<S>, added: Rows<S, T, E>, removed: Rows<S, T, E>) => void,
         options?: SelectOptions<S, T>,
     ): WatchReturnType {
-        const query = this.buildSelectQuery(table, columns, where, options);
-        const castedInit = (rows: SKDBTable) => init.bind(this)(rows as Array<Record<string, any>> as Rows<S, T, C>);
+        const query = this.buildSelectQuery(table, exprs, where, options);
+        const castedInit = (rows: SKDBTable) => init.bind(this)(rows as Array<Record<string, any>> as Rows<S, T, E>);
         const castedUpdate = (added: SKDBTable, removed: SKDBTable) => update.bind(this)(
-            added as Array<Record<string, any>> as Rows<S, T, C>,
-            removed as Array<Record<string, any>> as Rows<S, T, C>
+            added as Array<Record<string, any>> as Rows<S, T, E>,
+            removed as Array<Record<string, any>> as Rows<S, T, E>
         );
         return await this.watchChanges(query, params, castedInit, castedUpdate);
     }
 
-    public useSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
+    public useSelect<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(
         table: T,
-        columns: C,
+        exprs: E,
         where: string = "",
         params: Params = {},
-        defaultRows: Rows<S, T, C> = [],
+        defaultRows: Rows<S, T, E> = [],
         options: SelectOptions<S, T> = {},
-    ): Rows<S, T, C> {
+    ): Rows<S, T, E> {
         const [state, setState] = React.useState(defaultRows);
-        const deps = [this, table, columns, where, Object.values(params), Object.values(options)].flat(Infinity);
+        const deps = [this, table, exprs, where, Object.values(params), Object.values(options)].flat(Infinity);
         React.useEffect(() => {
             let removeQuery = false;
             const closeable = { close: () => { } };
-            this.watchSelect(table, columns, where, params, setState, options)
+            this.watchSelect(table, exprs, where, params, setState, options)
                 .then((handle) => {
                     if (removeQuery) {
                         return handle.close();
@@ -353,63 +420,50 @@ export class ConnectedDB<const S extends DBSchema> {
         return state;
     }
 
-    public useSelectMaybeSingle<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
+    public useSelectMaybeSingle<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(
         table: T,
-        columns: C,
+        exprs: E,
         where?: string,
         params?: Params,
-        defaultRow?: Row<S, T, C>,
+        defaultRow?: Row<S, T, E>,
         options?: SelectOptions<S, T>,
-    ): Row<S, T, C> | undefined {
+    ): Row<S, T, E> | undefined {
         const defaultRows = defaultRow === undefined ? undefined : [defaultRow];
-        const rows = this.useSelect(table, columns, where, params, defaultRows, options);
-        if (rows.length > 1) {
-            throw new Error(`Can't extract only row, got ${rows.length} rows`);
-        }
-        return rows[0];
+        return getMaybeSingleRow(this.useSelect(table, exprs, where, params, defaultRows, options));
     }
 
-    public useSelectSingle<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
+    public useSelectSingle<const T extends tableOf<S>, const E extends SelectExpr<S, T>[]>(
         table: T,
-        columns: C,
+        exprs: E,
         where: string,
         params: Params,
-        defaultRow: Row<S, T, C>,
+        defaultRow: Row<S, T, E>,
         options?: SelectOptions<S, T>,
-    ): Row<S, T, C> {
-        const maybeRow = this.useSelectMaybeSingle(table, columns, where, params, defaultRow, options);
-        if (maybeRow === undefined) {
-            throw new Error(`Can't extract only row, got no rows`);
-        }
-        return maybeRow;
+    ): Row<S, T, E> {
+        return getMustRow(this.useSelectMaybeSingle(table, exprs, where, params, defaultRow, options));
     }
 
-    public useSelectMaybeScalar<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(
+    public useSelectMaybeScalar<const T extends tableOf<S>, const E extends SelectExpr<S, T>>(
         table: T,
-        column: C,
+        expr: E,
         where?: string,
         params?: Params,
-        defaultValue?: ColumnType<S, T, C>,
+        defaultValue?: SelectExprType<S, T, E>,
         options?: SelectOptions<S, T>,
-    ): ColumnType<S, T, C> | undefined {
-        const defaultRow = defaultValue === undefined ? undefined : { [column]: defaultValue } as Row<S, T, [C]>;
-        const row = this.useSelectMaybeSingle(table, [column], where, params, defaultRow, options);
-        return row?.[column];
+    ): SelectExprType<S, T, E> | undefined {
+        const defaultRow = defaultValue === undefined ? undefined : { [expr]: defaultValue } as Row<S, T, [E]>;
+        return getMaybeScalar(expr, this.useSelectMaybeSingle(table, [expr], where, params, defaultRow, options));
     }
 
-    public useSelectScalar<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(
+    public useSelectScalar<const T extends tableOf<S>, const E extends SelectExpr<S, T>>(
         table: T,
-        column: C,
+        expr: E,
         where: string,
         params: Params,
-        defaultValue: ColumnType<S, T, C>,
+        defaultValue: SelectExprType<S, T, E>,
         options?: SelectOptions<S, T>,
-    ): ColumnType<S, T, C> {
-        const maybeValue = this.useSelectMaybeScalar(table, column, where, params, defaultValue, options);
-        if (maybeValue === undefined) {
-            throw new Error(`Can't extract only value, got no values`);
-        }
-        return maybeValue;
+    ): SelectExprType<S, T, E> {
+        return getMustVal(this.useSelectMaybeScalar(table, expr, where, params, defaultValue, options));
     }
 }
 
