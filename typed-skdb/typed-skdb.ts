@@ -68,20 +68,20 @@ export interface DBToConnect<S extends DBSchema> {
 type PossibleColumnNames<S extends DBSchema, T extends keyof S> = S[T][number][0];
 
 type GetColumnDescription<S extends DBSchema, T extends keyof S, K extends PossibleColumnNames<S, T>> =
-    Extract<S[T][number], PossiblyReadonly<[K, ...any[]]>>
+    Extract<S[T][number], PossiblyReadonly<[K, ...any[]]>>;
 
 type ColumnNullness<D extends columnDescription> =
     D extends PossiblyReadonly<[any, any, any, ...any[]]> ? D[2] : defaultNullness;
 
 type TypeOfColumnDescription<D extends columnDescription> =
-    ColumnTypeToJSType[D[1]] | ColumnNullnessToJSType[ColumnNullness<D>]
+    ColumnTypeToJSType[D[1]] | ColumnNullnessToJSType[ColumnNullness<D>];
 
 type ColumnType<S extends DBSchema, T extends keyof S, K extends PossibleColumnNames<S, T>> =
     TypeOfColumnDescription<GetColumnDescription<S, T, K>>
 
 type FullRow<S extends DBSchema, T extends keyof S> = {
     [K in S[T][number][0]]: ColumnType<S, T, K>
-}
+};
 
 type PartialRow<S extends DBSchema, T extends keyof S> =
     Partial<FullRow<S, T>>
@@ -97,14 +97,14 @@ type Rows<S extends DBSchema,
 type tableOf<X> = string & keyof X;
 
 type RestRow<S extends DBSchema, T extends keyof S, K extends PartialRow<S, T>> =
-    Omit<FullRow<S, T>, keyof K>
+    Omit<FullRow<S, T>, keyof K>;
 
 type Prepared = [string, Params | undefined];
 
 type OrderOrder = "ASC" | "DESC";
 
 type SelectOrderItem<S extends DBSchema, T extends keyof S> =
-    [PossibleColumnNames<S, T>] | [PossibleColumnNames<S, T>, OrderOrder]
+    [PossibleColumnNames<S, T>] | [PossibleColumnNames<S, T>, OrderOrder];
 
 type SelectOrder<S extends DBSchema, T extends keyof S> =
     Array<SelectOrderItem<S, T>>;
@@ -114,16 +114,30 @@ type SelectOptions<S extends DBSchema, T extends keyof S> = {
     limit?: number,
 };
 
-function paramsToString(params?: Params): string {
-    return params === undefined || Object.keys(params).length === 0 ?
+function logQuery(kind: string, query: string, params?: Params) {
+    const p = params === undefined || Object.keys(params).length === 0 ?
         "" :
         " with " + Object.entries(params).map(([k, v]) => `${k} => ${v}`).join(", ");
+    // @ts-ignore
+    console.log(`${kind}: ${query}${p};`);
 }
 
-function logQuery(kind: string, query: string, params?: Params) {
-    // @ts-ignore
-    console.log(`${kind}: ${query}${paramsToString(params)};`);
+function getMaybeSingleRow<T>(rows: T[]): T | undefined {
+    if (rows.length > 1) {
+        throw new Error(`Can't extract only row, got ${rows.length} rows`);
+    }
+    return rows[0];
 }
+
+function getMust<T>(what: string, maybe?: T): T {
+    if (maybe === undefined) {
+        throw new Error(`Can't extract only ${what}, got no ${what}s`);
+    }
+    return maybe;
+}
+
+function getMustRow<T>(maybeRow?: T): T { return getMust("row", maybeRow); }
+function getMustVal<T>(maybeVal?: T): T { return getMust("value", maybeVal); }
 
 export class ConnectedDB<const S extends DBSchema> {
     constructor(
@@ -290,11 +304,7 @@ export class ConnectedDB<const S extends DBSchema> {
     ): Promise<number> {
         const query = this.buildSelectQueryGen(table, "COUNT(*)", where);
         const result = await this.exec(query, params);
-        if (result.length === 0) {
-            return 0;
-        } else {
-            return Object.values(result[0])[0];
-        }
+        return Object.values(result[0])[0];
     }
 
     public async watchSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
@@ -362,11 +372,7 @@ export class ConnectedDB<const S extends DBSchema> {
         options?: SelectOptions<S, T>,
     ): Row<S, T, C> | undefined {
         const defaultRows = defaultRow === undefined ? undefined : [defaultRow];
-        const rows = this.useSelect(table, columns, where, params, defaultRows, options);
-        if (rows.length > 1) {
-            throw new Error(`Can't extract only row, got ${rows.length} rows`);
-        }
-        return rows[0];
+        return getMaybeSingleRow(this.useSelect(table, columns, where, params, defaultRows, options));
     }
 
     public useSelectSingle<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
@@ -377,11 +383,7 @@ export class ConnectedDB<const S extends DBSchema> {
         defaultRow: Row<S, T, C>,
         options?: SelectOptions<S, T>,
     ): Row<S, T, C> {
-        const maybeRow = this.useSelectMaybeSingle(table, columns, where, params, defaultRow, options);
-        if (maybeRow === undefined) {
-            throw new Error(`Can't extract only row, got no rows`);
-        }
-        return maybeRow;
+        return getMustRow(this.useSelectMaybeSingle(table, columns, where, params, defaultRow, options));
     }
 
     public useSelectMaybeScalar<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(
@@ -405,11 +407,7 @@ export class ConnectedDB<const S extends DBSchema> {
         defaultValue: ColumnType<S, T, C>,
         options?: SelectOptions<S, T>,
     ): ColumnType<S, T, C> {
-        const maybeValue = this.useSelectMaybeScalar(table, column, where, params, defaultValue, options);
-        if (maybeValue === undefined) {
-            throw new Error(`Can't extract only value, got no values`);
-        }
-        return maybeValue;
+        return getMustVal(this.useSelectMaybeScalar(table, column, where, params, defaultValue, options));
     }
 }
 

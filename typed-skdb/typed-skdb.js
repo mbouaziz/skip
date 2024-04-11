@@ -20,15 +20,27 @@ function schemaToText(schema) {
 function schemaToMirrorDfns(schema) {
     return Object.entries(schema).map(([table, cols]) => ({ table, expectedColumns: typedColumnsToText(cols) }));
 }
-function paramsToString(params) {
-    return params === undefined || Object.keys(params).length === 0 ?
+function logQuery(kind, query, params) {
+    const p = params === undefined || Object.keys(params).length === 0 ?
         "" :
         " with " + Object.entries(params).map(([k, v]) => `${k} => ${v}`).join(", ");
-}
-function logQuery(kind, query, params) {
     // @ts-ignore
-    console.log(`${kind}: ${query}${paramsToString(params)};`);
+    console.log(`${kind}: ${query}${p};`);
 }
+function getMaybeSingleRow(rows) {
+    if (rows.length > 1) {
+        throw new Error(`Can't extract only row, got ${rows.length} rows`);
+    }
+    return rows[0];
+}
+function getMust(what, maybe) {
+    if (maybe === undefined) {
+        throw new Error(`Can't extract only ${what}, got no ${what}s`);
+    }
+    return maybe;
+}
+function getMustRow(maybeRow) { return getMust("row", maybeRow); }
+function getMustVal(maybeVal) { return getMust("value", maybeVal); }
 export class ConnectedDB {
     schema;
     localDb;
@@ -133,12 +145,7 @@ export class ConnectedDB {
     async selectCount(table, where, params) {
         const query = this.buildSelectQueryGen(table, "COUNT(*)", where);
         const result = await this.exec(query, params);
-        if (result.length === 0) {
-            return 0;
-        }
-        else {
-            return Object.values(result[0])[0];
-        }
+        return Object.values(result[0])[0];
     }
     async watchSelect(table, columns, where, params, onChange, options) {
         const query = this.buildSelectQuery(table, columns, where, options);
@@ -170,18 +177,10 @@ export class ConnectedDB {
     }
     useSelectMaybeSingle(table, columns, where, params, defaultRow, options) {
         const defaultRows = defaultRow === undefined ? undefined : [defaultRow];
-        const rows = this.useSelect(table, columns, where, params, defaultRows, options);
-        if (rows.length > 1) {
-            throw new Error(`Can't extract only row, got ${rows.length} rows`);
-        }
-        return rows[0];
+        return getMaybeSingleRow(this.useSelect(table, columns, where, params, defaultRows, options));
     }
     useSelectSingle(table, columns, where, params, defaultRow, options) {
-        const maybeRow = this.useSelectMaybeSingle(table, columns, where, params, defaultRow, options);
-        if (maybeRow === undefined) {
-            throw new Error(`Can't extract only row, got no rows`);
-        }
-        return maybeRow;
+        return getMustRow(this.useSelectMaybeSingle(table, columns, where, params, defaultRow, options));
     }
     useSelectMaybeScalar(table, column, where, params, defaultValue, options) {
         const defaultRow = defaultValue === undefined ? undefined : { [column]: defaultValue };
@@ -189,11 +188,7 @@ export class ConnectedDB {
         return row?.[column];
     }
     useSelectScalar(table, column, where, params, defaultValue, options) {
-        const maybeValue = this.useSelectMaybeScalar(table, column, where, params, defaultValue, options);
-        if (maybeValue === undefined) {
-            throw new Error(`Can't extract only value, got no values`);
-        }
-        return maybeValue;
+        return getMustVal(this.useSelectMaybeScalar(table, column, where, params, defaultValue, options));
     }
 }
 export async function connectAndMirror(db) {

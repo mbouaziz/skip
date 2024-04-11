@@ -6,112 +6,230 @@ import type { ConnectedDB, WithSKDB } from "typed-skdb";
 
 const DEFAULT_BOTTOM_ADDR = 0x0000001000000000n;
 
-function h(bi: bigint): string {
+type read_bi = { bi: bigint };
+type read_value = { processing: boolean } | { error: string } | read_bi;
+type val = WithSKDB<
+  Schema,
+  {
+    path: string;
+    offset: number;
+    processing?: boolean;
+  }
+> &
+  read_value;
+type bival = val & read_bi;
+
+function hi(i: number): string {
+  const s = i.toString(16);
+  return "0x" + "00000000".slice(s.length) + s;
+}
+
+function hbi(bi: bigint): string {
   const s = bi.toString(16);
   return "0x" + "0000000000000000".slice(s.length) + s;
 }
 
-type obi = bigint | undefined;
-type oRow = { progress: number; value: string | null } | undefined;
-
-function loadingH(obi: obi): string {
-  return obi === undefined ? "Loading..." : h(obi);
-}
-
-function useRawWordMay(
+async function requestReadWord(
   skdb: ConnectedDB<Schema>,
   path: string,
-  offset: bigint,
-): oRow {
-  return skdb.useSelectMaybeSingle(
-    "readFile",
-    ["progress", "value"],
-    "path = @path AND offset = @offset",
-    { path, offset: offset.toString() },
-    undefined,
-    { order: [["progress", "DESC"]], limit: 1 },
+  offset: number,
+  nb: number = 1,
+) {
+  for (let i = 0; i < nb; i++) {
+    await skdb.insert("readFile", {
+      path,
+      offset: offset + i * 8,
+      progress: 0,
+      value: null,
+    });
+  }
+}
+
+function LoadLink(
+  props: WithSKDB<Schema, { path: string; offset: number; n?: number }>,
+) {
+  const n = props.n ?? 1;
+  return (
+    <a
+      href="#"
+      onClick={async (e) => {
+        e.preventDefault();
+        requestReadWord(props.skdb, props.path, props.offset, n);
+      }}
+    >
+      Load{n > 1 ? " all" : ""}
+    </a>
   );
 }
 
-function obiOfoRow(oRow: oRow): obi {
-  return oRow === undefined || oRow.progress < 3 || oRow.value === null
-    ? undefined
-    : BigInt(oRow.value);
+function PP(val: val) {
+  if ("bi" in val) {
+    return hbi(val.bi);
+  } else if ("error" in val) {
+    return val.error;
+  } else if (val.processing === true) {
+    return "Loading...";
+  } else {
+    return <LoadLink {...val} />;
+  }
 }
 
 function useWordMay(
   skdb: ConnectedDB<Schema>,
   path: string,
-  offset: bigint,
-): obi {
-  return obiOfoRow(useRawWordMay(skdb, path, offset));
+  offset: number,
+): val {
+  const oRow = skdb.useSelectMaybeSingle(
+    "readFile",
+    ["progress", "value"],
+    "path = @path AND offset = @offset",
+    { path, offset },
+    undefined,
+    { order: [["progress", "DESC"]], limit: 1 },
+  );
+  const x =
+    oRow === undefined
+      ? { processing: false }
+      : oRow.progress <= 1
+      ? { processing: true }
+      : oRow.progress === 2
+      ? { error: oRow.value ?? "" }
+      : oRow.progress === 3
+      ? oRow.value === null
+        ? { error: "Unexpected NULL" }
+        : { bi: BigInt(oRow.value) }
+      : { error: `Unexpected progress ${oRow.progress}` };
+  return { skdb, path, offset, ...x };
 }
 
 function useWordMust(
   skdb: ConnectedDB<Schema>,
   path: string,
-  offset: bigint,
-): obi {
-  const oRow = useRawWordMay(skdb, path, offset);
-  const oProgress = oRow?.progress;
+  offset: number,
+): val {
+  const val = useWordMay(skdb, path, offset);
+  const requireRequest = "processing" in val && val.processing === false;
   useEffect(() => {
-    async function insert() {
-      return await skdb.insert("readFile", {
-        path,
-        offset: offset.toString(),
-        progress: 0,
-        value: null,
-      });
+    if (requireRequest) {
+      requestReadWord(skdb, path, offset);
     }
-    if (oProgress === undefined) {
-      insert();
-    }
-  }, [skdb, path, offset, oProgress]);
-  return obiOfoRow(oRow);
+  }, [skdb, path, offset, requireRequest]);
+  return { ...val, processing: true };
 }
 
-type vobi = { value: obi };
-
-function Magic({ value }: vobi) {
-  return (
-    <tr>
-      <td>Magic</td>
-      <td>{loadingH(value)}</td>
-    </tr>
-  );
-}
-
-function BottomAddr({ value }: vobi) {
+function Row(
+  props: val & { name: string; bi_extra?: (v: bival) => React.ReactElement },
+) {
+  const BIExtra = props.bi_extra;
   const extra =
-    value === undefined ? (
-      ""
-    ) : value === DEFAULT_BOTTOM_ADDR ? (
-      <span title="Uses default bottom address">✓</span>
+    BIExtra === undefined || !("bi" in props) ? (
+      <></>
     ) : (
-      <span
-        title={`Unusual bottom address, default is ${h(DEFAULT_BOTTOM_ADDR)}`}
-      >
-        ⚠
-      </span>
+      <>
+        &nbsp;
+        <BIExtra {...props} />
+      </>
     );
   return (
     <tr>
-      <td>Bottom address</td>
+      <td>{hi(props.offset)}</td>
+      <td>{props.name}</td>
       <td>
-        {loadingH(value)}&nbsp;{extra}
+        <PP {...props} />
+        {extra}
       </td>
     </tr>
   );
 }
 
-function Mapping({ skdb, path }: WithSKDB<Schema, { path: string }>) {
-  const magic = useWordMust(skdb, path, 0n);
-  const bottom_addr = useWordMust(skdb, path, 8n);
+function LoadAllRow(
+  props: WithSKDB<
+    Schema,
+    { path: string; offset: number; n: number; name: string }
+  >,
+) {
+  const allLoaded = false;
+  if (allLoaded) {
+    return <></>;
+  } else {
+    return (
+      <tr>
+        <td>{hi(props.offset)}</td>
+        <td>{props.name}</td>
+        <td>
+          <LoadLink {...props} />
+        </td>
+      </tr>
+    );
+  }
+}
+
+function BottomAddrExtra({ bi }: bival) {
+  return bi === DEFAULT_BOTTOM_ADDR ? (
+    <span title="Uses default bottom address">✓</span>
+  ) : (
+    <span
+      title={`Unusual bottom address, default is ${hbi(DEFAULT_BOTTOM_ADDR)}`}
+    >
+      ⚠
+    </span>
+  );
+}
+
+function FTableElement(
+  props: WithSKDB<Schema, { path: string; offset: number; index: number }>,
+) {
+  const { skdb, path, offset, index } = props;
+  const ptr = useWordMay(skdb, path, offset);
+  return <Row name={`ftable[${index}]`} {...ptr} />;
+}
+
+function Ginfo(props: WithSKDB<Schema, { path: string; offset: number }>) {
+  const ftable = [];
+  for (let i = 0; i < 64; i++) {
+    ftable.push(
+      <FTableElement {...props} offset={props.offset + i * 8} index={i} />,
+    );
+  }
+  return (
+    <>
+      <LoadAllRow name="Free table" {...props} n={64} />
+      <tr>
+        <td>{hi(props.offset)}</td>
+        <td>Free table</td>
+        <td>
+          <LoadLink {...props} n={64} />
+        </td>
+      </tr>
+      {ftable}
+    </>
+  );
+}
+
+function ReadOfHeader(
+  props: WithSKDB<Schema, { path: string; offset: number }>,
+) {
+  const { skdb, path, offset } = props;
+  const gmutex_attr = useWordMay(skdb, path, offset);
 
   return (
     <>
-      <Magic value={magic} />
-      <BottomAddr value={bottom_addr} />
+      <Row name="gmutex_attr" {...gmutex_attr} />
+      <Ginfo {...props} offset={offset + 40} />
+    </>
+  );
+}
+
+function Mapping(props: WithSKDB<Schema, { path: string }>) {
+  const { skdb, path } = props;
+  const magic = useWordMust(skdb, path, 0);
+  const bottom_addr = useWordMust(skdb, path, 8);
+
+  return (
+    <>
+      <Row name="magic" {...magic} />
+      <Row name="bottom_addr" {...bottom_addr} bi_extra={BottomAddrExtra} />
+      {"bi" in magic ? <ReadOfHeader {...props} offset={16} /> : <></>}
     </>
   );
 }
@@ -143,7 +261,8 @@ function App({ skdb }: WithSKDB<Schema>) {
       <table>
         <thead>
           <tr>
-            <th />
+            <th></th>
+            <th></th>
             <th>{selectedMappingFile}</th>
           </tr>
         </thead>

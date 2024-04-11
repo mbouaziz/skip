@@ -1,7 +1,7 @@
 export const schema = {
     readFile: [
         ["path", "TEXT", "NOT NULL"],
-        ["offset", "TEXT", "NOT NULL"],
+        ["offset", "INTEGER", "NOT NULL"],
         ["progress", "INTEGER", "NOT NULL"],
         ["value", "TEXT"]
     ],
