@@ -183,7 +183,8 @@ export class ConnectedDB {
         return this.selectRaw(table, "COUNT(*)", where, params).firstFieldOfFirstRow();
     }
     /* Other query builders */
-    insert(table, r) {
+    insert(...args) {
+        const [table, r] = args;
         const queryParts = ["INSERT INTO"];
         queryParts.push(table);
         const cols = this.schema[table].map(([colName]) => colName).join(", ");
@@ -238,8 +239,8 @@ export class ConnectedDB {
         return this.delete(table, deleteWhere, rowKey).followedBy(this.insert(table, row));
     }
     /* Pre-built compositions */
-    async execInsert(table, r) {
-        return await this.exec(this.insert(table, r));
+    async execInsert(...args) {
+        return await this.exec(this.insert(...args));
     }
     async execDelete(table, where, params) {
         return await this.exec(this.delete(table, where, params));

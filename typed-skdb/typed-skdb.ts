@@ -32,7 +32,7 @@ type tableName = string
 type columnName = string
 type columnType = keyof ColumnTypeToJSType
 type columnNullness = keyof ColumnNullnessToJSType
-type columnDescription = PossiblyReadonly<[columnName, columnType] | [columnName, columnType, columnNullness]>
+type columnDescription = PossiblyReadonly<[columnName, columnType, columnNullness?]>
 type columns = PossiblyReadonly<columnDescription[]>
 export type DBSchema = PossiblyReadonly<{
     [table: tableName]: columns
@@ -344,9 +344,9 @@ export class ConnectedDB<const S extends DBSchema> {
     /* Other query builders */
 
     public insert<const T extends tableOf<S>>(
-        table: T,
-        r: FullRow<S, T> | FullRow<S, T>[],
+        ...args: [table: T, row: FullRow<S, T>] | [table: T, rows: FullRow<S, T>[]]
     ): Query<void> {
+        const [table, r] = args;
         const queryParts = ["INSERT INTO"];
         queryParts.push(table);
         const cols = this.schema[table].map(([colName]) => colName).join(", ");
@@ -419,11 +419,9 @@ export class ConnectedDB<const S extends DBSchema> {
 
     /* Pre-built compositions */
 
-    public async execInsert<const T extends tableOf<S>>(
-        table: T,
-        r: FullRow<S, T> | FullRow<S, T>[]
+    public async execInsert<const T extends tableOf<S>>(...args: [table: T, row: FullRow<S, T>] | [table: T, rows: FullRow<S, T>[]]
     ): Promise<void> {
-        return await this.exec(this.insert(table, r));
+        return await this.exec(this.insert(...args));
     }
 
     public async execDelete<const T extends tableOf<S>>(

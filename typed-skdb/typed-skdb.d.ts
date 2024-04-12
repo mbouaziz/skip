@@ -14,7 +14,7 @@ type tableName = string;
 type columnName = string;
 type columnType = keyof ColumnTypeToJSType;
 type columnNullness = keyof ColumnNullnessToJSType;
-type columnDescription = PossiblyReadonly<[columnName, columnType] | [columnName, columnType, columnNullness]>;
+type columnDescription = PossiblyReadonly<[columnName, columnType, columnNullness?]>;
 type columns = PossiblyReadonly<columnDescription[]>;
 export type DBSchema = PossiblyReadonly<{
     [table: tableName]: columns;
@@ -87,11 +87,11 @@ export declare class ConnectedDB<const S extends DBSchema> {
     select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where?: string, params?: Params, options?: SelectOptions<S, T>): Query<Rows<S, T, C>>;
     selectOneField<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(table: T, column: C, where?: string, params?: Params, options?: SelectOptions<S, T>): Query<ColumnType<S, T, C>[]>;
     selectCount<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Query<number>;
-    insert<const T extends tableOf<S>>(table: T, r: FullRow<S, T> | FullRow<S, T>[]): Query<void>;
+    insert<const T extends tableOf<S>>(...args: [table: T, row: FullRow<S, T>] | [table: T, rows: FullRow<S, T>[]]): Query<void>;
     delete<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Query<void>;
     update<const T extends tableOf<S>>(table: T, row: PartialRow<S, T>, where?: string, params?: Params): Query<void>;
     insertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(table: T, rowKey: K, rowRest: RestRow<S, T, K>): Query<void>;
-    execInsert<const T extends tableOf<S>>(table: T, r: FullRow<S, T> | FullRow<S, T>[]): Promise<void>;
+    execInsert<const T extends tableOf<S>>(...args: [table: T, row: FullRow<S, T>] | [table: T, rows: FullRow<S, T>[]]): Promise<void>;
     execDelete<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Promise<void>;
     execInsertOrUpdateWithKey<const T extends tableOf<S>, K extends PartialRow<S, T>>(table: T, rowKey: K, rowRest: RestRow<S, T, K>): Promise<void>;
     execSelect<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where?: string, params?: Params, options?: SelectOptions<S, T>): Promise<Rows<S, T, C>>;
