@@ -2,21 +2,15 @@ import { useEffect, useState } from "react";
 import "./App.css";
 // import {schema} from "./schema.ts";
 import type { Schema } from "./schema.ts";
-import type { ConnectedDB, WithSKDB } from "typed-skdb";
+import type { WithSKDB } from "typed-skdb";
 
 const DEFAULT_BOTTOM_ADDR = 0x0000001000000000n;
 
+type SKDBPath = WithSKDB<Schema, { path: string }>;
+type SKDBPathOffset = SKDBPath & { offset: number };
 type read_bi = { bi: bigint };
 type read_value = { processing: boolean } | { error: string } | read_bi;
-type val = WithSKDB<
-  Schema,
-  {
-    path: string;
-    offset: number;
-    processing?: boolean;
-  }
-> &
-  read_value;
+type val = SKDBPathOffset & { processing?: boolean } & read_value;
 type bival = val & read_bi;
 type RowExtraProps = {
   name: string;
@@ -34,9 +28,7 @@ function hbi(bi: bigint): string {
 }
 
 async function requestReadWord(
-  skdb: ConnectedDB<Schema>,
-  path: string,
-  offset: number,
+  { skdb, path, offset }: SKDBPathOffset,
   nb: number = 1,
 ) {
   return await skdb.execInsert(
@@ -50,16 +42,14 @@ async function requestReadWord(
   );
 }
 
-function LoadLink(
-  props: WithSKDB<Schema, { path: string; offset: number; n?: number }>,
-) {
+function LoadLink(props: SKDBPathOffset & { n?: number }) {
   const n = props.n ?? 1;
   return (
     <a
       href="#"
       onClick={async (e) => {
         e.preventDefault();
-        requestReadWord(props.skdb, props.path, props.offset, n);
+        requestReadWord(props, n);
       }}
     >
       Load{n > 1 ? " all" : ""}
@@ -79,19 +69,10 @@ function PP(val: val) {
   }
 }
 
-function useWordMay(
-  skdb: ConnectedDB<Schema>,
-  path: string,
-  offset: number,
+function valOfRow(
+  { skdb, path, offset }: SKDBPathOffset,
+  oRow: { progress: number; value: string | null } | undefined,
 ): val {
-  const oRow = skdb.useSelectMaybeSingle(
-    "readFile",
-    ["progress", "value"],
-    "path = @path AND offset = @offset",
-    { path, offset },
-    undefined,
-    { order: [["progress", "DESC"]], limit: 1 },
-  );
   const x =
     oRow === undefined
       ? { processing: false }
@@ -107,16 +88,34 @@ function useWordMay(
   return { skdb, path, offset, ...x };
 }
 
-function useWordMust(
-  skdb: ConnectedDB<Schema>,
-  path: string,
-  offset: number,
+function useWordMay(
+  ...a: [args: SKDBPathOffset] | [args: SKDBPath, offset: number]
 ): val {
-  const val = useWordMay(skdb, path, offset);
+  const args = a.length === 1 ? a[0] : { offset: a[1], ...a[0] };
+  const { skdb, path, offset } = args;
+  return valOfRow(
+    args,
+    skdb.useSelectMaybeSingle(
+      "readFile",
+      ["progress", "value"],
+      "path = @path AND offset = @offset",
+      { path, offset },
+      undefined,
+      { order: [["progress", "DESC"]], limit: 1 },
+    ),
+  );
+}
+
+function useWordMust(
+  ...a: [args: SKDBPathOffset] | [args: SKDBPath, offset: number]
+): val {
+  const args = a.length === 1 ? a[0] : { offset: a[1], ...a[0] };
+  const val = useWordMay(args);
+  const { skdb, path, offset } = args;
   const requireRequest = "processing" in val && val.processing === false;
   useEffect(() => {
     if (requireRequest) {
-      requestReadWord(skdb, path, offset);
+      requestReadWord({ skdb, path, offset });
     }
   }, [skdb, path, offset, requireRequest]);
   return { ...val, processing: true };
@@ -145,20 +144,12 @@ function Row(props: val & RowExtraProps) {
   );
 }
 
-function UseRowMay(
-  props: WithSKDB<Schema, { path: string; offset: number } & RowExtraProps>,
-) {
-  const { skdb, path, offset } = props;
-  const val = useWordMay(skdb, path, offset);
+function UseRowMay(props: SKDBPathOffset & RowExtraProps) {
+  const val = useWordMay(props);
   return <Row {...props} {...val} />;
 }
 
-function LoadAllRow(
-  props: WithSKDB<
-    Schema,
-    { path: string; offset: number; n: number; name: string }
-  >,
-) {
+function LoadAllRow(props: SKDBPathOffset & { n: number; name: string }) {
   const { skdb, path, offset, n } = props;
   const allLoaded = skdb.use(
     skdb.selectCount(
@@ -195,15 +186,13 @@ function BottomAddrExtra({ bi }: bival) {
   );
 }
 
-function FTableElement(
-  props: WithSKDB<Schema, { path: string; offset: number; index: number }>,
-) {
-  const { skdb, path, offset, index } = props;
-  const ptr = useWordMay(skdb, path, offset);
-  return <Row name={`ftable[${index}]`} {...ptr} />;
+function FTableElement(props: SKDBPathOffset & { index: number }) {
+  const ptr = useWordMay(props);
+  return <Row name={`ftable[${props.index}]`} {...ptr} />;
 }
 
-function Ginfo(props: WithSKDB<Schema, { path: string; offset: number }>) {
+function Ginfo(props: SKDBPathOffset) {
+  //const ftable_elements = useWordsMay(props, 64);
   const ftable = [];
   for (let i = 0; i < 64; i++) {
     const offset = props.offset + i * 8;
@@ -219,9 +208,7 @@ function Ginfo(props: WithSKDB<Schema, { path: string; offset: number }>) {
   );
 }
 
-function ReadOfHeader(
-  props: WithSKDB<Schema, { path: string; offset: number }>,
-) {
+function ReadOfHeader(props: SKDBPathOffset) {
   const { offset } = props;
 
   return (
@@ -233,9 +220,8 @@ function ReadOfHeader(
 }
 
 function Mapping(props: WithSKDB<Schema, { path: string }>) {
-  const { skdb, path } = props;
-  const magic = useWordMust(skdb, path, 0);
-  const bottom_addr = useWordMust(skdb, path, 8);
+  const magic = useWordMust(props, 0);
+  const bottom_addr = useWordMust(props, 8);
 
   return (
     <>
