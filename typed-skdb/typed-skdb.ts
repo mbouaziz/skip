@@ -111,12 +111,13 @@ type RestRow<S extends DBSchema, T extends keyof S, K extends PartialRow<S, T>> 
 type OrderOrder = "ASC" | "DESC";
 
 type SelectOrderItem<S extends DBSchema, T extends keyof S> =
-    [PossibleColumnNames<S, T>] | [PossibleColumnNames<S, T>, OrderOrder];
+    [PossibleColumnNames<S, T>, OrderOrder?];
 
 type SelectOrder<S extends DBSchema, T extends keyof S> =
     Array<SelectOrderItem<S, T>>;
 
 type SelectOptions<S extends DBSchema, T extends keyof S> = {
+    group?: PossibleColumnNames<S, T>[],
     order?: SelectOrder<S, T>,
     limit?: number,
 };
@@ -296,7 +297,11 @@ export class ConnectedDB<const S extends DBSchema> {
             queryParts.push("WHERE");
             queryParts.push(where);
         }
-        const { order, limit } = options;
+        const { group, order, limit } = options;
+        if (group !== undefined && group.length > 0) {
+            queryParts.push("GROUP BY");
+            queryParts.push(group.join(", "));
+        }
         if (order !== undefined && order.length > 0) {
             queryParts.push("ORDER BY");
             queryParts.push(order.map(orderItem => orderItem.join(" ")).join(", "));

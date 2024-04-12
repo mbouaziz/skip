@@ -70,9 +70,11 @@ function PP(val: val) {
 }
 
 function valOfRow(
-  { skdb, path, offset }: SKDBPathOffset,
-  oRow: { progress: number; value: string | null } | undefined,
+  args: SKDBPathOffset,
+  oRow: { progress: number; value: string | null; offset?: number } | undefined,
 ): val {
+  const { skdb, path } = args;
+  const offset = oRow?.offset ?? args.offset;
   const x =
     oRow === undefined
       ? { processing: false }
@@ -88,10 +90,25 @@ function valOfRow(
   return { skdb, path, offset, ...x };
 }
 
+function useWordsMay(args: SKDBPathOffset, n: number): val[] {
+  const { skdb, path, offset } = args;
+  const start = offset;
+  const end = offset + 8 * n;
+  const rows = skdb.useSelect(
+    "readFile",
+    ["offset", "progress", "value"],
+    "path = @path AND offset >= @start AND offset <= @end",
+    { path, start, end },
+    [],
+    { group: ["offset"], order: [["offset", "ASC"]] },
+  );
+  return rows.map((row) => valOfRow(args, row));
+}
+
 function useWordMay(
   ...a: [args: SKDBPathOffset] | [args: SKDBPath, offset: number]
 ): val {
-  const args = a.length === 1 ? a[0] : { offset: a[1], ...a[0] };
+  const args = a.length === 1 ? a[0] : { ...a[0], offset: a[1] };
   const { skdb, path, offset } = args;
   return valOfRow(
     args,
@@ -109,7 +126,7 @@ function useWordMay(
 function useWordMust(
   ...a: [args: SKDBPathOffset] | [args: SKDBPath, offset: number]
 ): val {
-  const args = a.length === 1 ? a[0] : { offset: a[1], ...a[0] };
+  const args = a.length === 1 ? a[0] : { ...a[0], offset: a[1] };
   const val = useWordMay(args);
   const { skdb, path, offset } = args;
   const requireRequest = "processing" in val && val.processing === false;
@@ -121,7 +138,7 @@ function useWordMust(
   return { ...val, processing: true };
 }
 
-function Row(props: val & RowExtraProps) {
+function Row(props: val & RowExtraProps & { offsetFrom?: number }) {
   const BIExtra = props.bi_extra;
   const extra =
     BIExtra === undefined || !("bi" in props) ? (
@@ -132,9 +149,13 @@ function Row(props: val & RowExtraProps) {
         <BIExtra {...props} />
       </>
     );
+  const off =
+    props.offsetFrom !== undefined && props.offsetFrom !== props.offset
+      ? hi(props.offsetFrom) + ".." + hi(props.offset)
+      : hi(props.offset);
   return (
     <tr>
-      <td>{hi(props.offset)}</td>
+      <td>{off}</td>
       <td>{props.name}</td>
       <td>
         <PP {...props} />
@@ -149,30 +170,30 @@ function UseRowMay(props: SKDBPathOffset & RowExtraProps) {
   return <Row {...props} {...val} />;
 }
 
-function LoadAllRow(props: SKDBPathOffset & { n: number; name: string }) {
-  const { skdb, path, offset, n } = props;
-  const allLoaded = skdb.use(
-    skdb.selectCount(
-      "readFile",
-      "path = @path AND offset >= @start AND offset <= @end AND progress = 3",
-      { path, start: offset, end: offset + n * 8 },
-    ),
-    0,
-  );
-  if (allLoaded) {
-    return <></>;
-  } else {
-    return (
-      <tr>
-        <td>{hi(props.offset)}</td>
-        <td>{props.name}</td>
-        <td>
-          <LoadLink {...props} />
-        </td>
-      </tr>
-    );
-  }
-}
+// function LoadAllRow(props: SKDBPathOffset & { n: number; name: string }) {
+//   const { skdb, path, offset, n } = props;
+//   const allLoaded = skdb.use(
+//     skdb.selectCount(
+//       "readFile",
+//       "path = @path AND offset >= @start AND offset <= @end AND progress = 3",
+//       { path, start: offset, end: offset + n * 8 },
+//     ),
+//     0,
+//   );
+//   if (allLoaded) {
+//     return <></>;
+//   } else {
+//     return (
+//       <tr>
+//         <td>{hi(props.offset)}</td>
+//         <td>{props.name}</td>
+//         <td>
+//           <LoadLink {...props} />
+//         </td>
+//       </tr>
+//     );
+//   }
+// }
 
 function BottomAddrExtra({ bi }: bival) {
   return bi === DEFAULT_BOTTOM_ADDR ? (
@@ -186,23 +207,83 @@ function BottomAddrExtra({ bi }: bival) {
   );
 }
 
-function FTableElement(props: SKDBPathOffset & { index: number }) {
-  const ptr = useWordMay(props);
-  return <Row name={`ftable[${props.index}]`} {...ptr} />;
-}
-
 function Ginfo(props: SKDBPathOffset) {
-  //const ftable_elements = useWordsMay(props, 64);
-  const ftable = [];
-  for (let i = 0; i < 64; i++) {
-    const offset = props.offset + i * 8;
-    ftable.push(
-      <FTableElement key={offset} {...props} offset={offset} index={i} />,
-    );
+  const slots = useWordsMay(props, 64);
+  const ftable: JSX.Element[] = [];
+  let index = 0;
+  let allLoaded = true;
+  const addMissing = (fromOffset: number, toOffset: number) => {
+    for (let offset = fromOffset; offset <= toOffset; offset += 8) {
+      allLoaded = false;
+      ftable.push(
+        <Row
+          name={`ftable[${index}]`}
+          key={offset}
+          {...props}
+          offset={offset}
+          processing={false}
+        />,
+      );
+      index++;
+    }
+  };
+  let consecutiveZeroes = 0;
+  slots.forEach((cur, i) => {
+    if (i > 0) {
+      addMissing(slots[i - 1].offset + 8, cur.offset - 8);
+    }
+    if (!("bi" in cur)) {
+      allLoaded = false;
+    }
+    const next = slots[i + 1];
+    if (
+      "bi" in cur &&
+      cur.bi === 0n &&
+      next !== undefined &&
+      next.offset == cur.offset + 8 &&
+      "bi" in next &&
+      next.bi === 0n
+    ) {
+      consecutiveZeroes++;
+    } else {
+      const name =
+        consecutiveZeroes > 0
+          ? `ftable[${index - consecutiveZeroes}..${index}]`
+          : `ftable[${index}]`;
+      const offsetFrom = cur.offset - consecutiveZeroes * 8;
+      ftable.push(
+        <Row
+          name={name}
+          key={cur.offset}
+          {...props}
+          {...cur}
+          offsetFrom={offsetFrom}
+        />,
+      );
+      consecutiveZeroes = 0;
+    }
+    index++;
+  });
+  {
+    const firstOffset =
+      slots.length > 0 ? slots[slots.length - 1].offset + 8 : props.offset;
+    const lastOffset = props.offset + 8 * 63;
+    addMissing(firstOffset, lastOffset);
   }
+  const loadAll = allLoaded ? (
+    <></>
+  ) : (
+    <tr>
+      <td>{hi(props.offset)}</td>
+      <td>Free table</td>
+      <td>
+        <LoadLink {...props} n={64} />
+      </td>
+    </tr>
+  );
   return (
     <>
-      <LoadAllRow name="Free table" {...props} n={64} />
+      {loadAll}
       {ftable}
     </>
   );
@@ -247,6 +328,7 @@ function App({ skdb }: WithSKDB<Schema>) {
     <div className="app">
       <input
         type="text"
+        name="path"
         value={mappingFileInput}
         onChange={(e) => setMappingFileInput(e.target.value)}
         onKeyDown={async (e) => {

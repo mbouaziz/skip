@@ -158,7 +158,11 @@ export class ConnectedDB {
             queryParts.push("WHERE");
             queryParts.push(where);
         }
-        const { order, limit } = options;
+        const { group, order, limit } = options;
+        if (group !== undefined && group.length > 0) {
+            queryParts.push("GROUP BY");
+            queryParts.push(group.join(", "));
+        }
         if (order !== undefined && order.length > 0) {
             queryParts.push("ORDER BY");
             queryParts.push(order.map(orderItem => orderItem.join(" ")).join(", "));

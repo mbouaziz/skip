@@ -21,6 +21,7 @@ async function onNewReadFileRequest(path: string, offset: number): Promise<void>
     try {
         const existingResult = await skdb.execSelectCount("readFile", "path = @path AND offset = @offset AND progress > 0", { path, offset });
         if (existingResult > 0) {
+            await skdb.execDelete("readFile", "path = @path AND offset = @offset AND progress = 0", { path, offset });
             console.log(`Abandoning ${path} @ ${offset}`);
             return;
         }

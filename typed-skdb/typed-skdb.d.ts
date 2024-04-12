@@ -44,10 +44,12 @@ type tableOf<X> = string & keyof X;
 type RestRow<S extends DBSchema, T extends keyof S, K extends PartialRow<S, T>> = Omit<FullRow<S, T>, keyof K>;
 type OrderOrder = "ASC" | "DESC";
 type SelectOrderItem<S extends DBSchema, T extends keyof S> = [
-    PossibleColumnNames<S, T>
-] | [PossibleColumnNames<S, T>, OrderOrder];
+    PossibleColumnNames<S, T>,
+    OrderOrder?
+];
 type SelectOrder<S extends DBSchema, T extends keyof S> = Array<SelectOrderItem<S, T>>;
 type SelectOptions<S extends DBSchema, T extends keyof S> = {
+    group?: PossibleColumnNames<S, T>[];
     order?: SelectOrder<S, T>;
     limit?: number;
 };
