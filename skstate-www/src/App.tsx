@@ -208,19 +208,21 @@ function BottomAddrExtra({ bi }: bival) {
 }
 
 function Ginfo(props: SKDBPathOffset) {
+  const foldConsecutiveZeroes = true;
   const slots = useWordsMay(props, 64);
   const ftable: JSX.Element[] = [];
   let index = 0;
   let allLoaded = true;
-  const addMissing = (fromOffset: number, toOffset: number) => {
-    for (let offset = fromOffset; offset <= toOffset; offset += 8) {
+  let lastEmptyOffset = props.offset;
+  const addMissing = (toOffset: number) => {
+    for (; lastEmptyOffset < toOffset; lastEmptyOffset += 8) {
       allLoaded = false;
       ftable.push(
         <Row
           name={`ftable[${index}]`}
-          key={offset}
+          key={index}
           {...props}
-          offset={offset}
+          offset={lastEmptyOffset}
           processing={false}
         />,
       );
@@ -229,14 +231,13 @@ function Ginfo(props: SKDBPathOffset) {
   };
   let consecutiveZeroes = 0;
   slots.forEach((cur, i) => {
-    if (i > 0) {
-      addMissing(slots[i - 1].offset + 8, cur.offset - 8);
-    }
+    addMissing(cur.offset);
     if (!("bi" in cur)) {
       allLoaded = false;
     }
     const next = slots[i + 1];
     if (
+      foldConsecutiveZeroes &&
       "bi" in cur &&
       cur.bi === 0n &&
       next !== undefined &&
@@ -254,7 +255,7 @@ function Ginfo(props: SKDBPathOffset) {
       ftable.push(
         <Row
           name={name}
-          key={cur.offset}
+          key={index}
           {...props}
           {...cur}
           offsetFrom={offsetFrom}
@@ -263,13 +264,9 @@ function Ginfo(props: SKDBPathOffset) {
       consecutiveZeroes = 0;
     }
     index++;
+    lastEmptyOffset = cur.offset + 8;
   });
-  {
-    const firstOffset =
-      slots.length > 0 ? slots[slots.length - 1].offset + 8 : props.offset;
-    const lastOffset = props.offset + 8 * 63;
-    addMissing(firstOffset, lastOffset);
-  }
+  addMissing(props.offset + 8 * 64);
   const loadAll = allLoaded ? (
     <></>
   ) : (
