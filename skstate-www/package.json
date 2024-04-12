@@ -16,10 +16,7 @@
     "@mui/material": "^5.14.14",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "skdb": "^0.0.63",
-    "skdb-dev": "^0.1.20",
-    "skdb-react": "^0.1.20",
-    "typed-skdb": "link:typed-skdb"
+    "typed-skdb": "file:../typed-skdb"
   },
   "devDependencies": {
     "@types/react": "^18.2.73",
