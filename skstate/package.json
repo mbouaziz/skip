@@ -8,9 +8,8 @@
   "type": "module",
   "author": "SkipLabs",
   "devDependencies": {
-    "@types/node": "^20.8.8",
-    "@types/bun": "latest",
-    "typescript": "^5.4.3"
+    "@types/node": "^20.12.7",
+    "typescript": "^5.4.5"
   },
   "dependencies": {
     "typed-skdb": "file:../typed-skdb"

@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "typed-skdb",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Typed wrapper around SKDB",
   "main": "typed-skdb.js",
   "types": "typed-skdb.d.ts",
@@ -10,7 +10,7 @@
     "skdb-dev": "^0.1.22"
   },
   "devDependencies": {
-    "@types/react": "^18.2.73",
-    "typescript": "^5.4.3"
+    "@types/react": "^18.2.77",
+    "typescript": "^5.4.5"
   }
 }
