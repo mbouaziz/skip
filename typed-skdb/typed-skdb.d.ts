@@ -55,7 +55,8 @@ declare class Query<T> {
     readonly query: string;
     readonly params: Params;
     readonly ofSKDBTable: (t: SKDBTable) => T;
-    constructor(query: string, params: Params, ofSKDBTable: (t: SKDBTable) => T);
+    private constructor();
+    static raw(query: string, params: Params): Query<SKDBTable>;
     static void(query: string, params: Params): Query<void>;
     mapResult<U>(f: (x: T) => U): Query<U>;
     static transac(qs: Query<void>[]): Query<void>;
@@ -63,6 +64,9 @@ declare class Query<T> {
     maybeSingle<T>(this: Query<T[]>): Query<T | undefined>;
     mustRow<T>(this: Query<T | undefined>): Query<T>;
     mustSingle<T>(this: Query<T[]>): Query<T>;
+    firstRow<T>(this: Query<T[]>): Query<T>;
+    firstField<T>(this: Query<Record<string, T>>): Query<T>;
+    firstFieldOfFirstRow<T>(this: Query<Record<string, T>[]>): Query<T>;
     getColumn<const C extends string, T>(this: Query<Record<C, T>[]>, column: C): Query<T[]>;
     maybeColumn<const C extends string, T>(this: Query<Record<C, T> | undefined>, column: C): Query<T | undefined>;
     maybeScalar<const C extends string, T>(this: Query<Record<C, T>[]>, column: C): Query<T | undefined>;
@@ -79,8 +83,7 @@ export declare class ConnectedDB<const S extends DBSchema> {
         close: () => Promise<void>;
     }>;
     use<T>(q: Query<T>, initial: T): T;
-    private buildSelectQueryGen;
-    private buildSelectQuery;
+    private selectRaw;
     select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(table: T, columns: C, where?: string, params?: Params, options?: SelectOptions<S, T>): Query<Rows<S, T, C>>;
     selectOneField<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(table: T, column: C, where?: string, params?: Params, options?: SelectOptions<S, T>): Query<ColumnType<S, T, C>[]>;
     selectCount<const T extends tableOf<S>>(table: T, where?: string, params?: Params): Query<number>;

@@ -18,6 +18,10 @@ type val = WithSKDB<
 > &
   read_value;
 type bival = val & read_bi;
+type RowExtraProps = {
+  name: string;
+  bi_extra?: (v: bival) => React.ReactElement;
+};
 
 function hi(i: number): string {
   const s = i.toString(16);
@@ -118,9 +122,7 @@ function useWordMust(
   return { ...val, processing: true };
 }
 
-function Row(
-  props: val & { name: string; bi_extra?: (v: bival) => React.ReactElement },
-) {
+function Row(props: val & RowExtraProps) {
   const BIExtra = props.bi_extra;
   const extra =
     BIExtra === undefined || !("bi" in props) ? (
@@ -143,13 +145,29 @@ function Row(
   );
 }
 
+function UseRowMay(
+  props: WithSKDB<Schema, { path: string; offset: number } & RowExtraProps>,
+) {
+  const { skdb, path, offset } = props;
+  const val = useWordMay(skdb, path, offset);
+  return <Row {...props} {...val} />;
+}
+
 function LoadAllRow(
   props: WithSKDB<
     Schema,
     { path: string; offset: number; n: number; name: string }
   >,
 ) {
-  const allLoaded = false;
+  const { skdb, path, offset, n } = props;
+  const allLoaded = skdb.use(
+    skdb.selectCount(
+      "readFile",
+      "path = @path AND offset >= @start AND offset <= @end AND progress = 3",
+      { path, start: offset, end: offset + n * 8 },
+    ),
+    0,
+  );
   if (allLoaded) {
     return <></>;
   } else {
@@ -204,12 +222,11 @@ function Ginfo(props: WithSKDB<Schema, { path: string; offset: number }>) {
 function ReadOfHeader(
   props: WithSKDB<Schema, { path: string; offset: number }>,
 ) {
-  const { skdb, path, offset } = props;
-  const gmutex_attr = useWordMay(skdb, path, offset);
+  const { offset } = props;
 
   return (
     <>
-      <Row name="gmutex_attr" {...gmutex_attr} />
+      <UseRowMay name="gmutex_attr" {...props} />
       <Ginfo {...props} offset={offset + 40} />
     </>
   );

@@ -2,6 +2,7 @@ import { skdbDevServerDb, createLocalDbConnectedTo } from "skdb-dev";
 import { SKDBTable } from "skdb";
 import * as React from "react";
 function ignore(_) { }
+function id(x) { return x; }
 // TODO: use branded types to check this on the input schema
 function checkColumnName(_name) { }
 function checkTableName(_name) { }
@@ -31,6 +32,9 @@ class Query {
         this.params = params;
         this.ofSKDBTable = ofSKDBTable;
     }
+    static raw(query, params) {
+        return new Query(query, params, id);
+    }
     static void(query, params) {
         return new Query(query, params, ignore);
     }
@@ -55,6 +59,15 @@ class Query {
     mustSingle() {
         return this.maybeSingle().mustRow();
     }
+    firstRow() {
+        return this.mapResult(t => t[0]);
+    }
+    firstField() {
+        return this.mapResult(t => Object.values(t)[0]);
+    }
+    firstFieldOfFirstRow() {
+        return this.firstRow().firstField();
+    }
     getColumn(column) {
         return this.mapResult(rows => rows.map(row => row?.[column]));
     }
@@ -66,11 +79,11 @@ class Query {
     }
 }
 ;
-function rowsOfSKDBTable(t) {
+function asArray(t) {
     return t;
 }
-function scalarOfSKDBTable(t) {
-    return Object.values(t[0])[0];
+function asRows(t) {
+    return t;
 }
 function logQuery(kind, { query, params }) {
     const p = Object.keys(params).length === 0 ?
@@ -100,7 +113,8 @@ export class ConnectedDB {
         this.schema = schema;
         this.localDb = localDb;
     }
-    /* Actions */
+    /* Actions on queries
+        Only these functions actually need localDb. */
     async exec(q) {
         logQuery("EXEC", q);
         const res = await this.localDb.exec(q.query, q.params);
@@ -134,7 +148,8 @@ export class ConnectedDB {
         }, deps);
         return state;
     }
-    buildSelectQueryGen(table, what, where = "", options = {}) {
+    /* Select query builders */
+    selectRaw(table, what, where = "", params = {}, options = {}) {
         const queryParts = ["SELECT"];
         queryParts.push(what);
         queryParts.push("FROM");
@@ -152,24 +167,22 @@ export class ConnectedDB {
             queryParts.push("LIMIT");
             queryParts.push(limit.toString());
         }
-        return queryParts.join(" ");
+        const query = queryParts.join(" ");
+        return Query.raw(query, params).mapResult((asArray));
     }
-    buildSelectQuery(table, columns, where, options) {
+    select(table, columns, where, params, options) {
         const what = columns.join(", ");
-        return this.buildSelectQueryGen(table, what, where, options);
+        return this.selectRaw(table, what, where, params, options).mapResult(asRows);
     }
-    select(table, columns, where = "", params = {}, options) {
-        const query = this.buildSelectQuery(table, columns, where, options);
-        return new Query(query, params, rowsOfSKDBTable);
-    }
+    // Utility to help typescript in this particular case
     selectOneField(table, column, where, params, options) {
+        // TS doesn't like this.select(...).getColumn(column)
         return this.select(table, [column], where, params, options).mapResult(rows => rows.map(row => row?.[column]));
     }
-    selectCount(table, where, params = {}) {
-        const query = this.buildSelectQueryGen(table, "COUNT(*)", where);
-        return new Query(query, params, scalarOfSKDBTable);
+    selectCount(table, where, params) {
+        return this.selectRaw(table, "COUNT(*)", where, params).firstFieldOfFirstRow();
     }
-    /* Query builders */
+    /* Other query builders */
     insert(table, r) {
         const queryParts = ["INSERT INTO"];
         queryParts.push(table);

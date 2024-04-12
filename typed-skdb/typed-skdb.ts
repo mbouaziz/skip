@@ -8,6 +8,7 @@ import * as React from "react";
 type PossiblyReadonly<T> = T | Readonly<T>
 
 function ignore(_: any): void { }
+function id<T>(x: T): T { return x; }
 
 /* Types from SKDB */
 
@@ -121,11 +122,15 @@ type SelectOptions<S extends DBSchema, T extends keyof S> = {
 };
 
 class Query<T> {
-    constructor(
+    private constructor(
         public readonly query: string,
         public readonly params: Params,
         public readonly ofSKDBTable: (t: SKDBTable) => T,
     ) { }
+
+    public static raw(query: string, params: Params): Query<SKDBTable> {
+        return new Query(query, params, id);
+    }
 
     public static void(query: string, params: Params): Query<void> {
         return new Query(query, params, ignore);
@@ -162,6 +167,18 @@ class Query<T> {
         return this.maybeSingle().mustRow();
     }
 
+    public firstRow<T>(this: Query<T[]>): Query<T> {
+        return this.mapResult(t => t[0]);
+    }
+
+    public firstField<T>(this: Query<Record<string, T>>): Query<T> {
+        return this.mapResult(t => Object.values(t)[0]);
+    }
+
+    public firstFieldOfFirstRow<T>(this: Query<Record<string, T>[]>): Query<T> {
+        return this.firstRow().firstField();
+    }
+
     public getColumn<const C extends string, T>(this: Query<Record<C, T>[]>, column: C): Query<T[]> {
         return this.mapResult(rows => rows.map(row => row?.[column]));
     }
@@ -175,13 +192,13 @@ class Query<T> {
     }
 };
 
-function rowsOfSKDBTable<const S extends DBSchema, const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
-    t: SKDBTable
-): Rows<S, T, C> {
-    return t as Array<Record<string, any>> as Rows<S, T, C>;
+function asArray<T>(t: SKDBTable): Array<Record<string, T>> {
+    return t as Array<Record<string, T>>;
 }
-function scalarOfSKDBTable<T extends string | number>(t: SKDBTable): T {
-    return Object.values(t[0])[0];
+function asRows<const S extends DBSchema, const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
+    t: Array<Record<string, unknown>>
+): Rows<S, T, C> {
+    return t as Rows<S, T, C>;
 }
 
 function logQuery<T>(kind: string, { query, params }: Query<T>) {
@@ -215,7 +232,8 @@ export class ConnectedDB<const S extends DBSchema> {
         private readonly localDb: SKDB) {
     }
 
-    /* Actions */
+    /* Actions on queries
+        Only these functions actually need localDb. */
 
     public async exec<T>(q: Query<T>): Promise<T> {
         logQuery("EXEC", q);
@@ -261,12 +279,15 @@ export class ConnectedDB<const S extends DBSchema> {
         return state;
     }
 
-    private buildSelectQueryGen<const T extends tableOf<S>>(
+    /* Select query builders */
+
+    private selectRaw<Res, const T extends tableOf<S>>(
         table: T,
         what: string,
         where: string = "",
+        params: Params = {},
         options: SelectOptions<S, T> = {},
-    ): string {
+    ): Query<Array<Record<string, Res>>> {
         const queryParts = ["SELECT"];
         queryParts.push(what);
         queryParts.push("FROM");
@@ -284,30 +305,22 @@ export class ConnectedDB<const S extends DBSchema> {
             queryParts.push("LIMIT");
             queryParts.push(limit.toString());
         }
-        return queryParts.join(" ");
-    }
-
-    private buildSelectQuery<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
-        table: T,
-        columns: C,
-        where?: string,
-        options?: SelectOptions<S, T>,
-    ): string {
-        const what = columns.join(", ");
-        return this.buildSelectQueryGen(table, what, where, options);
+        const query = queryParts.join(" ");
+        return Query.raw(query, params).mapResult(asArray<Res>);
     }
 
     public select<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>[]>(
         table: T,
         columns: C,
-        where: string = "",
-        params: Params = {},
+        where?: string,
+        params?: Params,
         options?: SelectOptions<S, T>,
     ): Query<Rows<S, T, C>> {
-        const query = this.buildSelectQuery(table, columns, where, options);
-        return new Query(query, params, rowsOfSKDBTable);
+        const what = columns.join(", ");
+        return this.selectRaw(table, what, where, params, options).mapResult(asRows);
     }
 
+    // Utility to help typescript in this particular case
     public selectOneField<const T extends tableOf<S>, const C extends PossibleColumnNames<S, T>>(
         table: T,
         column: C,
@@ -315,20 +328,20 @@ export class ConnectedDB<const S extends DBSchema> {
         params?: Params,
         options?: SelectOptions<S, T>,
     ): Query<ColumnType<S, T, C>[]> {
+        // TS doesn't like this.select(...).getColumn(column)
         return this.select(table, [column], where, params, options).mapResult(rows => rows.map(row => row?.[column]));
     }
 
     public selectCount<const T extends tableOf<S>>(
         table: T,
         where?: string,
-        params: Params = {},
+        params?: Params,
         //options?: SelectOptions<S, T>,
     ): Query<number> {
-        const query = this.buildSelectQueryGen(table, "COUNT(*)", where);
-        return new Query<number>(query, params, scalarOfSKDBTable);
+        return this.selectRaw<number, T>(table, "COUNT(*)", where, params).firstFieldOfFirstRow();
     }
 
-    /* Query builders */
+    /* Other query builders */
 
     public insert<const T extends tableOf<S>>(
         table: T,
