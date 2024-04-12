@@ -28,31 +28,40 @@ function hbi(bi: bigint): string {
 }
 
 async function requestReadWord(
-  { skdb, path, offset }: SKDBPathOffset,
-  nb: number = 1,
+  args: SKDBPathOffset,
+  n_or_missingOffsets?: number | number[],
 ) {
+  const { skdb, path, offset } = args;
+  const offsets = Array.isArray(n_or_missingOffsets)
+    ? n_or_missingOffsets
+    : typeof n_or_missingOffsets === "number"
+    ? Array.from({ length: n_or_missingOffsets }, (_, i) => offset + 8 * i)
+    : [offset];
   return await skdb.execInsert(
     "readFile",
-    Array.from({ length: nb }, (_, i) => ({
+    offsets.map((offset: number) => ({
       path,
-      offset: offset + i * 8,
+      offset,
       progress: 0,
       value: null,
     })),
   );
 }
 
-function LoadLink(props: SKDBPathOffset & { n?: number }) {
+function LoadLink(
+  props: SKDBPathOffset & { n?: number; missingOffsets?: number[] },
+) {
   const n = props.n ?? 1;
+  const suffix = props.missingOffsets !== undefined || n > 1 ? " all" : "";
   return (
     <a
       href="#"
       onClick={async (e) => {
         e.preventDefault();
-        requestReadWord(props, n);
+        requestReadWord(props, props.missingOffsets || n);
       }}
     >
-      Load{n > 1 ? " all" : ""}
+      Load{suffix}
     </a>
   );
 }
@@ -207,16 +216,16 @@ function BottomAddrExtra({ bi }: bival) {
   );
 }
 
-function Ginfo(props: SKDBPathOffset) {
+function FTable(props: SKDBPathOffset) {
   const foldConsecutiveZeroes = true;
   const slots = useWordsMay(props, 64);
   const ftable: JSX.Element[] = [];
   let index = 0;
-  let allLoaded = true;
+  const missingOffsets: number[] = [];
   let lastEmptyOffset = props.offset;
   const addMissing = (toOffset: number) => {
     for (; lastEmptyOffset < toOffset; lastEmptyOffset += 8) {
-      allLoaded = false;
+      missingOffsets.push(lastEmptyOffset);
       ftable.push(
         <Row
           name={`ftable[${index}]`}
@@ -232,8 +241,8 @@ function Ginfo(props: SKDBPathOffset) {
   let consecutiveZeroes = 0;
   slots.forEach((cur, i) => {
     addMissing(cur.offset);
-    if (!("bi" in cur)) {
-      allLoaded = false;
+    if (!("bi" in cur) && cur.processing !== true) {
+      missingOffsets.push(cur.offset);
     }
     const next = slots[i + 1];
     if (
@@ -267,21 +276,35 @@ function Ginfo(props: SKDBPathOffset) {
     lastEmptyOffset = cur.offset + 8;
   });
   addMissing(props.offset + 8 * 64);
-  const loadAll = allLoaded ? (
-    <></>
-  ) : (
-    <tr>
-      <td>{hi(props.offset)}</td>
-      <td>Free table</td>
-      <td>
-        <LoadLink {...props} n={64} />
-      </td>
-    </tr>
-  );
+  const loadAll =
+    missingOffsets.length === 0 ? (
+      <></>
+    ) : (
+      <tr>
+        <td>{hi(props.offset)}</td>
+        <td>Free table</td>
+        <td>
+          <LoadLink {...props} missingOffsets={missingOffsets} />
+        </td>
+      </tr>
+    );
   return (
     <>
       {loadAll}
       {ftable}
+    </>
+  );
+}
+
+function Context(props: SKDBPathOffset) {
+  return <UseRowMay name="Context" {...props} />;
+}
+
+function Ginfo(props: SKDBPathOffset) {
+  return (
+    <>
+      <FTable {...props} />
+      <Context {...props} offset={props.offset + 8 * 64} />
     </>
   );
 }
