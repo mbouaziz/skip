@@ -289,7 +289,7 @@ function Ginfo(props: SKDBPathOffset) {
   );
 }
 
-function ReadOfHeader(props: SKDBPathOffset) {
+function RestOfHeader(props: SKDBPathOffset) {
   const { offset } = props;
 
   return (
@@ -308,7 +308,7 @@ function Mapping(props: WithSKDB<Schema, { path: string }>) {
     <>
       <Row name="magic" {...magic} />
       <Row name="bottom_addr" {...bottom_addr} bi_extra={BottomAddrExtra} />
-      {"bi" in magic ? <ReadOfHeader {...props} offset={16} /> : <></>}
+      {"bi" in magic ? <RestOfHeader {...props} offset={16} /> : <></>}
     </>
   );
 }
