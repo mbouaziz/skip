@@ -44,7 +44,7 @@ function checkColumnName(_name: columnName): void { }
 function checkTableName(_name: tableName): void { }
 
 function typedColumnsToText<C extends columns>(cols: C): string {
-    const res = cols.map(([name, type, nullness]) => {
+    const res = cols.map(([name, type, nullness]: columnDescription) => {
         checkColumnName(name);
         return `${name} ${type} ${nullness ?? ""}`
     });
@@ -168,16 +168,12 @@ class Query<T> {
         return this.maybeSingle().mustRow();
     }
 
-    public firstRow<T>(this: Query<T[]>): Query<T> {
-        return this.mapResult(t => t[0]);
+    public singleField<T>(this: Query<Record<string, T>>): Query<T> {
+        return this.mapResult(t => getMust("field", Object.values(t)[0]));
     }
 
-    public firstField<T>(this: Query<Record<string, T>>): Query<T> {
-        return this.mapResult(t => Object.values(t)[0]);
-    }
-
-    public firstFieldOfFirstRow<T>(this: Query<Record<string, T>[]>): Query<T> {
-        return this.firstRow().firstField();
+    public singleFieldOfSingleRow<T>(this: Query<Record<string, T>[]>): Query<T> {
+        return this.mustSingle().singleField();
     }
 
     public getColumn<const C extends string, T>(this: Query<Record<C, T>[]>, column: C): Query<T[]> {
@@ -233,6 +229,10 @@ export class ConnectedDB<const S extends DBSchema> {
         private readonly localDb: SKDB) {
     }
 
+    private tableSchema<const T extends tableOf<S>>(table: T): S[T] {
+        return this.schema[table];
+    }
+
     /* Actions on queries
         Only these functions actually need localDb. */
 
@@ -274,6 +274,7 @@ export class ConnectedDB<const S extends DBSchema> {
                         return handle.close();
                     }
                     closeable.close = handle.close;
+                    return;
                 });
             return () => { removeQuery = true; closeable.close(); };
         }, deps);
@@ -343,7 +344,7 @@ export class ConnectedDB<const S extends DBSchema> {
         params?: Params,
         //options?: SelectOptions<S, T>,
     ): Query<number> {
-        return this.selectRaw<number, T>(table, "COUNT(*)", where, params).firstFieldOfFirstRow();
+        return this.selectRaw<number, T>(table, "COUNT(*)", where, params).singleFieldOfSingleRow();
     }
 
     /* Other query builders */
@@ -354,20 +355,21 @@ export class ConnectedDB<const S extends DBSchema> {
         const [table, r] = args;
         const queryParts = ["INSERT INTO"];
         queryParts.push(table);
-        const cols = this.schema[table].map(([colName]) => colName).join(", ");
+        const tableSchema = this.tableSchema(table);
+        const cols = tableSchema.map(([colName]: columnDescription) => colName).join(", ");
         queryParts.push(`(${cols}, skdb_access)`);
         queryParts.push("VALUES");
-        const values = [];
+        const values: string[][] = [];
         let params: Params;
         if (Array.isArray(r)) {
-            const preParams = [];
-            for (const i in r) {
-                values.push(this.schema[table].map(([colName]) => `@${colName}_${i}`));
-                preParams.push(Object.entries(r[i]).map(([c, v]) => [`${c}_${i}`, v]));
-            }
+            const preParams: [string, ParamValue][][] = [];
+            r.forEach((row, i) => {
+                values.push(tableSchema.map(([colName]: columnDescription) => `@${colName}_${i}`));
+                preParams.push(Object.entries(row).map(([c, v]: [columnName, any]) => [`${c}_${i}`, v]));
+            });
             params = Object.fromEntries(preParams.flat());
         } else {
-            values.push(this.schema[table].map(([colName]) => `@${colName}`));
+            values.push(tableSchema.map(([colName]: columnDescription) => `@${colName}`));
             params = r;
         }
         queryParts.push(values.map(v => `(${v.join(", ")}, 'read-write')`).join(", "));

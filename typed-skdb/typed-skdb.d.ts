@@ -66,9 +66,8 @@ declare class Query<T> {
     maybeSingle<T>(this: Query<T[]>): Query<T | undefined>;
     mustRow<T>(this: Query<T | undefined>): Query<T>;
     mustSingle<T>(this: Query<T[]>): Query<T>;
-    firstRow<T>(this: Query<T[]>): Query<T>;
-    firstField<T>(this: Query<Record<string, T>>): Query<T>;
-    firstFieldOfFirstRow<T>(this: Query<Record<string, T>[]>): Query<T>;
+    singleField<T>(this: Query<Record<string, T>>): Query<T>;
+    singleFieldOfSingleRow<T>(this: Query<Record<string, T>[]>): Query<T>;
     getColumn<const C extends string, T>(this: Query<Record<C, T>[]>, column: C): Query<T[]>;
     maybeColumn<const C extends string, T>(this: Query<Record<C, T> | undefined>, column: C): Query<T | undefined>;
     maybeScalar<const C extends string, T>(this: Query<Record<C, T>[]>, column: C): Query<T | undefined>;
@@ -77,6 +76,7 @@ export declare class ConnectedDB<const S extends DBSchema> {
     private readonly schema;
     private readonly localDb;
     constructor(schema: S, localDb: SKDB);
+    private tableSchema;
     exec<T>(q: Query<T>): Promise<T>;
     watch<T>(q: Query<T>, onChange: (this: ConnectedDB<S>, v: T) => void): Promise<{
         close: () => Promise<void>;

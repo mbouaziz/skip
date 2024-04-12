@@ -5,9 +5,8 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
-    //"jsx": "react-jsx",
-    "allowJs": true,
-
+    "allowJs": false,
+    "skipLibCheck": true,
     "incremental": true,
 
     // Bundler mode
@@ -23,13 +22,14 @@
 
     // Best practices
     "strict": true,
-    "skipLibCheck": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
     "noFallthroughCasesInSwitch": true,
-
-    // Some stricter flags (disabled by default)
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    //"noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "strictNullChecks": true,
   },
 }

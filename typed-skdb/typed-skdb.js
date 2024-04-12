@@ -59,14 +59,11 @@ class Query {
     mustSingle() {
         return this.maybeSingle().mustRow();
     }
-    firstRow() {
-        return this.mapResult(t => t[0]);
+    singleField() {
+        return this.mapResult(t => getMust("field", Object.values(t)[0]));
     }
-    firstField() {
-        return this.mapResult(t => Object.values(t)[0]);
-    }
-    firstFieldOfFirstRow() {
-        return this.firstRow().firstField();
+    singleFieldOfSingleRow() {
+        return this.mustSingle().singleField();
     }
     getColumn(column) {
         return this.mapResult(rows => rows.map(row => row?.[column]));
@@ -113,6 +110,9 @@ export class ConnectedDB {
         this.schema = schema;
         this.localDb = localDb;
     }
+    tableSchema(table) {
+        return this.schema[table];
+    }
     /* Actions on queries
         Only these functions actually need localDb. */
     async exec(q) {
@@ -143,6 +143,7 @@ export class ConnectedDB {
                     return handle.close();
                 }
                 closeable.close = handle.close;
+                return;
             });
             return () => { removeQuery = true; closeable.close(); };
         }, deps);
@@ -184,28 +185,29 @@ export class ConnectedDB {
         return this.select(table, [column], where, params, options).mapResult(rows => rows.map(row => row?.[column]));
     }
     selectCount(table, where, params) {
-        return this.selectRaw(table, "COUNT(*)", where, params).firstFieldOfFirstRow();
+        return this.selectRaw(table, "COUNT(*)", where, params).singleFieldOfSingleRow();
     }
     /* Other query builders */
     insert(...args) {
         const [table, r] = args;
         const queryParts = ["INSERT INTO"];
         queryParts.push(table);
-        const cols = this.schema[table].map(([colName]) => colName).join(", ");
+        const tableSchema = this.tableSchema(table);
+        const cols = tableSchema.map(([colName]) => colName).join(", ");
         queryParts.push(`(${cols}, skdb_access)`);
         queryParts.push("VALUES");
         const values = [];
         let params;
         if (Array.isArray(r)) {
             const preParams = [];
-            for (const i in r) {
-                values.push(this.schema[table].map(([colName]) => `@${colName}_${i}`));
-                preParams.push(Object.entries(r[i]).map(([c, v]) => [`${c}_${i}`, v]));
-            }
+            r.forEach((row, i) => {
+                values.push(tableSchema.map(([colName]) => `@${colName}_${i}`));
+                preParams.push(Object.entries(row).map(([c, v]) => [`${c}_${i}`, v]));
+            });
             params = Object.fromEntries(preParams.flat());
         }
         else {
-            values.push(this.schema[table].map(([colName]) => `@${colName}`));
+            values.push(tableSchema.map(([colName]) => `@${colName}`));
             params = r;
         }
         queryParts.push(values.map(v => `(${v.join(", ")}, 'read-write')`).join(", "));
