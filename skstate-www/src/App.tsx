@@ -14,7 +14,7 @@ type val = SKDBPathOffset & { processing?: boolean } & read_value;
 type bival = val & read_bi;
 type RowExtraProps = {
   name: string;
-  bi_extra?: (v: bival) => React.ReactElement;
+  extra?: (v: bival) => React.ReactElement | string;
 };
 
 function hi(i: number): string {
@@ -66,6 +66,33 @@ function LoadLink(
   );
 }
 
+const sizeUnitPrefix = ["", "kilo", "mega", "giba", "tera", "peta"];
+
+function PPSize({ bi }: bival) {
+  let o = 0;
+  let n: number;
+  if (bi >= 0x400n) {
+    let i = bi;
+    o++;
+    while (i >= 0x100000n && o < sizeUnitPrefix.length - 1) {
+      i /= 0x400n;
+      o++;
+    }
+    n = Number(i) / 0x400;
+  } else {
+    n = Number(bi);
+  }
+  return (
+    <span title={bi.toLocaleString(undefined, { style: "unit", unit: "byte" })}>
+      {n.toLocaleString(undefined, {
+        style: "unit",
+        unit: sizeUnitPrefix[o] + "byte",
+        maximumSignificantDigits: 4,
+      })}
+    </span>
+  );
+}
+
 function PP(val: val) {
   if ("bi" in val) {
     return hbi(val.bi);
@@ -102,7 +129,7 @@ function valOfRow(
 function useWordsMay(args: SKDBPathOffset, n: number): val[] {
   const { skdb, path, offset } = args;
   const start = offset;
-  const end = offset + 8 * n;
+  const end = offset + 8 * (n - 1);
   const rows = skdb.useSelect(
     "readFile",
     ["offset", "progress", "value"],
@@ -148,14 +175,14 @@ function useWordMust(
 }
 
 function Row(props: val & RowExtraProps & { offsetFrom?: number }) {
-  const BIExtra = props.bi_extra;
+  const Extra = props.extra;
   const extra =
-    BIExtra === undefined || !("bi" in props) ? (
+    Extra === undefined || !("bi" in props) ? (
       <></>
     ) : (
       <>
         &nbsp;
-        <BIExtra {...props} />
+        <Extra {...props} />
       </>
     );
   const off =
@@ -216,7 +243,7 @@ function BottomAddrExtra({ bi }: bival) {
   );
 }
 
-function FTable(props: SKDBPathOffset) {
+function FreeTable(props: SKDBPathOffset) {
   const foldConsecutiveZeroes = true;
   const slots = useWordsMay(props, 64);
   const ftable: JSX.Element[] = [];
@@ -297,14 +324,24 @@ function FTable(props: SKDBPathOffset) {
 }
 
 function Context(props: SKDBPathOffset) {
-  return <UseRowMay name="Context" {...props} />;
+  return <UseRowMay name="context" {...props} />;
 }
 
 function Ginfo(props: SKDBPathOffset) {
   return (
     <>
-      <FTable {...props} />
+      <FreeTable {...props} />
       <Context {...props} offset={props.offset + 8 * 64} />
+      <UseRowMay name="head" {...props} offset={props.offset + 8 * 65} />
+      <UseRowMay name="end" {...props} offset={props.offset + 8 * 66} />
+      <UseRowMay name="fileName" {...props} offset={props.offset + 8 * 67} />
+      <UseRowMay name="break_ptr" {...props} offset={props.offset + 8 * 68} />
+      <UseRowMay
+        name="total_palloc_size"
+        {...props}
+        offset={props.offset + 8 * 69}
+        extra={PPSize}
+      />
     </>
   );
 }
@@ -327,7 +364,7 @@ function Mapping(props: WithSKDB<Schema, { path: string }>) {
   return (
     <>
       <Row name="magic" {...magic} />
-      <Row name="bottom_addr" {...bottom_addr} bi_extra={BottomAddrExtra} />
+      <Row name="bottom_addr" {...bottom_addr} extra={BottomAddrExtra} />
       {"bi" in magic ? <RestOfHeader {...props} offset={16} /> : <></>}
     </>
   );
