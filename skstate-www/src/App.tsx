@@ -66,7 +66,7 @@ function LoadLink(
   );
 }
 
-const sizeUnitPrefix = ["", "kilo", "mega", "giba", "tera", "peta"];
+const sizeUnitPrefix = ["", "kilo", "mega", "giga", "tera", "peta"];
 
 function PPSize({ bi }: bival) {
   let o = 0;
@@ -328,46 +328,83 @@ function Context(props: SKDBPathOffset) {
 }
 
 function Ginfo(props: SKDBPathOffset) {
-  return (
-    <>
-      <FreeTable {...props} />
-      <Context {...props} offset={props.offset + 8 * 64} />
-      <UseRowMay name="head" {...props} offset={props.offset + 8 * 65} />
-      <UseRowMay name="end" {...props} offset={props.offset + 8 * 66} />
-      <UseRowMay name="fileName" {...props} offset={props.offset + 8 * 67} />
-      <UseRowMay name="break_ptr" {...props} offset={props.offset + 8 * 68} />
-      <UseRowMay
-        name="total_palloc_size"
-        {...props}
-        offset={props.offset + 8 * 69}
-        extra={PPSize}
-      />
-    </>
+  let { offset } = props;
+  const children = [];
+
+  children.push(<FreeTable {...props} offset={offset} />);
+  offset += 8 * 64;
+
+  children.push(<Context {...props} offset={offset} />);
+  offset += 8;
+
+  children.push(<UseRowMay name="head" {...props} offset={offset} />);
+  offset += 8;
+
+  children.push(<UseRowMay name="end" {...props} offset={offset} />);
+  offset += 8;
+
+  children.push(<UseRowMay name="fileName" {...props} offset={offset} />);
+  offset += 8;
+
+  children.push(<UseRowMay name="break_ptr" {...props} offset={offset} />);
+  offset += 8;
+
+  children.push(
+    <UseRowMay
+      name="total_palloc_size"
+      {...props}
+      offset={offset}
+      extra={PPSize}
+    />,
   );
+  offset += 8;
+
+  return <>{children}</>;
 }
 
-function RestOfHeader(props: SKDBPathOffset) {
-  const { offset } = props;
+function RestOfFile(props: SKDBPathOffset) {
+  let { offset } = props;
+  const children = [];
 
-  return (
-    <>
-      <UseRowMay name="gmutex_attr" {...props} />
-      <Ginfo {...props} offset={offset + 40} />
-    </>
+  children.push(<UseRowMay name="gmutex_attr" {...props} offset={offset} />);
+  offset += 8;
+
+  /* gmutex  */
+  offset += 40;
+
+  children.push(<Ginfo {...props} offset={offset} />);
+  offset += 8 * (64 + 6);
+
+  children.push(<UseRowMay name="gid" {...props} offset={offset} />);
+  offset += 8;
+
+  children.push(
+    <UseRowMay name="capacity" {...props} offset={offset} extra={PPSize} />,
   );
+  offset += 8;
+
+  return <>{children}</>;
 }
 
 function Mapping(props: WithSKDB<Schema, { path: string }>) {
-  const magic = useWordMust(props, 0);
-  const bottom_addr = useWordMust(props, 8);
+  let offset = 0;
+  const children = [];
 
-  return (
-    <>
-      <Row name="magic" {...magic} />
-      <Row name="bottom_addr" {...bottom_addr} extra={BottomAddrExtra} />
-      {"bi" in magic ? <RestOfHeader {...props} offset={16} /> : <></>}
-    </>
+  const magic = useWordMust(props, offset);
+  children.push(<Row name="magic" {...magic} />);
+  offset += 8;
+
+  const bottom_addr = useWordMust(props, offset);
+  children.push(
+    <Row name="bottom_addr" {...bottom_addr} extra={BottomAddrExtra} />,
   );
+  offset += 8;
+
+  if ("bi" in magic) {
+    children.push(<RestOfFile {...props} offset={offset} />);
+  }
+
+  return <>{children}</>;
 }
 
 function App({ skdb }: WithSKDB<Schema>) {
