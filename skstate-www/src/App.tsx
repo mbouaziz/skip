@@ -21,20 +21,22 @@ type read_value<T> = { processing: boolean } | { error: string } | v<T>;
 type val<T> = SKDBPathOffset & { processing?: boolean } & read_value<T>;
 type vval<T> = val<T> & v<T>;
 type PossiblyPtrTo =
-  | { ptrTo?: undefined }
+  | { PtrTo?: undefined }
   | ({
-      ptrTo: (props: SKDBPathOffsetSet) => ElementOrString;
+      PtrTo: (props: SKDBPathOffsetSet & { name: string }) => ElementOrString;
     } & SetAt);
 type RowExtraProps<T> = {
   name: string;
   extra?: (v: vval<T>) => ElementOrString;
 } & PossiblyPtrTo;
+type rowval<T> = val<T> & RowExtraProps<T>;
 
 type bival = val<bigint>;
-type bivval = vval<bigint>;
 type BIRowExtraProps = RowExtraProps<bigint>;
+type birowval = rowval<bigint>;
 
 type sval = val<string>;
+type csrowval = rowval<string>;
 
 function hi(i: number): string {
   const s = i.toString(16);
@@ -128,7 +130,7 @@ function PPSize({ v }: v<bigint>) {
 
 function doNotSetAt(): void {}
 
-function PPValBI(props: bivval & BIRowExtraProps) {
+function PPValBI(props: birowval & v<bigint>) {
   const Extra = props.extra;
   const extra =
     Extra === undefined ? (
@@ -140,13 +142,12 @@ function PPValBI(props: bivval & BIRowExtraProps) {
       </>
     );
   let contents: ElementOrString = hbi(props.v);
-  const { skdb, path, ptrTo } = props;
-  const bottom_addr = props.ptrTo !== undefined ? props.bottom_addr : 0n;
-  const setAt = props.ptrTo !== undefined ? props.setAt : doNotSetAt;
+  const { skdb, path, PtrTo } = props;
+  const bottom_addr = props.PtrTo !== undefined ? props.bottom_addr : 0n;
+  const setAt = props.PtrTo !== undefined ? props.setAt : doNotSetAt;
   const pointedOffset = Number(props.v - bottom_addr);
   const pointedElt = useMemo(() => {
-    if (props.ptrTo !== undefined) {
-      const PtrTo = props.ptrTo;
+    if (PtrTo !== undefined) {
       return (
         <PtrTo
           key={pointedOffset}
@@ -155,11 +156,12 @@ function PPValBI(props: bivval & BIRowExtraProps) {
           offset={pointedOffset}
           bottom_addr={bottom_addr}
           setAt={setAt}
+          name="TODO"
         />
       );
     } else return "";
-  }, [props.ptrTo, skdb, path, pointedOffset, bottom_addr, setAt]);
-  if (ptrTo !== undefined) {
+  }, [PtrTo, skdb, path, pointedOffset, bottom_addr, setAt]);
+  if (PtrTo !== undefined) {
     contents = (
       <a
         href="#"
@@ -180,9 +182,18 @@ function PPValBI(props: bivval & BIRowExtraProps) {
   );
 }
 
-function PPVal(props: bival & BIRowExtraProps) {
+function PPValCString(props: v<string>) {
+  return <>{props.v}</>;
+}
+
+type PPVVal<T> = {
+  PPVVal: (props: rowval<T> & vval<T>) => ElementOrString;
+};
+
+function PPVal<T>(props: rowval<T> & PPVVal<T>) {
+  const { PPVVal } = props;
   return "v" in props ? (
-    <PPValBI {...props} />
+    <PPVVal {...props} />
   ) : "error" in props ? (
     props.error
   ) : props.processing === true ? (
@@ -301,7 +312,7 @@ function useCStringMust(args: SKDBPathOffset): sval {
   return { ...val, processing: true };
 }
 
-function Row(props: bival & BIRowExtraProps & { offsetFrom?: number }) {
+function Row<T>(props: rowval<T> & PPVVal<T> & { offsetFrom?: number }) {
   const off =
     props.offsetFrom !== undefined && props.offsetFrom !== props.offset
       ? hi(props.offsetFrom) + ".." + hi(props.offset)
@@ -317,14 +328,22 @@ function Row(props: bival & BIRowExtraProps & { offsetFrom?: number }) {
   );
 }
 
-function UseRowMay(props: SKDBPathOffset & BIRowExtraProps) {
-  const val = useWordMay(props);
-  return <Row {...props} {...val} />;
+function BIRow(props: birowval & { offsetFrom?: number }) {
+  return <Row {...props} PPVVal={PPValBI} />;
 }
 
-function CString(props: SKDBPathOffsetSet) {
-  // const val = useCStringMust(props);
-  return <>TODO</>;
+function CStringRow(props: csrowval) {
+  return <Row {...props} PPVVal={PPValCString} />;
+}
+
+function UseRowMay(props: SKDBPathOffset & BIRowExtraProps) {
+  const val = useWordMay(props);
+  return <BIRow {...props} {...val} />;
+}
+
+function CString(props: SKDBPathOffsetSet & RowExtraProps<string>) {
+  const val = useCStringMust(props);
+  return <CStringRow {...props} {...val} />;
 }
 
 // function LoadAllRow(props: SKDBPathOffset & { n: number; name: string }) {
@@ -375,7 +394,7 @@ function FreeTable(props: SKDBPathOffsetSet) {
     for (; lastEmptyOffset < toOffset; lastEmptyOffset += 8) {
       missingOffsets.push(lastEmptyOffset);
       ftable.push(
-        <Row
+        <BIRow
           name={`ftable[${index}]`}
           key={index}
           {...props}
@@ -410,7 +429,7 @@ function FreeTable(props: SKDBPathOffsetSet) {
           : `ftable[${index}]`;
       const offsetFrom = cur.offset - consecutiveZeroes * 8;
       ftable.push(
-        <Row
+        <BIRow
           name={name}
           key={index}
           {...props}
@@ -474,7 +493,7 @@ function Ginfo(props: SKDBPathOffsetSet) {
       name="fileName"
       {...props}
       offset={offset}
-      ptrTo={CString}
+      PtrTo={CString}
     />,
   );
   offset += 8;
@@ -555,7 +574,7 @@ function RestOfFile(props: SKDBPathOffset & { bottom_addr: bigint }) {
   return (
     <>
       <RestOfHeader {...props} setAt={setAt} />
-      {loadedAddresses.toArray()}
+      {loadedAddresses.toList().toArray()}
     </>
   );
 }
@@ -565,12 +584,12 @@ function Mapping(props: WithSKDB<Schema, { path: string }>) {
   const children = [];
 
   const magic = useWordMust(props, offset);
-  children.push(<Row key={offset} name="magic" {...magic} />);
+  children.push(<BIRow key={offset} name="magic" {...magic} />);
   offset += 8;
 
   const bottom_addr = useWordMust(props, offset);
   children.push(
-    <Row
+    <BIRow
       key={offset}
       name="bottom_addr"
       {...bottom_addr}
