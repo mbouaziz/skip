@@ -16,7 +16,7 @@ type SetAt = {
 type SKDBPath = WithSKDB<Schema, { path: string }>;
 type SKDBPathOffset = SKDBPath & { offset: number };
 type SKDBPathOffsetSet = SKDBPathOffset & SetAt;
-type read_bi = { bi: bigint };
+type read_bi = { v: bigint };
 type read_value = { processing: boolean } | { error: string } | read_bi;
 type val = SKDBPathOffset & { processing?: boolean } & read_value;
 type bival = val & read_bi;
@@ -35,8 +35,8 @@ function hi(i: number): string {
   return "0x" + "00000000".slice(s.length) + s;
 }
 
-function hbi(bi: bigint): string {
-  const s = bi.toString(16);
+function hbi(v: bigint): string {
+  const s = v.toString(16);
   return "0x" + "0000000000000000".slice(s.length) + s;
 }
 
@@ -81,11 +81,11 @@ function LoadLink(
 
 const sizeUnitPrefix = ["", "kilo", "mega", "giga", "tera", "peta"];
 
-function PPSize({ bi }: bival) {
+function PPSize({ v }: bival) {
   let o = 0;
   let n: number;
-  if (bi >= 0x400n) {
-    let i = bi;
+  if (v >= 0x400n) {
+    let i = v;
     o++;
     while (i >= 0x100000n && o < sizeUnitPrefix.length - 1) {
       i /= 0x400n;
@@ -93,10 +93,10 @@ function PPSize({ bi }: bival) {
     }
     n = Number(i) / 0x400;
   } else {
-    n = Number(bi);
+    n = Number(v);
   }
   return (
-    <span title={bi.toLocaleString(undefined, { style: "unit", unit: "byte" })}>
+    <span title={v.toLocaleString(undefined, { style: "unit", unit: "byte" })}>
       {n.toLocaleString(undefined, {
         style: "unit",
         unit: sizeUnitPrefix[o] + "byte",
@@ -119,11 +119,11 @@ function PPValBI(props: bival & RowExtraProps) {
         <Extra {...props} />
       </>
     );
-  let contents: ElementOrString = hbi(props.bi);
+  let contents: ElementOrString = hbi(props.v);
   const { skdb, path, ptrTo } = props;
   const bottom_addr = props.ptrTo !== undefined ? props.bottom_addr : 0n;
   const setAt = props.ptrTo !== undefined ? props.setAt : doNotSetAt;
-  const pointedOffset = Number(props.bi - bottom_addr);
+  const pointedOffset = Number(props.v - bottom_addr);
   const pointedElt = useMemo(() => {
     if (props.ptrTo !== undefined) {
       const PtrTo = props.ptrTo;
@@ -145,7 +145,7 @@ function PPValBI(props: bival & RowExtraProps) {
         href="#"
         onClick={(e) => {
           e.preventDefault();
-          setAt(props.bi, pointedElt);
+          setAt(props.v, pointedElt);
         }}
       >
         {contents}
@@ -161,7 +161,7 @@ function PPValBI(props: bival & RowExtraProps) {
 }
 
 function PPVal(props: val & RowExtraProps) {
-  return "bi" in props ? (
+  return "v" in props ? (
     <PPValBI {...props} />
   ) : "error" in props ? (
     props.error
@@ -188,7 +188,7 @@ function valOfRow(
           : oRow.progress === 3
             ? oRow.value === null
               ? { error: "Unexpected NULL" }
-              : { bi: BigInt(oRow.value) }
+              : { v: BigInt(oRow.value) }
             : { error: `Unexpected progress ${oRow.progress}` };
   return { skdb, path, offset, ...x };
 }
@@ -292,8 +292,8 @@ function CString(props: SKDBPathOffsetSet) {
 //   }
 // }
 
-function BottomAddrExtra({ bi }: bival) {
-  return bi === DEFAULT_BOTTOM_ADDR ? (
+function BottomAddrExtra({ v }: bival) {
+  return v === DEFAULT_BOTTOM_ADDR ? (
     <span title="Uses default bottom address">✓</span>
   ) : (
     <span
@@ -329,18 +329,18 @@ function FreeTable(props: SKDBPathOffsetSet) {
   let consecutiveZeroes = 0;
   slots.forEach((cur, i) => {
     addMissing(cur.offset);
-    if (!("bi" in cur) && cur.processing !== true) {
+    if (!("v" in cur) && cur.processing !== true) {
       missingOffsets.push(cur.offset);
     }
     const next = slots[i + 1];
     if (
       foldConsecutiveZeroes &&
-      "bi" in cur &&
-      cur.bi === 0n &&
+      "v" in cur &&
+      cur.v === 0n &&
       next !== undefined &&
       next.offset == cur.offset + 8 &&
-      "bi" in next &&
-      next.bi === 0n
+      "v" in next &&
+      next.v === 0n
     ) {
       consecutiveZeroes++;
     } else {
@@ -519,13 +519,13 @@ function Mapping(props: WithSKDB<Schema, { path: string }>) {
   );
   offset += 8;
 
-  if ("bi" in magic && "bi" in bottom_addr) {
+  if ("v" in magic && "v" in bottom_addr) {
     children.push(
       <RestOfFile
         key={offset}
         {...props}
         offset={offset}
-        bottom_addr={bottom_addr.bi}
+        bottom_addr={bottom_addr.v}
       />,
     );
   }
