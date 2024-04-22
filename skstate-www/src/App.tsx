@@ -16,19 +16,23 @@ type SetAt = {
 type SKDBPath = WithSKDB<Schema, { path: string }>;
 type SKDBPathOffset = SKDBPath & { offset: number };
 type SKDBPathOffsetSet = SKDBPathOffset & SetAt;
-type read_bi = { v: bigint };
-type read_value = { processing: boolean } | { error: string } | read_bi;
-type val = SKDBPathOffset & { processing?: boolean } & read_value;
-type bival = val & read_bi;
+type v<T> = { v: T };
+type read_value<T> = { processing: boolean } | { error: string } | v<T>;
+type val<T> = SKDBPathOffset & { processing?: boolean } & read_value<T>;
+type vval<T> = val<T> & v<T>;
 type PossiblyPtrTo =
   | { ptrTo?: undefined }
   | ({
       ptrTo: (props: SKDBPathOffsetSet) => ElementOrString;
     } & SetAt);
-type RowExtraProps = {
+type RowExtraProps<T> = {
   name: string;
-  extra?: (v: bival) => ElementOrString;
+  extra?: (v: vval<T>) => ElementOrString;
 } & PossiblyPtrTo;
+
+type bival = val<bigint>;
+type bivval = vval<bigint>;
+type BIRowExtraProps = RowExtraProps<bigint>;
 
 function hi(i: number): string {
   const s = i.toString(16);
@@ -81,7 +85,7 @@ function LoadLink(
 
 const sizeUnitPrefix = ["", "kilo", "mega", "giga", "tera", "peta"];
 
-function PPSize({ v }: bival) {
+function PPSize({ v }: v<bigint>) {
   let o = 0;
   let n: number;
   if (v >= 0x400n) {
@@ -108,7 +112,7 @@ function PPSize({ v }: bival) {
 
 function doNotSetAt(): void {}
 
-function PPValBI(props: bival & RowExtraProps) {
+function PPValBI(props: bivval & BIRowExtraProps) {
   const Extra = props.extra;
   const extra =
     Extra === undefined ? (
@@ -160,7 +164,7 @@ function PPValBI(props: bival & RowExtraProps) {
   );
 }
 
-function PPVal(props: val & RowExtraProps) {
+function PPVal(props: bival & BIRowExtraProps) {
   return "v" in props ? (
     <PPValBI {...props} />
   ) : "error" in props ? (
@@ -175,7 +179,7 @@ function PPVal(props: val & RowExtraProps) {
 function valOfRow(
   args: SKDBPathOffset,
   oRow: { progress: number; value: string | null; offset?: number } | undefined,
-): val {
+): bival {
   const { skdb, path } = args;
   const offset = oRow?.offset ?? args.offset;
   const x =
@@ -193,7 +197,7 @@ function valOfRow(
   return { skdb, path, offset, ...x };
 }
 
-function useWordsMay(args: SKDBPathOffset, n: number): val[] {
+function useWordsMay(args: SKDBPathOffset, n: number): bival[] {
   const { skdb, path, offset } = args;
   const start = offset;
   const end = offset + 8 * (n - 1);
@@ -210,7 +214,7 @@ function useWordsMay(args: SKDBPathOffset, n: number): val[] {
 
 function useWordMay(
   ...a: [args: SKDBPathOffset] | [args: SKDBPath, offset: number]
-): val {
+): bival {
   const args = a.length === 1 ? a[0] : { ...a[0], offset: a[1] };
   const { skdb, path, offset } = args;
   return valOfRow(
@@ -228,7 +232,7 @@ function useWordMay(
 
 function useWordMust(
   ...a: [args: SKDBPathOffset] | [args: SKDBPath, offset: number]
-): val {
+): bival {
   const args = a.length === 1 ? a[0] : { ...a[0], offset: a[1] };
   const val = useWordMay(args);
   const { skdb, path, offset } = args;
@@ -241,7 +245,7 @@ function useWordMust(
   return { ...val, processing: true };
 }
 
-function Row(props: val & RowExtraProps & { offsetFrom?: number }) {
+function Row(props: bival & BIRowExtraProps & { offsetFrom?: number }) {
   const off =
     props.offsetFrom !== undefined && props.offsetFrom !== props.offset
       ? hi(props.offsetFrom) + ".." + hi(props.offset)
@@ -257,7 +261,7 @@ function Row(props: val & RowExtraProps & { offsetFrom?: number }) {
   );
 }
 
-function UseRowMay(props: SKDBPathOffset & RowExtraProps) {
+function UseRowMay(props: SKDBPathOffset & BIRowExtraProps) {
   const val = useWordMay(props);
   return <Row {...props} {...val} />;
 }
@@ -292,7 +296,7 @@ function CString(props: SKDBPathOffsetSet) {
 //   }
 // }
 
-function BottomAddrExtra({ v }: bival) {
+function BottomAddrExtra({ v }: v<bigint>) {
   return v === DEFAULT_BOTTOM_ADDR ? (
     <span title="Uses default bottom address">✓</span>
   ) : (
