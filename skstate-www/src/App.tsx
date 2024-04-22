@@ -176,10 +176,15 @@ function PPVal(props: bival & BIRowExtraProps) {
   );
 }
 
-function valOfRow(
+type oRow =
+  | { progress: number; value: string | null; offset?: number }
+  | undefined;
+
+function valOfRow<T>(
   args: SKDBPathOffset,
-  oRow: { progress: number; value: string | null; offset?: number } | undefined,
-): bival {
+  oRow: oRow,
+  f: (v: string) => T,
+): val<T> {
   const { skdb, path } = args;
   const offset = oRow?.offset ?? args.offset;
   const x =
@@ -192,9 +197,13 @@ function valOfRow(
           : oRow.progress === 3
             ? oRow.value === null
               ? { error: "Unexpected NULL" }
-              : { v: BigInt(oRow.value) }
+              : { v: f(oRow.value) }
             : { error: `Unexpected progress ${oRow.progress}` };
   return { skdb, path, offset, ...x };
+}
+
+function bivalOfRow(args: SKDBPathOffset, oRow: oRow): bival {
+  return valOfRow(args, oRow, BigInt);
 }
 
 function useWordsMay(args: SKDBPathOffset, n: number): bival[] {
@@ -209,7 +218,7 @@ function useWordsMay(args: SKDBPathOffset, n: number): bival[] {
     [],
     { group: ["offset"], order: [["offset", "ASC"]] },
   );
-  return rows.map((row) => valOfRow(args, row));
+  return rows.map((row) => bivalOfRow(args, row));
 }
 
 function useWordMay(
@@ -217,7 +226,7 @@ function useWordMay(
 ): bival {
   const args = a.length === 1 ? a[0] : { ...a[0], offset: a[1] };
   const { skdb, path, offset } = args;
-  return valOfRow(
+  return bivalOfRow(
     args,
     skdb.useSelectMaybeSingle(
       "readWord",
