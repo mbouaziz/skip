@@ -34,6 +34,8 @@ type bival = val<bigint>;
 type bivval = vval<bigint>;
 type BIRowExtraProps = RowExtraProps<bigint>;
 
+type sval = val<string>;
+
 function hi(i: number): string {
   const s = i.toString(16);
   return "0x" + "00000000".slice(s.length) + s;
@@ -56,6 +58,20 @@ async function requestReadWord(
       : [offset];
   return await skdb.execInsert(
     "readWord",
+    offsets.map((offset: number) => ({
+      path,
+      offset,
+      progress: 0,
+      value: null,
+    })),
+  );
+}
+
+async function requestReadCString(args: SKDBPathOffset) {
+  const { skdb, path, offset } = args;
+  const offsets = [offset];
+  return await skdb.execInsert(
+    "readCString",
     offsets.map((offset: number) => ({
       path,
       offset,
@@ -206,6 +222,10 @@ function bivalOfRow(args: SKDBPathOffset, oRow: oRow): bival {
   return valOfRow(args, oRow, BigInt);
 }
 
+function svalOfRow(args: SKDBPathOffset, oRow: oRow): sval {
+  return valOfRow(args, oRow, (s) => s);
+}
+
 function useWordsMay(args: SKDBPathOffset, n: number): bival[] {
   const { skdb, path, offset } = args;
   const start = offset;
@@ -249,6 +269,33 @@ function useWordMust(
   useEffect(() => {
     if (requireRequest) {
       requestReadWord({ skdb, path, offset });
+    }
+  }, [skdb, path, offset, requireRequest]);
+  return { ...val, processing: true };
+}
+
+function useCStringMay(args: SKDBPathOffset): sval {
+  const { skdb, path, offset } = args;
+  return svalOfRow(
+    args,
+    skdb.useSelectMaybeSingle(
+      "readCString",
+      ["progress", "value"],
+      "path = @path AND offset = @offset",
+      { path, offset },
+      undefined,
+      { order: [["progress", "DESC"]], limit: 1 },
+    ),
+  );
+}
+
+function useCStringMust(args: SKDBPathOffset): sval {
+  const val = useCStringMay(args);
+  const { skdb, path, offset } = args;
+  const requireRequest = "processing" in val && val.processing === false;
+  useEffect(() => {
+    if (requireRequest) {
+      requestReadCString({ skdb, path, offset });
     }
   }, [skdb, path, offset, requireRequest]);
   return { ...val, processing: true };
