@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { OrderedMap } from "immutable";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 // import {schema} from "./schema.ts";
 import type { Schema } from "./schema.ts";
@@ -6,16 +7,28 @@ import type { WithSKDB } from "typed-skdb";
 
 const DEFAULT_BOTTOM_ADDR = 0x0000001000000000n;
 
+type ElementOrString = JSX.Element | string;
+
+type SetAt = {
+  bottom_addr: bigint;
+  setAt: (addr: bigint, elt: ElementOrString) => void;
+};
 type SKDBPath = WithSKDB<Schema, { path: string }>;
 type SKDBPathOffset = SKDBPath & { offset: number };
+type SKDBPathOffsetSet = SKDBPathOffset & SetAt;
 type read_bi = { bi: bigint };
 type read_value = { processing: boolean } | { error: string } | read_bi;
 type val = SKDBPathOffset & { processing?: boolean } & read_value;
 type bival = val & read_bi;
+type PossiblyPtrTo =
+  | { ptrTo?: undefined }
+  | ({
+      ptrTo: (props: SKDBPathOffsetSet) => ElementOrString;
+    } & SetAt);
 type RowExtraProps = {
   name: string;
-  extra?: (v: bival) => React.ReactElement | string;
-};
+  extra?: (v: bival) => ElementOrString;
+} & PossiblyPtrTo;
 
 function hi(i: number): string {
   const s = i.toString(16);
@@ -35,10 +48,10 @@ async function requestReadWord(
   const offsets = Array.isArray(n_or_missingOffsets)
     ? n_or_missingOffsets
     : typeof n_or_missingOffsets === "number"
-    ? Array.from({ length: n_or_missingOffsets }, (_, i) => offset + 8 * i)
-    : [offset];
+      ? Array.from({ length: n_or_missingOffsets }, (_, i) => offset + 8 * i)
+      : [offset];
   return await skdb.execInsert(
-    "readFile",
+    "readWord",
     offsets.map((offset: number) => ({
       path,
       offset,
@@ -93,16 +106,70 @@ function PPSize({ bi }: bival) {
   );
 }
 
-function PP(val: val) {
-  if ("bi" in val) {
-    return hbi(val.bi);
-  } else if ("error" in val) {
-    return val.error;
-  } else if (val.processing === true) {
-    return "Loading...";
-  } else {
-    return <LoadLink {...val} />;
+function doNotSetAt(): void {}
+
+function PPValBI(props: bival & RowExtraProps) {
+  const Extra = props.extra;
+  const extra =
+    Extra === undefined ? (
+      <></>
+    ) : (
+      <>
+        &nbsp;
+        <Extra {...props} />
+      </>
+    );
+  let contents: ElementOrString = hbi(props.bi);
+  const { skdb, path, ptrTo } = props;
+  const bottom_addr = props.ptrTo !== undefined ? props.bottom_addr : 0n;
+  const setAt = props.ptrTo !== undefined ? props.setAt : doNotSetAt;
+  const pointedOffset = Number(props.bi - bottom_addr);
+  const pointedElt = useMemo(() => {
+    if (props.ptrTo !== undefined) {
+      const PtrTo = props.ptrTo;
+      return (
+        <PtrTo
+          key={pointedOffset}
+          skdb={skdb}
+          path={path}
+          offset={pointedOffset}
+          bottom_addr={bottom_addr}
+          setAt={setAt}
+        />
+      );
+    } else return "";
+  }, [props.ptrTo, skdb, path, pointedOffset, bottom_addr, setAt]);
+  if (ptrTo !== undefined) {
+    contents = (
+      <a
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          setAt(props.bi, pointedElt);
+        }}
+      >
+        {contents}
+      </a>
+    );
   }
+  return (
+    <>
+      {contents}
+      {extra}
+    </>
+  );
+}
+
+function PPVal(props: val & RowExtraProps) {
+  return "bi" in props ? (
+    <PPValBI {...props} />
+  ) : "error" in props ? (
+    props.error
+  ) : props.processing === true ? (
+    "Loading..."
+  ) : (
+    <LoadLink {...props} />
+  );
 }
 
 function valOfRow(
@@ -115,14 +182,14 @@ function valOfRow(
     oRow === undefined
       ? { processing: false }
       : oRow.progress <= 1
-      ? { processing: true }
-      : oRow.progress === 2
-      ? { error: oRow.value ?? "" }
-      : oRow.progress === 3
-      ? oRow.value === null
-        ? { error: "Unexpected NULL" }
-        : { bi: BigInt(oRow.value) }
-      : { error: `Unexpected progress ${oRow.progress}` };
+        ? { processing: true }
+        : oRow.progress === 2
+          ? { error: oRow.value ?? "" }
+          : oRow.progress === 3
+            ? oRow.value === null
+              ? { error: "Unexpected NULL" }
+              : { bi: BigInt(oRow.value) }
+            : { error: `Unexpected progress ${oRow.progress}` };
   return { skdb, path, offset, ...x };
 }
 
@@ -131,7 +198,7 @@ function useWordsMay(args: SKDBPathOffset, n: number): val[] {
   const start = offset;
   const end = offset + 8 * (n - 1);
   const rows = skdb.useSelect(
-    "readFile",
+    "readWord",
     ["offset", "progress", "value"],
     "path = @path AND offset >= @start AND offset <= @end",
     { path, start, end },
@@ -149,7 +216,7 @@ function useWordMay(
   return valOfRow(
     args,
     skdb.useSelectMaybeSingle(
-      "readFile",
+      "readWord",
       ["progress", "value"],
       "path = @path AND offset = @offset",
       { path, offset },
@@ -175,16 +242,6 @@ function useWordMust(
 }
 
 function Row(props: val & RowExtraProps & { offsetFrom?: number }) {
-  const Extra = props.extra;
-  const extra =
-    Extra === undefined || !("bi" in props) ? (
-      <></>
-    ) : (
-      <>
-        &nbsp;
-        <Extra {...props} />
-      </>
-    );
   const off =
     props.offsetFrom !== undefined && props.offsetFrom !== props.offset
       ? hi(props.offsetFrom) + ".." + hi(props.offset)
@@ -194,8 +251,7 @@ function Row(props: val & RowExtraProps & { offsetFrom?: number }) {
       <td>{off}</td>
       <td>{props.name}</td>
       <td>
-        <PP {...props} />
-        {extra}
+        <PPVal {...props} />
       </td>
     </tr>
   );
@@ -206,11 +262,16 @@ function UseRowMay(props: SKDBPathOffset & RowExtraProps) {
   return <Row {...props} {...val} />;
 }
 
+function CString(props: SKDBPathOffsetSet) {
+  // const val = useCStringMust(props);
+  return <>TODO</>;
+}
+
 // function LoadAllRow(props: SKDBPathOffset & { n: number; name: string }) {
 //   const { skdb, path, offset, n } = props;
 //   const allLoaded = skdb.use(
 //     skdb.selectCount(
-//       "readFile",
+//       "readWord",
 //       "path = @path AND offset >= @start AND offset <= @end AND progress = 3",
 //       { path, start: offset, end: offset + n * 8 },
 //     ),
@@ -243,7 +304,7 @@ function BottomAddrExtra({ bi }: bival) {
   );
 }
 
-function FreeTable(props: SKDBPathOffset) {
+function FreeTable(props: SKDBPathOffsetSet) {
   const foldConsecutiveZeroes = true;
   const slots = useWordsMay(props, 64);
   const ftable: JSX.Element[] = [];
@@ -323,34 +384,49 @@ function FreeTable(props: SKDBPathOffset) {
   );
 }
 
-function Context(props: SKDBPathOffset) {
+function Context(props: SKDBPathOffsetSet) {
   return <UseRowMay name="context" {...props} />;
 }
 
-function Ginfo(props: SKDBPathOffset) {
+function Ginfo(props: SKDBPathOffsetSet) {
   let { offset } = props;
   const children = [];
 
-  children.push(<FreeTable {...props} offset={offset} />);
+  children.push(<FreeTable key={offset} {...props} offset={offset} />);
   offset += 8 * 64;
 
-  children.push(<Context {...props} offset={offset} />);
+  children.push(<Context key={offset} {...props} offset={offset} />);
   offset += 8;
 
-  children.push(<UseRowMay name="head" {...props} offset={offset} />);
+  children.push(
+    <UseRowMay key={offset} name="head" {...props} offset={offset} />,
+  );
   offset += 8;
 
-  children.push(<UseRowMay name="end" {...props} offset={offset} />);
-  offset += 8;
-
-  children.push(<UseRowMay name="fileName" {...props} offset={offset} />);
-  offset += 8;
-
-  children.push(<UseRowMay name="break_ptr" {...props} offset={offset} />);
+  children.push(
+    <UseRowMay key={offset} name="end" {...props} offset={offset} />,
+  );
   offset += 8;
 
   children.push(
     <UseRowMay
+      key={offset}
+      name="fileName"
+      {...props}
+      offset={offset}
+      ptrTo={CString}
+    />,
+  );
+  offset += 8;
+
+  children.push(
+    <UseRowMay key={offset} name="break_ptr" {...props} offset={offset} />,
+  );
+  offset += 8;
+
+  children.push(
+    <UseRowMay
+      key={offset}
       name="total_palloc_size"
       {...props}
       offset={offset}
@@ -362,28 +438,66 @@ function Ginfo(props: SKDBPathOffset) {
   return <>{children}</>;
 }
 
-function RestOfFile(props: SKDBPathOffset) {
+function RestOfHeader(props: SKDBPathOffsetSet) {
   let { offset } = props;
   const children = [];
 
-  children.push(<UseRowMay name="gmutex_attr" {...props} offset={offset} />);
+  children.push(
+    <UseRowMay key={offset} name="gmutex_attr" {...props} offset={offset} />,
+  );
   offset += 8;
 
   /* gmutex  */
   offset += 40;
 
-  children.push(<Ginfo {...props} offset={offset} />);
+  children.push(<Ginfo key={offset} {...props} offset={offset} />);
   offset += 8 * (64 + 6);
 
-  children.push(<UseRowMay name="gid" {...props} offset={offset} />);
+  children.push(
+    <UseRowMay key={offset} name="gid" {...props} offset={offset} />,
+  );
   offset += 8;
 
   children.push(
-    <UseRowMay name="capacity" {...props} offset={offset} extra={PPSize} />,
+    <UseRowMay
+      key={offset}
+      name="capacity"
+      {...props}
+      offset={offset}
+      extra={PPSize}
+    />,
+  );
+  offset += 8;
+
+  children.push(
+    <UseRowMay key={offset} name="pconsts" {...props} offset={offset} />,
   );
   offset += 8;
 
   return <>{children}</>;
+}
+
+const emptyMap: OrderedMap<number, ElementOrString> = OrderedMap();
+
+function RestOfFile(props: SKDBPathOffset & { bottom_addr: bigint }) {
+  const [loadedAddresses, setLoadedAddresses] = useState(emptyMap);
+  const bottom_addr = props.bottom_addr;
+
+  const setAt = useCallback(
+    (addr: bigint, elt: ElementOrString) =>
+      setLoadedAddresses((la) => {
+        const offset = Number(addr - bottom_addr);
+        return Object.is(la.get(offset), elt) ? la : la.set(offset, elt);
+      }),
+    [bottom_addr, setLoadedAddresses],
+  );
+
+  return (
+    <>
+      <RestOfHeader {...props} setAt={setAt} />
+      {loadedAddresses.toArray()}
+    </>
+  );
 }
 
 function Mapping(props: WithSKDB<Schema, { path: string }>) {
@@ -391,17 +505,29 @@ function Mapping(props: WithSKDB<Schema, { path: string }>) {
   const children = [];
 
   const magic = useWordMust(props, offset);
-  children.push(<Row name="magic" {...magic} />);
+  children.push(<Row key={offset} name="magic" {...magic} />);
   offset += 8;
 
   const bottom_addr = useWordMust(props, offset);
   children.push(
-    <Row name="bottom_addr" {...bottom_addr} extra={BottomAddrExtra} />,
+    <Row
+      key={offset}
+      name="bottom_addr"
+      {...bottom_addr}
+      extra={BottomAddrExtra}
+    />,
   );
   offset += 8;
 
-  if ("bi" in magic) {
-    children.push(<RestOfFile {...props} offset={offset} />);
+  if ("bi" in magic && "bi" in bottom_addr) {
+    children.push(
+      <RestOfFile
+        key={offset}
+        {...props}
+        offset={offset}
+        bottom_addr={bottom_addr.bi}
+      />,
+    );
   }
 
   return <>{children}</>;
