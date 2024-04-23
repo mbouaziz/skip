@@ -1,4 +1,4 @@
-import { OrderedMap } from "immutable";
+import { Map } from "immutable";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 // import {schema} from "./schema.ts";
@@ -9,6 +9,7 @@ const DEFAULT_BOTTOM_ADDR = 0x0000001000000000n;
 
 type ElementOrString = JSX.Element | string;
 
+type Named = { name: string };
 type SetAt = {
   bottom_addr: bigint;
   setAt: (addr: bigint, elt: ElementOrString) => void;
@@ -23,10 +24,9 @@ type vval<T> = val<T> & v<T>;
 type PossiblyPtrTo =
   | { PtrTo?: undefined }
   | ({
-      PtrTo: (props: SKDBPathOffsetSet & { name: string }) => ElementOrString;
+      PtrTo: (props: SKDBPathOffsetSet & Named) => ElementOrString;
     } & SetAt);
 type RowExtraProps<T> = {
-  name: string;
   extra?: (v: vval<T>) => ElementOrString;
 } & PossiblyPtrTo;
 type rowval<T> = val<T> & RowExtraProps<T>;
@@ -156,7 +156,7 @@ function PPValBI(props: birowval & v<bigint>) {
           offset={pointedOffset}
           bottom_addr={bottom_addr}
           setAt={setAt}
-          name="TODO"
+          name=""
         />
       );
     } else return "";
@@ -187,10 +187,10 @@ function PPValCString(props: v<string>) {
 }
 
 type PPVVal<T> = {
-  PPVVal: (props: rowval<T> & vval<T>) => ElementOrString;
+  PPVVal: (props: val<T> & v<T>) => ElementOrString;
 };
 
-function PPVal<T>(props: rowval<T> & PPVVal<T>) {
+function PPVal<T>(props: val<T> & PPVVal<T>) {
   const { PPVVal } = props;
   return "v" in props ? (
     <PPVVal {...props} />
@@ -312,7 +312,9 @@ function useCStringMust(args: SKDBPathOffset): sval {
   return { ...val, processing: true };
 }
 
-function Row<T>(props: rowval<T> & PPVVal<T> & { offsetFrom?: number }) {
+function Row<T>(
+  props: rowval<T> & PPVVal<T> & Named & { offsetFrom?: number },
+) {
   const off =
     props.offsetFrom !== undefined && props.offsetFrom !== props.offset
       ? hi(props.offsetFrom) + ".." + hi(props.offset)
@@ -328,22 +330,68 @@ function Row<T>(props: rowval<T> & PPVVal<T> & { offsetFrom?: number }) {
   );
 }
 
-function BIRow(props: birowval & { offsetFrom?: number }) {
+function BIRow(props: birowval & Named & { offsetFrom?: number }) {
   return <Row {...props} PPVVal={PPValBI} />;
 }
 
-function CStringRow(props: csrowval) {
+function CStringRow(props: csrowval & Named) {
   return <Row {...props} PPVVal={PPValCString} />;
 }
 
-function UseRowMay(props: SKDBPathOffset & BIRowExtraProps) {
+function UseRowMay(props: SKDBPathOffset & BIRowExtraProps & Named) {
   const val = useWordMay(props);
   return <BIRow {...props} {...val} />;
 }
 
-function CString(props: SKDBPathOffsetSet & RowExtraProps<string>) {
+function CString(props: SKDBPathOffset & RowExtraProps<string> & Named) {
   const val = useCStringMust(props);
   return <CStringRow {...props} {...val} />;
+}
+
+const BINARY_PATH = "/home/mehdi/skdb.github/sql/target/host/dev/skdb";
+
+function inBinary(props: SKDBPathOffset, bioffset: bigint | number) {
+  const offset = Number(BigInt(bioffset) - 0x400000n);
+  return { ...props, path: BINARY_PATH, offset };
+}
+
+function Typename_of_gctype_name_ptr(props: SKDBPathOffset) {
+  const val = useCStringMust(props);
+  return <PPVal {...val} PPVVal={PPValCString} />;
+}
+
+function Typename_of_gctype_word0(props: vval<bigint>) {
+  const m_hasName = props.v & 0xff000000n;
+  if (m_hasName === 0n) {
+    return "(no name)";
+  } else {
+    const m_refsHintMask = props.v & 0x1n;
+    // Assuming userByteSize <= 8*64, i.e. length of m_refMask is 0 or 1
+    const length_of_refMask = m_refsHintMask === 0n ? 0 : 1;
+    const offset = props.offset + 8 * (3 + length_of_refMask);
+    return <Typename_of_gctype_name_ptr {...props} offset={offset} />;
+  }
+}
+
+function Typename_of_gctype_ptr(props: vval<bigint>) {
+  const gctype_word0_props = inBinary(props, props.v);
+  const gctype_word0 = useWordMust(gctype_word0_props);
+  return <PPVal {...gctype_word0} PPVVal={Typename_of_gctype_word0} />;
+}
+
+function Typename_of_vtable_ptr(props: vval<bigint>) {
+  const gctype_ptr_offset = props.v + 8n;
+  const in_binary_props = inBinary(props, gctype_ptr_offset);
+  const gctype_ptr = useWordMust(in_binary_props);
+  return <PPVal {...gctype_ptr} PPVVal={Typename_of_gctype_ptr} />;
+}
+// function isSkString();
+
+function SkObj(props: SKDBPathOffsetSet & BIRowExtraProps) {
+  const { offset } = props;
+  const vtable_offset = offset - 8;
+  const vtable_ptr = useWordMust({ ...props, offset: vtable_offset });
+  return <BIRow name="vtable" {...vtable_ptr} extra={Typename_of_vtable_ptr} />;
 }
 
 // function LoadAllRow(props: SKDBPathOffset & { n: number; name: string }) {
@@ -463,10 +511,6 @@ function FreeTable(props: SKDBPathOffsetSet) {
   );
 }
 
-function Context(props: SKDBPathOffsetSet) {
-  return <UseRowMay name="context" {...props} />;
-}
-
 function Ginfo(props: SKDBPathOffsetSet) {
   let { offset } = props;
   const children = [];
@@ -474,7 +518,15 @@ function Ginfo(props: SKDBPathOffsetSet) {
   children.push(<FreeTable key={offset} {...props} offset={offset} />);
   offset += 8 * 64;
 
-  children.push(<Context key={offset} {...props} offset={offset} />);
+  children.push(
+    <UseRowMay
+      key={offset}
+      name="context"
+      {...props}
+      offset={offset}
+      PtrTo={SkObj}
+    />,
+  );
   offset += 8;
 
   children.push(
@@ -556,7 +608,7 @@ function RestOfHeader(props: SKDBPathOffsetSet) {
   return <>{children}</>;
 }
 
-const emptyMap: OrderedMap<number, ElementOrString> = OrderedMap();
+const emptyMap: Map<number, ElementOrString> = Map();
 
 function RestOfFile(props: SKDBPathOffset & { bottom_addr: bigint }) {
   const [loadedAddresses, setLoadedAddresses] = useState(emptyMap);
@@ -571,10 +623,15 @@ function RestOfFile(props: SKDBPathOffset & { bottom_addr: bigint }) {
     [bottom_addr, setLoadedAddresses],
   );
 
+  const sortedLoadedAddresses = loadedAddresses
+    .sortBy((_v, k) => k)
+    .toIndexedSeq()
+    .toArray();
+
   return (
     <>
       <RestOfHeader {...props} setAt={setAt} />
-      {loadedAddresses.toList().toArray()}
+      {sortedLoadedAddresses}
     </>
   );
 }
