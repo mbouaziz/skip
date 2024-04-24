@@ -1,5 +1,6 @@
 import { Map } from "immutable";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { PropsWithChildren } from "react";
 import "./App.css";
 // import {schema} from "./schema.ts";
 import type { Schema } from "./schema.ts";
@@ -22,11 +23,10 @@ type nonv = { processing: boolean } | { error: string };
 type read_value<T> = nonv | v<T>;
 type val<T> = SKDBPathOffset & { processing?: boolean } & read_value<T>;
 type vval<T> = val<T> & v<T>;
-type PossiblyPtrTo =
-  | { PtrTo?: undefined }
-  | ({
-      PtrTo: (props: SKDBPathOffsetSet & Named) => ElementOrString;
-    } & SetAt);
+type PtrTo = {
+  PtrTo: (props: SKDBPathOffsetSet & Named) => ElementOrString;
+} & SetAt;
+type PossiblyPtrTo = { PtrTo?: undefined } | PtrTo;
 type RowExtraProps<T> = {
   extra?: ((v: vval<T>) => ElementOrString) | ElementOrString;
 } & PossiblyPtrTo;
@@ -135,7 +135,35 @@ function PPSize({ v }: v<bigint>) {
   );
 }
 
-function doNotSetAt(): void {}
+function PtrLink(props: PropsWithChildren<birowval & v<bigint> & PtrTo>) {
+  const { skdb, path, bottom_addr, setAt, PtrTo, v, children } = props;
+  const pointedOffset = Number(v - bottom_addr);
+  const pointedElt = useMemo(
+    () => (
+      <PtrTo
+        key={pointedOffset}
+        skdb={skdb}
+        path={path}
+        offset={pointedOffset}
+        bottom_addr={bottom_addr}
+        setAt={setAt}
+        name=""
+      />
+    ),
+    [PtrTo, skdb, path, pointedOffset, bottom_addr, setAt],
+  );
+  return (
+    <a
+      href="#"
+      onClick={(e) => {
+        e.preventDefault();
+        setAt(v, pointedElt);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
 
 function PPValBI(props: birowval & v<bigint>) {
   const Extra = props.extra;
@@ -151,37 +179,8 @@ function PPValBI(props: birowval & v<bigint>) {
       Extra
     );
   let contents: ElementOrString = hbi(props.v);
-  const { skdb, path, PtrTo } = props;
-  const bottom_addr = props.PtrTo !== undefined ? props.bottom_addr : 0n;
-  const setAt = props.PtrTo !== undefined ? props.setAt : doNotSetAt;
-  const pointedOffset = Number(props.v - bottom_addr);
-  const pointedElt = useMemo(() => {
-    if (PtrTo !== undefined) {
-      return (
-        <PtrTo
-          key={pointedOffset}
-          skdb={skdb}
-          path={path}
-          offset={pointedOffset}
-          bottom_addr={bottom_addr}
-          setAt={setAt}
-          name=""
-        />
-      );
-    } else return "";
-  }, [PtrTo, skdb, path, pointedOffset, bottom_addr, setAt]);
-  if (PtrTo !== undefined) {
-    contents = (
-      <a
-        href="#"
-        onClick={(e) => {
-          e.preventDefault();
-          setAt(props.v, pointedElt);
-        }}
-      >
-        {contents}
-      </a>
-    );
+  if (props.PtrTo !== undefined) {
+    contents = <PtrLink {...props}>{contents}</PtrLink>;
   }
   return (
     <>
