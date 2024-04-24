@@ -11,9 +11,12 @@ const DEFAULT_BOTTOM_ADDR = 0x0000001000000000n;
 type ElementOrString = JSX.Element | string;
 
 type Named = { name: string };
-type SetAt = {
-  setAt: (addr: bigint, ptrTo: ptrTo, props: SKDBPathOffsetSet & Named) => void;
-};
+type setAt = (
+  addr: bigint,
+  ptrTo: ptrTo,
+  props: SKDBPathOffsetSet & Named,
+) => void;
+type SetAt = { setAt: setAt };
 type SKDBPath = WithSKDB<Schema, { path: string }>;
 type SKDBPathOffset = SKDBPath & { offset: number };
 type SKDBPathOffsetSet = SKDBPathOffset & SetAt;
@@ -728,10 +731,8 @@ function RestOfHeader(props: SKDBPathOffsetSet) {
 
 const emptyMap: Map<number, ElementOrString> = Map();
 
-function RestOfFile(props: SKDBPathOffset & { bottom_addr: bigint }) {
+function useLoadedAddresses(bottom_addr: bigint): [ElementOrString[], setAt] {
   const [loadedAddresses, setLoadedAddresses] = useState(emptyMap);
-  const bottom_addr = props.bottom_addr;
-
   const setAt = useCallback(
     (addr: bigint, PtrTo: ptrTo, props: SKDBPathOffsetSet & Named) => {
       const { skdb, path, setAt, name } = props;
@@ -753,11 +754,15 @@ function RestOfFile(props: SKDBPathOffset & { bottom_addr: bigint }) {
     },
     [bottom_addr, setLoadedAddresses],
   );
-
   const sortedLoadedAddresses = loadedAddresses
     .sortBy((_v, k) => k)
     .toIndexedSeq()
     .toArray();
+  return [sortedLoadedAddresses, setAt];
+}
+
+function RestOfFile(props: SKDBPathOffset & { bottom_addr: bigint }) {
+  const [sortedLoadedAddresses, setAt] = useLoadedAddresses(props.bottom_addr);
 
   return (
     <>
