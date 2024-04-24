@@ -18,7 +18,8 @@ type SKDBPath = WithSKDB<Schema, { path: string }>;
 type SKDBPathOffset = SKDBPath & { offset: number };
 type SKDBPathOffsetSet = SKDBPathOffset & SetAt;
 type v<T> = { v: T };
-type read_value<T> = { processing: boolean } | { error: string } | v<T>;
+type nonv = { processing: boolean } | { error: string };
+type read_value<T> = nonv | v<T>;
 type val<T> = SKDBPathOffset & { processing?: boolean } & read_value<T>;
 type vval<T> = val<T> & v<T>;
 type PossiblyPtrTo =
@@ -31,7 +32,9 @@ type RowExtraProps<T> = {
 } & PossiblyPtrTo;
 type rowval<T> = val<T> & RowExtraProps<T>;
 
+type biv = v<bigint>;
 type bival = val<bigint>;
+type bivval = vval<bigint>;
 type BIRowExtraProps = RowExtraProps<bigint>;
 type birowval = rowval<bigint>;
 
@@ -338,6 +341,20 @@ function CStringRow(props: csrowval & Named) {
   return <Row {...props} PPVVal={PPValCString} />;
 }
 
+function NonVContents(nonv: nonv) {
+  return "error" in nonv ? nonv.error : "Loading...";
+}
+
+function NonVRow(props: { offset: number } & Named & { nonv: nonv }) {
+  return (
+    <tr>
+      <td>{hi(props.offset)}</td>
+      <td>{props.name}</td>
+      <td>{NonVContents(props.nonv)}</td>
+    </tr>
+  );
+}
+
 function UseRowMay(props: SKDBPathOffset & BIRowExtraProps & Named) {
   const val = useWordMay(props);
   return <BIRow {...props} {...val} />;
@@ -348,6 +365,11 @@ function CString(props: SKDBPathOffset & RowExtraProps<string> & Named) {
   return <CStringRow {...props} {...val} />;
 }
 
+function JustCString(props: SKDBPathOffset) {
+  const val = useCStringMust(props);
+  return "v" in val ? PPValCString(val) : NonVContents(val);
+}
+
 const BINARY_PATH = "/home/mehdi/skdb.github/sql/target/host/dev/skdb";
 
 function inBinary(props: SKDBPathOffset, bioffset: bigint | number) {
@@ -355,43 +377,91 @@ function inBinary(props: SKDBPathOffset, bioffset: bigint | number) {
   return { ...props, path: BINARY_PATH, offset };
 }
 
-function Typename_of_gctype_name_ptr(props: SKDBPathOffset) {
-  const val = useCStringMust(props);
-  return <PPVal {...val} PPVVal={PPValCString} />;
-}
-
-function Typename_of_gctype_word0(props: vval<bigint>) {
-  const m_hasName = props.v & 0xff000000n;
-  if (m_hasName === 0n) {
-    return "(no name)";
-  } else {
-    const m_refsHintMask = props.v & 0x1n;
-    // Assuming userByteSize <= 8*64, i.e. length of m_refMask is 0 or 1
-    const length_of_refMask = m_refsHintMask === 0n ? 0 : 1;
-    const offset = props.offset + 8 * (3 + length_of_refMask);
-    return <Typename_of_gctype_name_ptr {...props} offset={offset} />;
+function SkObjFromGCTypeWord0and2(
+  props: SKDBPathOffsetSet & { vtable_ptr: bivval } & {
+    gctype_word0: bivval;
+    gctype_word1: biv;
+  },
+) {
+  const { vtable_ptr, gctype_word0, gctype_word1 } = props;
+  const m_refsHintMask = gctype_word0.v & 0x1n;
+  const m_kind = gctype_word0.v & 0x100n;
+  const m_hasName = gctype_word0.v & 0xff000000n;
+  const m_userByteSize = gctype_word1.v;
+  const length_of_refMask = Number(
+    m_refsHintMask === 0n ? 0 : ((m_userByteSize + 7n) / 8n + 63n) / 64n,
+  );
+  const isArray = m_kind !== 0n;
+  if (isArray) {
+    return "TODO Array";
   }
+  const children = [];
+  const vtable_extra =
+    m_hasName === 0n ? (
+      ""
+    ) : (
+      <>
+        (
+        <JustCString
+          {...gctype_word0}
+          offset={gctype_word0.offset + 8 * (3 + length_of_refMask)}
+        />
+        )
+      </>
+    );
+  children.push(
+    <tr>
+      <td>{hi(vtable_ptr.offset)}</td>
+      <td>vtable</td>
+      <td>
+        {hbi(vtable_ptr.v)} {vtable_extra}
+      </td>
+    </tr>,
+  );
+  return <>{children}</>;
 }
 
-function Typename_of_gctype_ptr(props: vval<bigint>) {
-  const gctype_word0_props = inBinary(props, props.v);
-  const gctype_word0 = useWordMust(gctype_word0_props);
-  return <PPVal {...gctype_word0} PPVVal={Typename_of_gctype_word0} />;
+function SkObjFromGCTypePtr(
+  props: SKDBPathOffsetSet & { vtable_ptr: bivval } & { gctype_ptr: biv },
+) {
+  const gctype_props = inBinary(props, props.gctype_ptr.v);
+  const gctype_word0 = useWordMust(gctype_props);
+  const gctype_word1 = useWordMust(gctype_props, gctype_props.offset + 8);
+  return "v" in gctype_word0 ? (
+    "v" in gctype_word1 ? (
+      <SkObjFromGCTypeWord0and2
+        {...props}
+        gctype_word0={gctype_word0}
+        gctype_word1={gctype_word1}
+      />
+    ) : (
+      <NonVRow {...props} name="" nonv={gctype_word1} />
+    )
+  ) : (
+    <NonVRow {...props} name="" nonv={gctype_word0} />
+  );
 }
 
-function Typename_of_vtable_ptr(props: vval<bigint>) {
-  const gctype_ptr_offset = props.v + 8n;
+function SkObjFromVtablePtr(props: SKDBPathOffsetSet & { vtable_ptr: bivval }) {
+  const gctype_ptr_offset = props.vtable_ptr.v + 8n;
   const in_binary_props = inBinary(props, gctype_ptr_offset);
   const gctype_ptr = useWordMust(in_binary_props);
-  return <PPVal {...gctype_ptr} PPVVal={Typename_of_gctype_ptr} />;
+  return "v" in gctype_ptr ? (
+    <SkObjFromGCTypePtr {...props} gctype_ptr={gctype_ptr} />
+  ) : (
+    <NonVRow {...props} name="" nonv={gctype_ptr} />
+  );
 }
-// function isSkString();
 
-function SkObj(props: SKDBPathOffsetSet & BIRowExtraProps) {
+function SkObj(props: SKDBPathOffsetSet) {
   const { offset } = props;
   const vtable_offset = offset - 8;
   const vtable_ptr = useWordMust({ ...props, offset: vtable_offset });
-  return <BIRow name="vtable" {...vtable_ptr} extra={Typename_of_vtable_ptr} />;
+  return "v" in vtable_ptr ? (
+    <SkObjFromVtablePtr {...props} vtable_ptr={vtable_ptr} />
+  ) : (
+    <NonVRow {...props} name="" nonv={vtable_ptr} />
+  );
 }
 
 // function LoadAllRow(props: SKDBPathOffset & { n: number; name: string }) {
