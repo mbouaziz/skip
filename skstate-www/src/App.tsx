@@ -28,7 +28,7 @@ type PossiblyPtrTo =
       PtrTo: (props: SKDBPathOffsetSet & Named) => ElementOrString;
     } & SetAt);
 type RowExtraProps<T> = {
-  extra?: (v: vval<T>) => ElementOrString;
+  extra?: ((v: vval<T>) => ElementOrString) | ElementOrString;
 } & PossiblyPtrTo;
 type rowval<T> = val<T> & RowExtraProps<T>;
 
@@ -51,6 +51,10 @@ function hbi(v: bigint): string {
   return "0x" + "0000000000000000".slice(s.length) + s;
 }
 
+function genOffsets(start: number, n: number): number[] {
+  return Array.from({ length: n }, (_, i) => start + 8 * i);
+}
+
 async function requestReadWord(
   args: SKDBPathOffset,
   n_or_missingOffsets?: number | number[],
@@ -59,7 +63,7 @@ async function requestReadWord(
   const offsets = Array.isArray(n_or_missingOffsets)
     ? n_or_missingOffsets
     : typeof n_or_missingOffsets === "number"
-      ? Array.from({ length: n_or_missingOffsets }, (_, i) => offset + 8 * i)
+      ? genOffsets(offset, n_or_missingOffsets)
       : [offset];
   return await skdb.execInsert(
     "readWord",
@@ -138,11 +142,13 @@ function PPValBI(props: birowval & v<bigint>) {
   const extra =
     Extra === undefined ? (
       <></>
-    ) : (
+    ) : typeof Extra === "function" ? (
       <>
         &nbsp;
         <Extra {...props} />
       </>
+    ) : (
+      Extra
     );
   let contents: ElementOrString = hbi(props.v);
   const { skdb, path, PtrTo } = props;
@@ -260,17 +266,19 @@ function useWordMay(
 ): bival {
   const args = a.length === 1 ? a[0] : { ...a[0], offset: a[1] };
   const { skdb, path, offset } = args;
-  return bivalOfRow(
-    args,
-    skdb.useSelectMaybeSingle(
-      "readWord",
-      ["progress", "value"],
-      "path = @path AND offset = @offset",
-      { path, offset },
-      undefined,
-      { order: [["progress", "DESC"]], limit: 1 },
-    ),
+  const row = skdb.useSelectMaybeSingle(
+    "readWord",
+    ["progress", "value"],
+    "path = @path AND offset = @offset",
+    { path, offset },
+    undefined,
+    { order: [["progress", "DESC"]], limit: 1 },
   );
+  return bivalOfRow(args, row);
+}
+
+function valRequiresRequest<T>(val: val<T>): boolean {
+  return "processing" in val && val.processing === false;
 }
 
 function useWordMust(
@@ -279,13 +287,46 @@ function useWordMust(
   const args = a.length === 1 ? a[0] : { ...a[0], offset: a[1] };
   const val = useWordMay(args);
   const { skdb, path, offset } = args;
-  const requireRequest = "processing" in val && val.processing === false;
+  const requiresRequest = valRequiresRequest(val);
   useEffect(() => {
-    if (requireRequest) {
+    if (requiresRequest) {
       requestReadWord({ skdb, path, offset });
     }
-  }, [skdb, path, offset, requireRequest]);
+  }, [skdb, path, offset, requiresRequest]);
   return { ...val, processing: true };
+}
+
+function fillMissing(args: SKDBPathOffset, n: number, vals: bival[]): bival[] {
+  const { skdb, path } = args;
+  const res: bival[] = [];
+  let { offset } = args;
+  let iv = 0;
+  for (let ir = 0; ir < n; ir++) {
+    if (iv < vals.length && vals[iv].offset == offset) {
+      res.push(vals[iv]);
+      iv++;
+    } else {
+      res.push({ skdb, path, offset, processing: false });
+    }
+    offset += 8;
+  }
+  return res;
+}
+
+function useWordsMust(args: SKDBPathOffset, n: number): bival[] {
+  const { skdb, path, offset } = args;
+  const vals = fillMissing(args, n, useWordsMay(args, n));
+  const missingOffsets = vals.map((v) =>
+    valRequiresRequest(v) ? v.offset : null,
+  );
+  const deps = ([skdb, path] as unknown[]).concat(missingOffsets);
+  useEffect(() => {
+    const reallyMissing = missingOffsets.filter((v): v is number => v !== null);
+    if (reallyMissing.length > 0) {
+      requestReadWord({ skdb, path, offset }, reallyMissing);
+    }
+  }, deps);
+  return vals.map((v) => ({ ...v, processing: true }));
 }
 
 function useCStringMay(args: SKDBPathOffset): sval {
@@ -388,15 +429,19 @@ function SkObjFromGCTypeWord0and2(
   const m_kind = gctype_word0.v & 0x100n;
   const m_hasName = gctype_word0.v & 0xff000000n;
   const m_userByteSize = gctype_word1.v;
+  const m_userWordSize = (m_userByteSize + 7n) / 8n;
   const length_of_refMask = Number(
-    m_refsHintMask === 0n ? 0 : ((m_userByteSize + 7n) / 8n + 63n) / 64n,
+    m_refsHintMask === 0n ? 0 : (m_userWordSize + 63n) / 64n,
   );
   const isArray = m_kind !== 0n;
+  const refMask = useWordsMust(gctype_word0, length_of_refMask);
+  const userWordSize = Number(m_userWordSize);
+  const words = useWordsMust(props, userWordSize);
   if (isArray) {
     return "TODO Array";
   }
   const children = [];
-  const vtable_extra =
+  const type_name =
     m_hasName === 0n ? (
       ""
     ) : (
@@ -410,14 +455,34 @@ function SkObjFromGCTypeWord0and2(
       </>
     );
   children.push(
-    <tr>
-      <td>{hi(vtable_ptr.offset)}</td>
-      <td>vtable</td>
-      <td>
-        {hbi(vtable_ptr.v)} {vtable_extra}
-      </td>
-    </tr>,
+    <BIRow
+      key={vtable_ptr.offset}
+      name="vtable"
+      {...vtable_ptr}
+      extra={type_name}
+    />,
   );
+  let mask_slot = 0;
+  let mask_bit = 0n;
+  for (let w = 0; w < userWordSize; w++) {
+    const current_mask = refMask[mask_slot];
+    const is_ptr = "v" in current_mask && current_mask.v & (1n << mask_bit);
+    const PtrTo = is_ptr ? SkObj : undefined;
+    children.push(
+      <BIRow
+        key={words[w].offset}
+        {...props}
+        {...words[w]}
+        name={`w${w}`}
+        PtrTo={PtrTo}
+      />,
+    );
+    mask_bit++;
+    if (mask_bit >= 64n) {
+      mask_slot++;
+      mask_bit = 0n;
+    }
+  }
   return <>{children}</>;
 }
 
@@ -526,7 +591,7 @@ function FreeTable(props: SKDBPathOffsetSet) {
   let consecutiveZeroes = 0;
   slots.forEach((cur, i) => {
     addMissing(cur.offset);
-    if (!("v" in cur) && cur.processing !== true) {
+    if (valRequiresRequest(cur)) {
       missingOffsets.push(cur.offset);
     }
     const next = slots[i + 1];
