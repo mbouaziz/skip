@@ -397,10 +397,11 @@ function JustCString(props: SKDBPathOffset) {
   return "v" in val ? PPValCString(val) : NonVContents(val);
 }
 
+const BINARY_BASE_ADDR = 0x400000n;
 const BINARY_PATH = "/home/mehdi/skdb.github/sql/target/host/dev/skdb";
 
 function inBinary(props: SKDBPathOffset, bioffset: bigint | number) {
-  const offset = Number(BigInt(bioffset) - 0x400000n);
+  const offset = Number(BigInt(bioffset) - BINARY_BASE_ADDR);
   return { ...props, path: BINARY_PATH, offset };
 }
 
@@ -410,7 +411,7 @@ function SkObjFromGCTypeWord0and2(
     gctype_word1: biv;
   },
 ) {
-  const { vtable_ptr, gctype_word0, gctype_word1 } = props;
+  const { vtable_ptr, gctype_word0, gctype_word1, setAt } = props;
   const m_refsHintMask = gctype_word0.v & 0x1n;
   const m_kind = gctype_word0.v & 0x100n;
   const m_hasName = gctype_word0.v & 0xff000000n;
@@ -420,7 +421,10 @@ function SkObjFromGCTypeWord0and2(
     m_refsHintMask === 0n ? 0 : (m_userWordSize + 63n) / 64n,
   );
   const isArray = m_kind !== 0n;
-  const refMask = useWordsMust(gctype_word0, length_of_refMask);
+  const refMask = useWordsMust(
+    { ...gctype_word0, offset: gctype_word0.offset + 24 },
+    length_of_refMask,
+  );
   const userWordSize = Number(m_userWordSize);
   const words = useWordsMust(props, userWordSize);
   if (isArray) {
@@ -442,10 +446,12 @@ function SkObjFromGCTypeWord0and2(
     );
   children.push(
     <BIRow
-      key={vtable_ptr.offset}
-      name="vtable"
       {...vtable_ptr}
+      name="vtable"
       extra={type_name}
+      setAt={setAt}
+      PtrTo={VTable}
+      key={vtable_ptr.offset}
     />,
   );
   let mask_slot = 0;
@@ -456,11 +462,11 @@ function SkObjFromGCTypeWord0and2(
     const PtrTo = is_ptr ? SkObj : undefined;
     children.push(
       <BIRow
-        key={words[w].offset}
-        {...props}
         {...words[w]}
         name={`w${w}`}
+        setAt={setAt}
         PtrTo={PtrTo}
+        key={words[w].offset}
       />,
     );
     mask_bit++;
@@ -515,6 +521,192 @@ function SkObj(props: SKDBPathOffsetSet) {
   );
 }
 
+function VTable(props: SKDBPathOffsetSet) {
+  const { setAt } = props;
+  let { offset } = props;
+  const children = [];
+
+  children.push(<UseRowMay {...props} name="vtable[0]" key={offset} />);
+  offset += 8;
+
+  children.push(
+    <UseRowMay
+      {...props}
+      name="vtable[1]"
+      offset={offset}
+      setAt={setAt}
+      PtrTo={GCType}
+      key={offset}
+    />,
+  );
+  offset += 8;
+
+  return <>{children}</>;
+}
+
+function BIArray(props: SKDBPathOffset & Named & { n: number }) {
+  const { n, name } = props;
+  const words = useWordsMay(props, n);
+  const all = fillMissing(props, n, words);
+  return (
+    <>
+      {all.map((val, i) => (
+        <BIRow {...val} name={`${name}[${i}]`} />
+      ))}
+    </>
+  );
+}
+
+function GCType(props: SKDBPathOffsetSet) {
+  let { offset } = props;
+  const children = [];
+
+  let m_refsHintMask = 0n;
+  let m_userByteSize = 0n;
+  let m_hasName = 0n;
+
+  const gctype_word0 = useWordMay(props, offset);
+
+  if ("v" in gctype_word0) {
+    let word0 = gctype_word0.v;
+
+    m_refsHintMask = word0 & 0xffn;
+    children.push(
+      <BIRow
+        {...gctype_word0}
+        name="m_refsHintMask"
+        offset={offset}
+        v={m_refsHintMask}
+        key={offset}
+      />,
+    );
+    word0 >>= 8n;
+    offset++;
+
+    children.push(
+      <BIRow
+        {...gctype_word0}
+        name="m_kind"
+        offset={offset}
+        v={word0 & 0xffn}
+        extra={({ v }: biv) =>
+          v === 0n ? "class" : v === 1n ? "array" : "UNEXPECTED"
+        }
+        key={offset}
+      />,
+    );
+    word0 >>= 8n;
+    offset++;
+
+    children.push(
+      <BIRow
+        {...gctype_word0}
+        name="m_unused_tilesPerMask"
+        offset={offset}
+        v={word0 & 0xffn}
+        key={offset}
+      />,
+    );
+    word0 >>= 8n;
+    offset++;
+
+    m_hasName = word0 & 0xffn;
+    children.push(
+      <BIRow
+        {...gctype_word0}
+        name="m_hasName"
+        offset={offset}
+        v={m_hasName}
+        key={offset}
+      />,
+    );
+    word0 >>= 8n;
+    offset++;
+
+    children.push(
+      <BIRow
+        {...gctype_word0}
+        name="m_uninternedMetadataByteSize"
+        offset={offset}
+        v={word0 & 0xffn}
+        extra={PPSize}
+        key={offset}
+      />,
+    );
+    word0 >>= 16n;
+    offset += 2;
+
+    children.push(
+      <BIRow
+        {...gctype_word0}
+        name="m_unused_internedMetadataByteSize"
+        offset={offset}
+        v={word0 & 0xffn}
+        extra={PPSize}
+        key={offset}
+      />,
+    );
+    word0 >>= 16n;
+    offset += 2;
+  } else {
+    children.push(
+      <NonVRow
+        {...gctype_word0}
+        name="gctype.word0"
+        nonv={gctype_word0}
+        key={offset}
+      />,
+    );
+    offset += 8;
+  }
+
+  const gctype_word1 = useWordMay(props, offset);
+  children.push(<BIRow {...gctype_word1} name="m_userByteSize" key={offset} />);
+  if ("v" in gctype_word1) {
+    m_userByteSize = gctype_word1.v;
+  } else {
+    m_hasName = 0n;
+  }
+  offset += 8;
+
+  children.push(
+    <UseRowMay
+      {...props}
+      offset={offset}
+      name="m_unused_padding"
+      key={offset}
+    />,
+  );
+  offset += 8;
+
+  if (m_refsHintMask !== 0n) {
+    const m_userWordSize = (m_userByteSize + 7n) / 8n;
+    const length_of_refMask = Number(
+      m_refsHintMask === 0n ? 0 : (m_userWordSize + 63n) / 64n,
+    );
+    if (length_of_refMask > 0) {
+      children.push(
+        <BIArray
+          {...props}
+          name="m_refMask"
+          offset={offset}
+          n={length_of_refMask}
+          key={offset}
+        />,
+      );
+    }
+    offset += length_of_refMask * 8;
+  }
+
+  if (m_hasName !== 0n) {
+    children.push(
+      <CString {...props} name="name" offset={offset} key={offset} />,
+    );
+  }
+
+  return <>{children}</>;
+}
+
 // function LoadAllRow(props: SKDBPathOffset & { n: number; name: string }) {
 //   const { skdb, path, offset, n } = props;
 //   const allLoaded = skdb.use(
@@ -564,11 +756,11 @@ function FreeTable(props: SKDBPathOffsetSet) {
       missingOffsets.push(lastEmptyOffset);
       ftable.push(
         <BIRow
-          name={`ftable[${index}]`}
-          key={index}
           {...props}
+          name={`ftable[${index}]`}
           offset={lastEmptyOffset}
           processing={false}
+          key={index}
         />,
       );
       index++;
@@ -599,11 +791,11 @@ function FreeTable(props: SKDBPathOffsetSet) {
       const offsetFrom = cur.offset - consecutiveZeroes * 8;
       ftable.push(
         <BIRow
-          name={name}
-          key={index}
           {...props}
           {...cur}
+          name={name}
           offsetFrom={offsetFrom}
+          key={index}
         />,
       );
       consecutiveZeroes = 0;
@@ -636,53 +828,53 @@ function Ginfo(props: SKDBPathOffsetSet) {
   let { offset } = props;
   const children = [];
 
-  children.push(<FreeTable key={offset} {...props} offset={offset} />);
+  children.push(<FreeTable {...props} offset={offset} key={offset} />);
   offset += 8 * 64;
 
   children.push(
     <UseRowMay
-      key={offset}
-      name="context"
       {...props}
+      name="context"
       offset={offset}
       PtrTo={SkObj}
+      key={offset}
     />,
   );
   offset += 8;
 
   children.push(
-    <UseRowMay key={offset} name="head" {...props} offset={offset} />,
+    <UseRowMay {...props} name="head" offset={offset} key={offset} />,
   );
   offset += 8;
 
   children.push(
-    <UseRowMay key={offset} name="end" {...props} offset={offset} />,
+    <UseRowMay {...props} name="end" offset={offset} key={offset} />,
   );
   offset += 8;
 
   children.push(
     <UseRowMay
-      key={offset}
-      name="fileName"
       {...props}
+      name="fileName"
       offset={offset}
       PtrTo={CString}
+      key={offset}
     />,
   );
   offset += 8;
 
   children.push(
-    <UseRowMay key={offset} name="break_ptr" {...props} offset={offset} />,
+    <UseRowMay {...props} name="break_ptr" offset={offset} key={offset} />,
   );
   offset += 8;
 
   children.push(
     <UseRowMay
-      key={offset}
-      name="total_palloc_size"
       {...props}
+      name="total_palloc_size"
       offset={offset}
       extra={PPSize}
+      key={offset}
     />,
   );
   offset += 8;
@@ -695,34 +887,34 @@ function RestOfHeader(props: SKDBPathOffsetSet) {
   const children = [];
 
   children.push(
-    <UseRowMay key={offset} name="gmutex_attr" {...props} offset={offset} />,
+    <UseRowMay {...props} name="gmutex_attr" offset={offset} key={offset} />,
   );
   offset += 8;
 
   /* gmutex  */
   offset += 40;
 
-  children.push(<Ginfo key={offset} {...props} offset={offset} />);
+  children.push(<Ginfo {...props} offset={offset} key={offset} />);
   offset += 8 * (64 + 6);
 
   children.push(
-    <UseRowMay key={offset} name="gid" {...props} offset={offset} />,
+    <UseRowMay {...props} name="gid" offset={offset} key={offset} />,
   );
   offset += 8;
 
   children.push(
     <UseRowMay
-      key={offset}
-      name="capacity"
       {...props}
+      name="capacity"
       offset={offset}
       extra={PPSize}
+      key={offset}
     />,
   );
   offset += 8;
 
   children.push(
-    <UseRowMay key={offset} name="pconsts" {...props} offset={offset} />,
+    <UseRowMay {...props} name="pconsts" offset={offset} key={offset} />,
   );
   offset += 8;
 
@@ -739,12 +931,12 @@ function useLoadedAddresses(bottom_addr: bigint): [ElementOrString[], setAt] {
       const pointedOffset = Number(addr - bottom_addr);
       const elt = (
         <PtrTo
-          key={pointedOffset}
           skdb={skdb}
           path={path}
           offset={pointedOffset}
           setAt={setAt}
           name={name}
+          key={pointedOffset}
         />
       );
       setLoadedAddresses((la) => {
@@ -761,9 +953,25 @@ function useLoadedAddresses(bottom_addr: bigint): [ElementOrString[], setAt] {
   return [sortedLoadedAddresses, setAt];
 }
 
-function RestOfFile(props: SKDBPathOffset & { bottom_addr: bigint }) {
-  const [sortedLoadedAddresses, setAt] = useLoadedAddresses(props.bottom_addr);
-
+function RestOfFile(
+  props: SKDBPathOffset & { bottom_addr: bigint } & { binSetAt: setAt },
+) {
+  const { bottom_addr, binSetAt } = props;
+  const [sortedLoadedAddresses, mappingSetAt] = useLoadedAddresses(bottom_addr);
+  const setAt = useCallback(
+    (addr: bigint, PtrTo: ptrTo, props: SKDBPathOffsetSet & Named) => {
+      if (addr < bottom_addr) {
+        if (addr < BINARY_BASE_ADDR) {
+          alert("Segmentation fault!");
+        } else {
+          binSetAt(addr, PtrTo, { ...props, path: BINARY_PATH });
+        }
+      } else {
+        mappingSetAt(addr, PtrTo, props);
+      }
+    },
+    [bottom_addr, binSetAt, mappingSetAt],
+  );
   return (
     <>
       <RestOfHeader {...props} setAt={setAt} />
@@ -772,21 +980,21 @@ function RestOfFile(props: SKDBPathOffset & { bottom_addr: bigint }) {
   );
 }
 
-function Mapping(props: WithSKDB<Schema, { path: string }>) {
+function Mapping(props: SKDBPath & { binSetAt: setAt }) {
   let offset = 0;
   const children = [];
 
   const magic = useWordMust(props, offset);
-  children.push(<BIRow key={offset} name="magic" {...magic} />);
+  children.push(<BIRow {...magic} name="magic" key={offset} />);
   offset += 8;
 
   const bottom_addr = useWordMust(props, offset);
   children.push(
     <BIRow
-      key={offset}
-      name="bottom_addr"
       {...bottom_addr}
+      name="bottom_addr"
       extra={BottomAddrExtra}
+      key={offset}
     />,
   );
   offset += 8;
@@ -794,10 +1002,10 @@ function Mapping(props: WithSKDB<Schema, { path: string }>) {
   if ("v" in magic && "v" in bottom_addr) {
     children.push(
       <RestOfFile
-        key={offset}
         {...props}
         offset={offset}
         bottom_addr={bottom_addr.v}
+        key={offset}
       />,
     );
   }
@@ -805,16 +1013,40 @@ function Mapping(props: WithSKDB<Schema, { path: string }>) {
   return <>{children}</>;
 }
 
+function MappingTables(props: SKDBPath) {
+  const { skdb, path } = props;
+  const [binaryContents, binSetAt] = useLoadedAddresses(BINARY_BASE_ADDR);
+  const data =
+    path === "" ? (
+      <></>
+    ) : (
+      <Mapping skdb={skdb} path={path} binSetAt={binSetAt} />
+    );
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>{path}</th>
+          <th>{BINARY_PATH}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <table className="app-data">{data}</table>
+          </td>
+          <td>
+            <table className="app-data">{binaryContents}</table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
 function App({ skdb }: WithSKDB<Schema>) {
   const [mappingFileInput, setMappingFileInput] = useState("");
   const [selectedMappingFile, setSelectedMappingFile] = useState("");
-
-  const data =
-    selectedMappingFile === "" ? (
-      <></>
-    ) : (
-      <Mapping skdb={skdb} path={selectedMappingFile} />
-    );
 
   return (
     <div className="app">
@@ -830,16 +1062,7 @@ function App({ skdb }: WithSKDB<Schema>) {
           }
         }}
       />
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th></th>
-            <th>{selectedMappingFile}</th>
-          </tr>
-        </thead>
-        <tbody className="app-data">{data}</tbody>
-      </table>
+      <MappingTables skdb={skdb} path={selectedMappingFile} />
     </div>
   );
 }
