@@ -1,5 +1,5 @@
 import { Map } from "immutable";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { PropsWithChildren } from "react";
 import "./App.css";
 // import {schema} from "./schema.ts";
@@ -12,8 +12,7 @@ type ElementOrString = JSX.Element | string;
 
 type Named = { name: string };
 type SetAt = {
-  bottom_addr: bigint;
-  setAt: (addr: bigint, elt: ElementOrString) => void;
+  setAt: (addr: bigint, ptrTo: ptrTo, props: SKDBPathOffsetSet & Named) => void;
 };
 type SKDBPath = WithSKDB<Schema, { path: string }>;
 type SKDBPathOffset = SKDBPath & { offset: number };
@@ -23,10 +22,10 @@ type nonv = { processing: boolean } | { error: string };
 type read_value<T> = nonv | v<T>;
 type val<T> = SKDBPathOffset & { processing?: boolean } & read_value<T>;
 type vval<T> = val<T> & v<T>;
-type PtrTo = {
-  PtrTo: (props: SKDBPathOffsetSet & Named) => ElementOrString;
-} & SetAt;
-type PossiblyPtrTo = { PtrTo?: undefined } | PtrTo;
+type ptrTo = (props: SKDBPathOffsetSet & Named) => ElementOrString;
+type PtrTo = { PtrTo: ptrTo };
+type PtrToAndSet = PtrTo & SetAt;
+type PossiblyPtrTo = { PtrTo?: undefined } | PtrToAndSet;
 type RowExtraProps<T> = {
   extra?: ((v: vval<T>) => ElementOrString) | ElementOrString;
 } & PossiblyPtrTo;
@@ -135,29 +134,14 @@ function PPSize({ v }: biv) {
   );
 }
 
-function PtrLink(props: PropsWithChildren<birowval & biv & PtrTo>) {
-  const { skdb, path, bottom_addr, setAt, PtrTo, v, children } = props;
-  const pointedOffset = Number(v - bottom_addr);
-  const pointedElt = useMemo(
-    () => (
-      <PtrTo
-        key={pointedOffset}
-        skdb={skdb}
-        path={path}
-        offset={pointedOffset}
-        bottom_addr={bottom_addr}
-        setAt={setAt}
-        name=""
-      />
-    ),
-    [PtrTo, skdb, path, pointedOffset, bottom_addr, setAt],
-  );
+function PtrLink(props: PropsWithChildren<birowval & biv & PtrToAndSet>) {
+  const { setAt, PtrTo, v, children } = props;
   return (
     <a
       href="#"
       onClick={(e) => {
         e.preventDefault();
-        setAt(v, pointedElt);
+        setAt(v, PtrTo, { ...props, name: "" });
       }}
     >
       {children}
@@ -749,11 +733,24 @@ function RestOfFile(props: SKDBPathOffset & { bottom_addr: bigint }) {
   const bottom_addr = props.bottom_addr;
 
   const setAt = useCallback(
-    (addr: bigint, elt: ElementOrString) =>
+    (addr: bigint, PtrTo: ptrTo, props: SKDBPathOffsetSet & Named) => {
+      const { skdb, path, setAt, name } = props;
+      const pointedOffset = Number(addr - bottom_addr);
+      const elt = (
+        <PtrTo
+          key={pointedOffset}
+          skdb={skdb}
+          path={path}
+          offset={pointedOffset}
+          setAt={setAt}
+          name={name}
+        />
+      );
       setLoadedAddresses((la) => {
         const offset = Number(addr - bottom_addr);
         return Object.is(la.get(offset), elt) ? la : la.set(offset, elt);
-      }),
+      });
+    },
     [bottom_addr, setLoadedAddresses],
   );
 
