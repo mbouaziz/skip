@@ -110,7 +110,7 @@ function LoadLink(
 
 const sizeUnitPrefix = ["", "kilo", "mega", "giga", "tera", "peta"];
 
-function PPSize({ v }: v<bigint>) {
+function PPSize({ v }: biv) {
   let o = 0;
   let n: number;
   if (v >= 0x400n) {
@@ -135,7 +135,7 @@ function PPSize({ v }: v<bigint>) {
   );
 }
 
-function PtrLink(props: PropsWithChildren<birowval & v<bigint> & PtrTo>) {
+function PtrLink(props: PropsWithChildren<birowval & biv & PtrTo>) {
   const { skdb, path, bottom_addr, setAt, PtrTo, v, children } = props;
   const pointedOffset = Number(v - bottom_addr);
   const pointedElt = useMemo(
@@ -165,7 +165,7 @@ function PtrLink(props: PropsWithChildren<birowval & v<bigint> & PtrTo>) {
   );
 }
 
-function PPValBI(props: birowval & v<bigint>) {
+function PPValBI(props: birowval & biv) {
   const Extra = props.extra;
   const extra =
     Extra === undefined ? (
@@ -553,7 +553,7 @@ function SkObj(props: SKDBPathOffsetSet) {
 //   }
 // }
 
-function BottomAddrExtra({ v }: v<bigint>) {
+function BottomAddrExtra({ v }: biv) {
   return v === DEFAULT_BOTTOM_ADDR ? (
     <span title="Uses default bottom address">✓</span>
   ) : (
