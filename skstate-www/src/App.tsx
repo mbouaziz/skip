@@ -178,32 +178,19 @@ function PPValBI(props: birowval & biv) {
   }
   return (
     <>
-      {contents}
-      {extra}
+      <td>{contents}</td>
+      <td>{extra}</td>
     </>
   );
 }
 
 function PPValCString(props: v<string>) {
-  return <>{props.v}</>;
+  return <td colSpan={2}>{props.v}</td>;
 }
 
 type PPVVal<T> = {
-  PPVVal: (props: val<T> & v<T>) => ElementOrString;
+  PPVVal: (props: val<T> & v<T>) => JSX.Element;
 };
-
-function PPVal<T>(props: val<T> & PPVVal<T>) {
-  const { PPVVal } = props;
-  return "v" in props ? (
-    <PPVVal {...props} />
-  ) : "error" in props ? (
-    props.error
-  ) : props.processing === true ? (
-    "Loading..."
-  ) : (
-    <LoadLink {...props} />
-  );
-}
 
 type oRow =
   | { progress: number; value: string | null; offset?: number }
@@ -352,17 +339,28 @@ function useCStringMust(args: SKDBPathOffset): sval {
 function Row<T>(
   props: rowval<T> & PPVVal<T> & Named & { offsetFrom?: number },
 ) {
+  const { offset, offsetFrom, PPVVal } = props;
   const off =
-    props.offsetFrom !== undefined && props.offsetFrom !== props.offset
-      ? hi(props.offsetFrom) + ".." + hi(props.offset)
-      : hi(props.offset);
+    offsetFrom !== undefined && offsetFrom !== offset
+      ? hi(offsetFrom) + ".." + hi(offset)
+      : hi(offset);
+  const contents =
+    "v" in props ? (
+      <PPVVal {...props} />
+    ) : "error" in props ? (
+      props.error
+    ) : props.processing === true ? (
+      <td colSpan={2}>Loading...</td>
+    ) : (
+      <td colSpan={2}>
+        <LoadLink {...props} />
+      </td>
+    );
   return (
     <tr>
       <td>{off}</td>
       <td>{props.name}</td>
-      <td>
-        <PPVal {...props} />
-      </td>
+      {contents}
     </tr>
   );
 }
@@ -384,7 +382,7 @@ function NonVRow(props: { offset: number } & Named & { nonv: nonv }) {
     <tr>
       <td>{hi(props.offset)}</td>
       <td>{props.name}</td>
-      <td>{NonVContents(props.nonv)}</td>
+      <td colSpan={2}>{NonVContents(props.nonv)}</td>
     </tr>
   );
 }
@@ -401,7 +399,7 @@ function CString(props: SKDBPathOffset & RowExtraProps<string> & Named) {
 
 function JustCString(props: SKDBPathOffset) {
   const val = useCStringMust(props);
-  return "v" in val ? PPValCString(val) : NonVContents(val);
+  return "v" in val ? val.v : NonVContents(val);
 }
 
 const BINARY_BASE_ADDR = 0x400000n;
@@ -518,7 +516,7 @@ function SkObjFromVtablePtr(
   );
 }
 
-function SkString(props: SKDBPathOffsetSet & { prev_word: bigint }) {
+function SkString(props: SKDBPathOffsetSet & { size: bigint; hash: bigint }) {
   return "TODO";
 }
 
@@ -527,8 +525,12 @@ function SkObj(props: SKDBPathsOffsetSet) {
   const vtable_offset = offset - 8;
   const vtable_ptr = useWordMust({ ...props, offset: vtable_offset });
   return "v" in vtable_ptr ? (
-    (vtable_ptr.v & 0x80000000n) !== 0n ? (
-      <SkString {...props} prev_word={vtable_ptr.v} />
+    (vtable_ptr.v & 0x8000000000000000n) !== 0n ? (
+      <SkString
+        {...props}
+        size={vtable_ptr.v & 0xffffffffn}
+        hash={(vtable_ptr.v >> 32n) & 0x7fffffffn}
+      />
     ) : (
       <SkObjFromVtablePtr {...props} vtable_ptr={vtable_ptr} />
     )
@@ -740,7 +742,7 @@ function GCType(props: SKDBPathOffsetSet) {
 //       <tr>
 //         <td>{hi(props.offset)}</td>
 //         <td>{props.name}</td>
-//         <td>
+//         <td colSpan={2}>
 //           <LoadLink {...props} />
 //         </td>
 //       </tr>
@@ -827,7 +829,7 @@ function FreeTable(props: SKDBPathOffsetSet) {
       <tr>
         <td>{hi(props.offset)}</td>
         <td>Free table</td>
-        <td>
+        <td colSpan={2}>
           <LoadLink {...props} missingOffsets={missingOffsets} />
         </td>
       </tr>
