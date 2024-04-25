@@ -17,15 +17,22 @@ type setAt = (
   props: SKDBPathOffsetSet & Named,
 ) => void;
 type SetAt = { setAt: setAt };
-type SKDBPath = WithSKDB<Schema, { path: string }>;
-type SKDBPathOffset = SKDBPath & { offset: number };
+type Path = { path: string };
+type Offset = { offset: number };
+type SKDBPath = WithSKDB<Schema, Path>;
+type SKDBPathOffset = SKDBPath & Offset;
 type SKDBPathOffsetSet = SKDBPathOffset & SetAt;
+type BinPath = { binPath: string };
+type Paths = Path & BinPath;
+type SKDBPaths = WithSKDB<Schema, Paths>;
+type SKDBPathsOffset = SKDBPaths & Offset;
+type SKDBPathsOffsetSet = SKDBPathsOffset & SetAt;
 type v<T> = { v: T };
 type nonv = { processing: boolean } | { error: string };
 type read_value<T> = nonv | v<T>;
 type val<T> = SKDBPathOffset & { processing?: boolean } & read_value<T>;
 type vval<T> = val<T> & v<T>;
-type ptrTo = (props: SKDBPathOffsetSet & Named) => ElementOrString;
+type ptrTo = (props: SKDBPathsOffsetSet & Named) => ElementOrString;
 type PtrTo = { PtrTo: ptrTo };
 type PtrToAndSet = PtrTo & SetAt;
 type PossiblyPtrTo = { PtrTo?: undefined } | PtrToAndSet;
@@ -398,11 +405,10 @@ function JustCString(props: SKDBPathOffset) {
 }
 
 const BINARY_BASE_ADDR = 0x400000n;
-const BINARY_PATH = "/home/mehdi/skdb.github/sql/target/host/dev/skdb";
 
-function inBinary(props: SKDBPathOffset, bioffset: bigint | number) {
-  const offset = Number(BigInt(bioffset) - BINARY_BASE_ADDR);
-  return { ...props, path: BINARY_PATH, offset };
+function inBinary(props: SKDBPathsOffset, off: bigint | number) {
+  const offset = Number(BigInt(off) - BINARY_BASE_ADDR);
+  return { ...props, path: props.binPath, offset };
 }
 
 function SkObjFromGCTypeWord0and2(
@@ -479,7 +485,7 @@ function SkObjFromGCTypeWord0and2(
 }
 
 function SkObjFromGCTypePtr(
-  props: SKDBPathOffsetSet & { vtable_ptr: bivval } & { gctype_ptr: biv },
+  props: SKDBPathsOffsetSet & { vtable_ptr: bivval } & { gctype_ptr: biv },
 ) {
   const gctype_props = inBinary(props, props.gctype_ptr.v);
   const gctype_word0 = useWordMust(gctype_props);
@@ -499,7 +505,9 @@ function SkObjFromGCTypePtr(
   );
 }
 
-function SkObjFromVtablePtr(props: SKDBPathOffsetSet & { vtable_ptr: bivval }) {
+function SkObjFromVtablePtr(
+  props: SKDBPathsOffsetSet & { vtable_ptr: bivval },
+) {
   const gctype_ptr_offset = props.vtable_ptr.v + 8n;
   const in_binary_props = inBinary(props, gctype_ptr_offset);
   const gctype_ptr = useWordMust(in_binary_props);
@@ -510,12 +518,20 @@ function SkObjFromVtablePtr(props: SKDBPathOffsetSet & { vtable_ptr: bivval }) {
   );
 }
 
-function SkObj(props: SKDBPathOffsetSet) {
+function SkString(props: SKDBPathOffsetSet & { prev_word: bigint }) {
+  return "TODO";
+}
+
+function SkObj(props: SKDBPathsOffsetSet) {
   const { offset } = props;
   const vtable_offset = offset - 8;
   const vtable_ptr = useWordMust({ ...props, offset: vtable_offset });
   return "v" in vtable_ptr ? (
-    <SkObjFromVtablePtr {...props} vtable_ptr={vtable_ptr} />
+    (vtable_ptr.v & 0x80000000n) !== 0n ? (
+      <SkString {...props} prev_word={vtable_ptr.v} />
+    ) : (
+      <SkObjFromVtablePtr {...props} vtable_ptr={vtable_ptr} />
+    )
   ) : (
     <NonVRow {...props} name="" nonv={vtable_ptr} />
   );
@@ -923,28 +939,28 @@ function RestOfHeader(props: SKDBPathOffsetSet) {
 
 const emptyMap: Map<number, ElementOrString> = Map();
 
-function useLoadedAddresses(bottom_addr: bigint): [ElementOrString[], setAt] {
+function useLoadedAddresses(
+  bottom_addr: bigint,
+  binPath: string,
+): [ElementOrString[], setAt] {
   const [loadedAddresses, setLoadedAddresses] = useState(emptyMap);
   const setAt = useCallback(
     (addr: bigint, PtrTo: ptrTo, props: SKDBPathOffsetSet & Named) => {
-      const { skdb, path, setAt, name } = props;
       const pointedOffset = Number(addr - bottom_addr);
       const elt = (
         <PtrTo
-          skdb={skdb}
-          path={path}
+          {...props}
+          binPath={binPath}
           offset={pointedOffset}
-          setAt={setAt}
-          name={name}
           key={pointedOffset}
         />
       );
       setLoadedAddresses((la) => {
-        const offset = Number(addr - bottom_addr);
+        const offset = Number(pointedOffset);
         return Object.is(la.get(offset), elt) ? la : la.set(offset, elt);
       });
     },
-    [bottom_addr, setLoadedAddresses],
+    [bottom_addr, binPath, setLoadedAddresses],
   );
   const sortedLoadedAddresses = loadedAddresses
     .sortBy((_v, k) => k)
@@ -954,23 +970,26 @@ function useLoadedAddresses(bottom_addr: bigint): [ElementOrString[], setAt] {
 }
 
 function RestOfFile(
-  props: SKDBPathOffset & { bottom_addr: bigint } & { binSetAt: setAt },
+  props: SKDBPathsOffset & { bottom_addr: bigint } & { binSetAt: setAt },
 ) {
-  const { bottom_addr, binSetAt } = props;
-  const [sortedLoadedAddresses, mappingSetAt] = useLoadedAddresses(bottom_addr);
+  const { bottom_addr, binSetAt, binPath } = props;
+  const [sortedLoadedAddresses, mappingSetAt] = useLoadedAddresses(
+    bottom_addr,
+    binPath,
+  );
   const setAt = useCallback(
     (addr: bigint, PtrTo: ptrTo, props: SKDBPathOffsetSet & Named) => {
       if (addr < bottom_addr) {
         if (addr < BINARY_BASE_ADDR) {
           alert("Segmentation fault!");
         } else {
-          binSetAt(addr, PtrTo, { ...props, path: BINARY_PATH });
+          binSetAt(addr, PtrTo, { ...props, path: binPath });
         }
       } else {
         mappingSetAt(addr, PtrTo, props);
       }
     },
-    [bottom_addr, binSetAt, mappingSetAt],
+    [bottom_addr, binSetAt, binPath, mappingSetAt],
   );
   return (
     <>
@@ -980,7 +999,7 @@ function RestOfFile(
   );
 }
 
-function Mapping(props: SKDBPath & { binSetAt: setAt }) {
+function Mapping(props: SKDBPaths & { binSetAt: setAt }) {
   let offset = 0;
   const children = [];
 
@@ -1013,21 +1032,19 @@ function Mapping(props: SKDBPath & { binSetAt: setAt }) {
   return <>{children}</>;
 }
 
-function MappingTables(props: SKDBPath) {
-  const { skdb, path } = props;
-  const [binaryContents, binSetAt] = useLoadedAddresses(BINARY_BASE_ADDR);
-  const data =
-    path === "" ? (
-      <></>
-    ) : (
-      <Mapping skdb={skdb} path={path} binSetAt={binSetAt} />
-    );
+function MappingTables(props: SKDBPaths) {
+  const { path, binPath } = props;
+  const [binaryContents, binSetAt] = useLoadedAddresses(
+    BINARY_BASE_ADDR,
+    binPath,
+  );
+  const data = path === "" ? <></> : <Mapping {...props} binSetAt={binSetAt} />;
   return (
     <table>
       <thead>
         <tr>
           <th>{path}</th>
-          <th>{BINARY_PATH}</th>
+          <th>{binPath}</th>
         </tr>
       </thead>
       <tbody>
@@ -1044,12 +1061,23 @@ function MappingTables(props: SKDBPath) {
   );
 }
 
+const BINARY_PATH = "/home/mehdi/skdb.github/sql/target/host/dev/skdb";
+
 function App({ skdb }: WithSKDB<Schema>) {
   const [mappingFileInput, setMappingFileInput] = useState("");
   const [selectedMappingFile, setSelectedMappingFile] = useState("");
+  const [binFile, setBinFile] = useState(BINARY_PATH);
 
   return (
     <div className="app">
+      Binary:
+      <input
+        type="text"
+        name="binPath"
+        value={binFile}
+        onChange={(e) => setBinFile(e.target.value)}
+      />
+      Mapping:
       <input
         type="text"
         name="path"
@@ -1062,7 +1090,7 @@ function App({ skdb }: WithSKDB<Schema>) {
           }
         }}
       />
-      <MappingTables skdb={skdb} path={selectedMappingFile} />
+      <MappingTables skdb={skdb} path={selectedMappingFile} binPath={binFile} />
     </div>
   );
 }
