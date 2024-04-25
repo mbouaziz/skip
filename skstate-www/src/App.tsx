@@ -1042,24 +1042,14 @@ function MappingTables(props: SKDBPaths) {
   );
   const data = path === "" ? <></> : <Mapping {...props} binSetAt={binSetAt} />;
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>{path}</th>
-          <th>{binPath}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>
-            <table className="app-data">{data}</table>
-          </td>
-          <td>
-            <table className="app-data">{binaryContents}</table>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <>
+      <td>
+        <table className="app-data">{data}</table>
+      </td>
+      <td>
+        <table className="app-data">{binaryContents}</table>
+      </td>
+    </>
   );
 }
 
@@ -1072,27 +1062,48 @@ function App({ skdb }: WithSKDB<Schema>) {
 
   return (
     <div className="app">
-      Binary:
-      <input
-        type="text"
-        name="binPath"
-        value={binFile}
-        onChange={(e) => setBinFile(e.target.value)}
-      />
-      Mapping:
-      <input
-        type="text"
-        name="path"
-        value={mappingFileInput}
-        onChange={(e) => setMappingFileInput(e.target.value)}
-        onKeyDown={async (e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            setSelectedMappingFile(mappingFileInput);
-          }
-        }}
-      />
-      <MappingTables skdb={skdb} path={selectedMappingFile} binPath={binFile} />
+      <table>
+        <thead>
+          <tr>
+            <th>Binary</th>
+            <th>Mapping</th>
+          </tr>
+          <tr>
+            <td>
+              <input
+                width="100%"
+                type="text"
+                name="binPath"
+                value={binFile}
+                onChange={(e) => setBinFile(e.target.value)}
+              />
+            </td>
+            <td>
+              <input
+                type="text"
+                name="path"
+                value={mappingFileInput}
+                onChange={(e) => setMappingFileInput(e.target.value)}
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    setSelectedMappingFile(mappingFileInput);
+                  }
+                }}
+              />
+            </td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <MappingTables
+              skdb={skdb}
+              path={selectedMappingFile}
+              binPath={binFile}
+            />
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 }

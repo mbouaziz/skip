@@ -399,3 +399,7 @@ div.users ul[role="menu"] svg {
 .app-data {
   font-family: monospace;
 }
+
+.app input {
+  width:100%;
+}
