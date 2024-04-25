@@ -40,6 +40,7 @@ type RowExtraProps<T> = {
   extra?: ((v: vval<T>) => ElementOrString) | ElementOrString;
 } & PossiblyPtrTo;
 type rowval<T> = val<T> & RowExtraProps<T>;
+type Bytes = { bytes?: number };
 
 type biv = v<bigint>;
 type bival = val<bigint>;
@@ -50,14 +51,12 @@ type birowval = rowval<bigint>;
 type sval = val<string>;
 type csrowval = rowval<string>;
 
-function hi(i: number): string {
-  const s = i.toString(16);
-  return "0x" + "00000000".slice(s.length) + s;
+function hi(i: number, bytes: number = 4): string {
+  return "0x" + i.toString(16).padStart(bytes * 2, "0");
 }
 
-function hbi(v: bigint): string {
-  const s = v.toString(16);
-  return "0x" + "0000000000000000".slice(s.length) + s;
+function hbi(i: bigint, bytes: number = 8): string {
+  return "0x" + i.toString(16).padStart(bytes * 2, "0");
 }
 
 function genOffsets(start: number, n: number): number[] {
@@ -159,7 +158,7 @@ function PtrLink(props: PropsWithChildren<birowval & biv & PtrToAndSet>) {
   );
 }
 
-function PPValBI(props: birowval & biv) {
+function PPValBI(props: birowval & biv & Bytes) {
   const Extra = props.extra;
   const extra =
     Extra === undefined ? (
@@ -172,19 +171,19 @@ function PPValBI(props: birowval & biv) {
     ) : (
       Extra
     );
-  let contents: ElementOrString = hbi(props.v);
+  let contents: ElementOrString = hbi(props.v, props.bytes);
   if (props.PtrTo !== undefined) {
     contents = <PtrLink {...props}>{contents}</PtrLink>;
   }
   return (
     <>
-      <td>{contents}</td>
+      <td className="bi">{contents}</td>
       <td>{extra}</td>
     </>
   );
 }
 
-function PPValCString(props: v<string>) {
+function PPValString(props: v<string>) {
   return <td colSpan={2}>{props.v}</td>;
 }
 
@@ -365,12 +364,12 @@ function Row<T>(
   );
 }
 
-function BIRow(props: birowval & Named & { offsetFrom?: number }) {
+function BIRow(props: birowval & Named & Bytes & { offsetFrom?: number }) {
   return <Row {...props} PPVVal={PPValBI} />;
 }
 
-function CStringRow(props: csrowval & Named) {
-  return <Row {...props} PPVVal={PPValCString} />;
+function StringRow(props: csrowval & Named) {
+  return <Row {...props} PPVVal={PPValString} />;
 }
 
 function NonVContents(nonv: nonv) {
@@ -394,7 +393,7 @@ function UseRowMay(props: SKDBPathOffset & BIRowExtraProps & Named) {
 
 function CString(props: SKDBPathOffset & RowExtraProps<string> & Named) {
   const val = useCStringMust(props);
-  return <CStringRow {...props} {...val} />;
+  return <StringRow {...props} {...val} />;
 }
 
 function JustCString(props: SKDBPathOffset) {
@@ -516,8 +515,34 @@ function SkObjFromVtablePtr(
   );
 }
 
-function SkString(props: SKDBPathOffsetSet & { size: bigint; hash: bigint }) {
-  return "TODO";
+function SkString(
+  props: SKDBPathOffsetSet & Named & { size: bigint; hash: bigint },
+) {
+  const { name, offset, size, hash } = props;
+  // TODO: use size instead of using CString
+  return (
+    <>
+      <BIRow
+        {...props}
+        PtrTo={undefined}
+        name={`${name}.size`}
+        v={size}
+        bytes={4}
+        offset={offset - 8}
+        key={offset - 8}
+      />
+      <BIRow
+        {...props}
+        PtrTo={undefined}
+        name={`${name}.hash`}
+        v={hash}
+        bytes={4}
+        offset={offset - 4}
+        key={offset - 4}
+      />
+      <CString {...props} key={offset} />
+    </>
+  );
 }
 
 function SkObj(props: SKDBPathsOffsetSet) {
@@ -593,8 +618,9 @@ function GCType(props: SKDBPathOffsetSet) {
       <BIRow
         {...gctype_word0}
         name="m_refsHintMask"
-        offset={offset}
         v={m_refsHintMask}
+        bytes={1}
+        offset={offset}
         key={offset}
       />,
     );
@@ -605,11 +631,12 @@ function GCType(props: SKDBPathOffsetSet) {
       <BIRow
         {...gctype_word0}
         name="m_kind"
-        offset={offset}
         v={word0 & 0xffn}
         extra={({ v }: biv) =>
           v === 0n ? "class" : v === 1n ? "array" : "UNEXPECTED"
         }
+        bytes={1}
+        offset={offset}
         key={offset}
       />,
     );
@@ -620,8 +647,9 @@ function GCType(props: SKDBPathOffsetSet) {
       <BIRow
         {...gctype_word0}
         name="m_unused_tilesPerMask"
-        offset={offset}
         v={word0 & 0xffn}
+        bytes={1}
+        offset={offset}
         key={offset}
       />,
     );
@@ -633,8 +661,9 @@ function GCType(props: SKDBPathOffsetSet) {
       <BIRow
         {...gctype_word0}
         name="m_hasName"
-        offset={offset}
         v={m_hasName}
+        bytes={1}
+        offset={offset}
         key={offset}
       />,
     );
@@ -645,9 +674,10 @@ function GCType(props: SKDBPathOffsetSet) {
       <BIRow
         {...gctype_word0}
         name="m_uninternedMetadataByteSize"
-        offset={offset}
         v={word0 & 0xffn}
         extra={PPSize}
+        bytes={2}
+        offset={offset}
         key={offset}
       />,
     );
@@ -658,9 +688,10 @@ function GCType(props: SKDBPathOffsetSet) {
       <BIRow
         {...gctype_word0}
         name="m_unused_internedMetadataByteSize"
-        offset={offset}
         v={word0 & 0xffn}
         extra={PPSize}
+        bytes={2}
+        offset={offset}
         key={offset}
       />,
     );
@@ -1044,10 +1075,10 @@ function MappingTables(props: SKDBPaths) {
   return (
     <>
       <td>
-        <table className="app-data">{data}</table>
+        <table className="app-data">{binaryContents}</table>
       </td>
       <td>
-        <table className="app-data">{binaryContents}</table>
+        <table className="app-data">{data}</table>
       </td>
     </>
   );

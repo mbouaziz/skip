@@ -403,3 +403,11 @@ div.users ul[role="menu"] svg {
 .app input {
   width:100%;
 }
+
+.app td {
+  vertical-align: top;
+}
+
+.bi {
+  text-align: right;
+}
