@@ -24,7 +24,7 @@ const skdb = await connectAndMirror({
 console.log("CONNECTED");
 
 async function readCString(fh: FileHandle, offset: number): Promise<string> {
-    const CHUNK_SIZE = 1024 * 1024;
+    const CHUNK_SIZE = 16 * 1024;
     const chunks = [];
     let curOffset = offset;
     let totalLength = 0;

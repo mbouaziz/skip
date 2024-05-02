@@ -144,13 +144,13 @@ function PPSize({ v }: biv) {
 }
 
 function PtrLink(props: PropsWithChildren<birowval & biv & PtrToAndSet>) {
-  const { setAt, PtrTo, v, children } = props;
+  const { skdb, path, offset, setAt, PtrTo, v, children } = props;
   return (
     <a
       href="#"
       onClick={(e) => {
         e.preventDefault();
-        setAt(v, PtrTo, { ...props, name: "" });
+        setAt(v, PtrTo, { skdb, path, offset, setAt, name: "" });
       }}
     >
       {children}
@@ -450,7 +450,7 @@ function SkObjFromGCTypeWord0and2(
   children.push(
     <BIRow
       {...vtable_ptr}
-      name="vtable"
+      name="vtable_ptr"
       extra={type_name}
       setAt={setAt}
       PtrTo={VTable}
@@ -524,7 +524,6 @@ function SkString(
     <>
       <BIRow
         {...props}
-        PtrTo={undefined}
         name={`${name}.size`}
         v={size}
         bytes={4}
@@ -533,7 +532,6 @@ function SkString(
       />
       <BIRow
         {...props}
-        PtrTo={undefined}
         name={`${name}.hash`}
         v={hash}
         bytes={4}
