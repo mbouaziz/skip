@@ -290,16 +290,4 @@ export async function connectAndMirror(db) {
     await localDb.mirror(...schemaToMirrorDfns(schema));
     return new ConnectedDB(schema, localDb);
 }
-// type ComponentFunction<S extends DBSchema, This, Props, Return> =
-//     (this: This, skdb: ConnectedDB<S>, props: Props) => Return;
-// export function withSchema<const S extends DBSchema>(_schema: S) {
-//     return function <This, Props, Return>(
-//         f: ComponentFunction<S, This, Props, Return>,
-//         _context: ClassMethodDecoratorContext<This, ComponentFunction<S, This, Props, Return>>
-//     ) {
-//         return function (this: This, { skdb, ...rest }: WithSKDB<S, Props>) {
-//             return f.call(this, skdb, rest as Props);
-//         }
-//     }
-// }
 //# sourceMappingURL=typed-skdb.js.map

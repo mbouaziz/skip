@@ -565,17 +565,3 @@ type SKDBPropName = "skdb";
 type SKDBProp<S extends DBSchema> = { [p in SKDBPropName]: ConnectedDB<S> }
 export type WithSKDB<S extends DBSchema, Props = {}> =
     SKDBProp<S> & Props
-
-// type ComponentFunction<S extends DBSchema, This, Props, Return> =
-//     (this: This, skdb: ConnectedDB<S>, props: Props) => Return;
-
-// export function withSchema<const S extends DBSchema>(_schema: S) {
-//     return function <This, Props, Return>(
-//         f: ComponentFunction<S, This, Props, Return>,
-//         _context: ClassMethodDecoratorContext<This, ComponentFunction<S, This, Props, Return>>
-//     ) {
-//         return function (this: This, { skdb, ...rest }: WithSKDB<S, Props>) {
-//             return f.call(this, skdb, rest as Props);
-//         }
-//     }
-// }

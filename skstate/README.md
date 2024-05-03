@@ -1,15 +1,25 @@
-# skstate
+# SkState server
 
-To install dependencies:
+This is the server-side of `skstate`.
+
+It connects to the SKDB database, watches requests to read files and handles them.
+That's it!
+
+## Install dependencies
 
 ```bash
-bun install
+npm install
 ```
 
-To run:
+## Build
 
 ```bash
-bun run index.ts
+tsc
 ```
 
-This project was created using `bun init` in bun v1.0.33. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+## Run
+
+```bash
+cd .. && node skstate/dist/index.js
+```
+
