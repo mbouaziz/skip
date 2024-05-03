@@ -3,8 +3,8 @@
   "name": "typed-skdb",
   "version": "0.2.0",
   "description": "Typed wrapper around SKDB",
-  "main": "typed-skdb.js",
-  "types": "typed-skdb.d.ts",
+  "main": "dist/typed-skdb.js",
+  "types": "dist/typed-skdb.d.ts",
   "dependencies": {
     "skdb": "^0.0.65",
     "skdb-dev": "^0.1.22"

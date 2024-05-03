@@ -13,7 +13,7 @@
     "moduleResolution": "bundler",
     //"allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
-    //"noEmit": true,
+    "outDir": "./dist",
     "declaration": true,
     "sourceMap": true,
     "declarationMap": true,
