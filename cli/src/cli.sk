@@ -66,16 +66,16 @@ base class Arg{
   }
 }
 
-base class DefaultableArg{_default: ?Value = None()} extends Arg {
+base class TypedArg<T: frozen>{_default: ?Value = None()} extends Arg {
   fun getDefault(): ?Value {
     this._default
   }
 }
 
-base class ValuedArg{
+base class ValuedArg<T: frozen>{
   _required: Bool = false,
   _value_name: String = "VALUE",
-} extends DefaultableArg {
+} extends TypedArg<T> {
   fun required(value: Bool = true): this {
     this with {_required => value}
   }
@@ -89,7 +89,7 @@ base class ValuedArg{
   }
 }
 
-class StringArg extends ValuedArg {
+class StringArg extends ValuedArg<String> {
   fun default(value: String): this {
     if (this._repeatable) {
       invariant_violation(
@@ -109,13 +109,13 @@ class StringArg extends ValuedArg {
   }
 }
 
-class IntArg extends ValuedArg {
+class IntArg extends ValuedArg<Int> {
   fun default(value: Int): this {
     this with {_default => Some(IntValue(value))}
   }
 }
 
-class BoolArg{_negatable: Bool = false} extends DefaultableArg {
+class BoolArg{_negatable: Bool = false} extends TypedArg<Bool> {
   fun default(value: Bool): this {
     this with {_default => Some(BoolValue(value))}
   }
