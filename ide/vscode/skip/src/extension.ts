@@ -7,22 +7,24 @@ function formatSkipFile(fileName: string): void {
   execSync(`"${skfmt} -i < "${fileName}"`, { stdio: "inherit" });
 }
 
+const documentFormattingEditProvider = {
+  provideDocumentFormattingEdits(
+    document: vscode.TextDocument,
+  ): vscode.TextEdit[] {
+    vscode.window.showInformationMessage("Hello World from skip!");
+
+    formatSkipFile(document.fileName);
+
+    return [];
+  },
+};
+
 export function activate(context: vscode.ExtensionContext) {
   console.log("Skip extension is alive!");
 
   const disposable = vscode.languages.registerDocumentFormattingEditProvider(
-    "skip",
-    {
-      provideDocumentFormattingEdits(
-        document: vscode.TextDocument,
-      ): vscode.TextEdit[] {
-        vscode.window.showInformationMessage("Hello World from skip!");
-
-        formatSkipFile(document.fileName);
-
-        return [];
-      },
-    },
+    { scheme: "file", language: "skip" },
+    documentFormattingEditProvider,
   );
 
   context.subscriptions.push(disposable);
