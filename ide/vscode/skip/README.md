@@ -8,7 +8,7 @@ Skip language support.
 
 ## Requirements
 
-None.
+- When using locally, run `npm run compile`
 
 ## Extension Settings
 
