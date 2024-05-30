@@ -59,4 +59,66 @@ class .SortedArray<T: frozen & Orderable> private (
   }
 }
 
+private fun byKey<K: frozen, V>(kv: (K, V)): K {
+  kv.i0
+}
+
+class .SortedKVArray<K: frozen & Orderable, V> private (
+  private inner: .Array<(K, V)>,
+)
+  extends .Sequence<(K, V)>
+  uses
+    IntoIterator<(K, V)>,
+    FromIterator<(K, V)>,
+    Show[K: Show, V: Show],
+    Hashable[K: Hashable, V: Hashable],
+    Orderable[V: Orderable],
+    Equality[V: Equality],
+   {
+  static fun createFromArray(a: Array<(K, V)>): this {
+    if (a.isSortedBy(byKey)) static(a) else static(a.sortedBy(byKey))
+  }
+  static fun createFromVector<V: readonly Vector<(K, V)>>(v: V): this {
+    if (v.isSortedBy(byKey)) static(v.toArray()) else {
+      a = Array::mcreateFromItems(v);
+      a.sortBy(byKey);
+      static(unsafe_chill_trust_me(a))
+    }
+  }
+  static fun createFromItems<I: readonly Sequence<(K, V)>>(items: I): this {
+    a = Array::mcreateFromItems(items);
+    if (a.isSortedBy(byKey)) static(unsafe_chill_trust_me(a)) else {
+      static(a.sortedBy(byKey))
+    }
+  }
+  static fun createFromIterator<I: mutable Iterator<(K, V)>>(it: I): this {
+    v = Vector::mcreateFromIterator(it);
+    if (!v.isSortedBy(byKey)) {
+      v.sortBy(byKey)
+    };
+    static(v.toArray())
+  }
+
+  fun size(): Int {
+    this.inner.size()
+  }
+  fun values(): mutable Iterator<(K, V)> {
+    this.inner.values()
+  }
+  fun chill(): this {
+    static(this.inner.chill())
+  }
+  fun get(index: Int): (K, V) {
+    this.inner.get(index)
+  }
+  fun ==<K2: Orderable, V2: Orderable>[K: K2, V: V2](
+    other: SortedKVArray<K2, V2>,
+  ): Bool {
+    this.inner == other.inner
+  }
+  fun toString[K: Show, V: Show](): String {
+    this.inner.toString()
+  }
+}
+
 module end;
