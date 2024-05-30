@@ -1,0 +1,62 @@
+module SortedArray;
+
+// An immutable array with the guarantee that its elements are sorted
+class .SortedArray<T: frozen & Orderable> private (
+  private inner: .Array<T>,
+)
+  extends .IndexedSequence<T>
+  uses
+    IntoIterator<T>,
+    FromIterator<T>,
+    Show[T: Show],
+    Hashable[T: Hashable],
+    Orderable,
+    Equality,
+    AsBytes,
+   {
+  static fun createFromArray(a: Array<T>): this {
+    if (a.isSorted()) static(a) else static(a.sorted())
+  }
+  static fun createFromVector<V: readonly Vector<T>>(v: V): this {
+    if (v.isSorted()) static(v.toArray()) else {
+      a = Array::mcreateFromItems(v);
+      a.sort();
+      static(unsafe_chill_trust_me(a))
+    }
+  }
+  static fun createFromItems<I: readonly Sequence<T>>(items: I): this {
+    a = Array::mcreateFromItems(items);
+    if (a.isSorted()) static(unsafe_chill_trust_me(a)) else static(a.sorted())
+  }
+  static fun createFromIterator<I: mutable Iterator<T>>(it: I): this {
+    v = Vector::mcreateFromIterator(it);
+    if (!v.isSorted()) {
+      v.sort();
+    };
+    static(v.toArray())
+  }
+
+  fun size(): Int {
+    this.inner.size()
+  }
+  fun values(): mutable Iterator<T> {
+    this.inner.values()
+  }
+  fun chill(): this {
+    this
+  }
+  fun get(index: Int): T {
+    this.inner.get(index)
+  }
+  fun ==<U: Orderable>[T: U](other: SortedArray<U>): Bool {
+    this.inner == other.inner
+  }
+  fun toString[T: Show](): String {
+    this.inner.toString()
+  }
+  fun bytes(): readonly Bytes {
+    this.inner.bytes()
+  }
+}
+
+module end;
