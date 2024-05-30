@@ -330,7 +330,7 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     tag
   }
 
-  fun getChangesAcc(
+  private fun getChangesAcc(
     after: Tick,
     acc: mutable Vector<Key>,
     i: Int,
@@ -360,7 +360,7 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     result
   }
 
-  fun getKeyChangesAfter(
+  private fun getKeyChangesAfter(
     after: Tick,
     key: Key,
     i: Int,
