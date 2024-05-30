@@ -7,7 +7,7 @@
 
 module Range;
 
-class .Range(start: Int, end: Int) extends Sequence<Int> uses Equality, Show {
+class .Range(start: Int, end: Int) uses Sequence<Int>, Equality, Show {
   static fun create{start: Int, length: Int}: this {
     invariant(start >= 0, "Invalid start. Negative ranges are not allowed");
     invariant(length >= 0, "Invalid length. Negative ranges are not allowed");

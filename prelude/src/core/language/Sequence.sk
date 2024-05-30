@@ -16,7 +16,7 @@ module Sequence;
 //
 // NOTE: This class presents an analogous API to Iterator but with different
 // mutability requirements: the fundamental difference
-mutable base class .Sequence<+T> uses IntoIterator<T> {
+trait .Sequence<+T> extends IntoIterator<T> {
   // # Sizing
   // Methods to query or change the size or capacity of a container.
 

@@ -10,7 +10,7 @@ module Sequence;
 // A type that represents a concrete sequence of items with a finite size (that
 // may change over time) that can be accessed by contiguous integer indices in
 // the range 0 (inclusive) to `size()` (exclusive).
-mutable base class .IndexedSequence<+T> extends Sequence<T> {
+mutable base class .IndexedSequence<+T> uses Sequence<T> {
   // # Creating Sequences
 
   // Return a chilled (shallowly frozen) copy of this sequence.
@@ -581,7 +581,7 @@ mutable base class .MutableIndexedSequence<+T> extends IndexedSequence<T> {
   // rng = Random::create(container.hash());
   // ```
   overridable mutable fun shuffle(rng: mutable Random): void {
-    // Deterministic shuffle using the Fisher–Yates algorithm.
+    // Deterministic shuffle using the FisherYates algorithm.
     size = this.size();
     for (i in Range(0, size - 1)) {
       swap = rng.random(i, size);

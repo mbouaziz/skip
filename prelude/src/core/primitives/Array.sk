@@ -8,18 +8,17 @@
 module Array;
 
 // A contiguous, fixed-size list/array-like type.
-mutable native class .Array<+T>
-  extends Sequence<T>
-  uses
-    IntoIterator<T>,
-    FromIterator<T>,
-    Show[T: readonly Show],
-    Hashable[T: Hashable],
-    Orderable[T: Orderable],
-    Equality[T: Equality],
-    AsBytes,
-    AsMutableBytes,
-   {
+mutable native class .Array<+T> uses
+  Sequence<T>,
+  IntoIterator<T>,
+  FromIterator<T>,
+  Show[T: readonly Show],
+  Hashable[T: Hashable],
+  Orderable[T: Orderable],
+  Equality[T: Equality],
+  AsBytes,
+  AsMutableBytes,
+{
   // # (Private) Native Methods
 
   @intrinsic

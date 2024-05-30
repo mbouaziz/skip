@@ -20,7 +20,7 @@ trait .AsMutableBytes {
   mutable fun mbytes(): mutable MutableBytes;
 }
 
-mutable base class .Bytes extends Sequence<UInt8> uses Show {
+mutable base class .Bytes uses Sequence<UInt8>, Show {
   readonly fun ptr(): Unsafe.Ptr<UInt8>;
   readonly fun size(): Int;
 
