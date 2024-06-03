@@ -250,8 +250,8 @@ native class .String uses Hashable, Show, Orderable, AsBytes {
     i.rfind(f).map(_ -> i)
   }
 
-  fun chars(): Vector<Char> {
-    this.getIter().collect(Vector)
+  fun chars(): Array<Char> {
+    this.getIter().collect(Array)
   }
 
   fun utf8(): Array<UInt8> {

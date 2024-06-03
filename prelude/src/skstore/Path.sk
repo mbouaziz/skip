@@ -268,7 +268,7 @@ module SKStoreImpl;
 
 mutable class NameValidator(
   dirName: String,
-  chars: Vector<Char>,
+  chars: Array<Char>,
   mutable idx: Int,
 ) {
   readonly fun error(msg: String): void {
