@@ -139,7 +139,7 @@ class InvariantViolation(msg: String) extends Exception {
 }
 
 // Uncomment this line to get reliable stack traces when debugging invariant_violations.
-const print_stack_on_invariant_violation: Bool = false;
+const print_stack_on_invariant_violation: Bool = true;
 
 @no_inline
 fun invariant_violation<T>(msg: String): T {

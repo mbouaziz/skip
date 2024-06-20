@@ -154,6 +154,14 @@ void SKIP_initializeSkip();
 void skip_main();
 void SKIP_throw_EndOfFile();
 
+void SKIP_print_last_exception_stack_trace_and_exit(void*) {
+#ifndef RELEASE
+  skip::printStackTrace();
+#else
+  todo();
+#endif
+}
+
 void sk_string_check_c_safe(char* str) {
   size_t size = SKIP_String_byteSize(str);
   size_t len = strlen(str);

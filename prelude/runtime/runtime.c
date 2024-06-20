@@ -29,9 +29,6 @@ void SKIP_Regex_initialize() {}
 void SKIP_print_stack_trace() {
   todo();
 }
-void SKIP_print_last_exception_stack_trace_and_exit(void*) {
-  todo();
-}
 void SKIP_unreachableMethodCall(void*, void*) {
   todo();
 }

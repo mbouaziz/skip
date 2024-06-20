@@ -297,3 +297,7 @@ void SKIP_js_execvp(char* args_obj);
 void SKIP_posix_execvp(char* args_obj) {
   SKIP_js_execvp(args_obj);
 }
+
+void SKIP_print_last_exception_stack_trace_and_exit(void*) {
+  todo();
+}
