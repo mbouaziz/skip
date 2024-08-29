@@ -3,6 +3,7 @@
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import stylisticJs from "@stylistic/eslint-plugin-js";
+import TSDoc from "eslint-plugin-tsdoc";
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -17,6 +18,7 @@ export default tseslint.config(
     },
     plugins: {
       "@stylistic/js": stylisticJs,
+      tsdoc: TSDoc,
     },
     rules: {
       "prefer-spread": "warn",
@@ -67,6 +69,7 @@ export default tseslint.config(
         "error",
         { enforce: [{ prev: "*", next: "method", blankLine: "always" }] },
       ],
+      "tsdoc/syntax": "error",
     },
   },
   { files: ["**/*.js"], ...tseslint.configs.disableTypeChecked },
