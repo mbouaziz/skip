@@ -97,20 +97,10 @@ function getValue<T extends Internal.CJSON>(hdl: WasmHandle<T>): Exportable {
       return hdl.utils.importString(
         hdl.access.SKIP_SKJSON_asString(hdl.pointer),
       );
-    case Type.Array: {
-      const aPtr = hdl.access.SKIP_SKJSON_asArray(hdl.pointer);
-      return new Proxy(
-        hdl.derive(aPtr),
-        reactiveArray,
-      ) as unknown as ArrayProxy<any>;
-    }
-    case Type.Object: {
-      const oPtr = hdl.access.SKIP_SKJSON_asObject(hdl.pointer);
-      return new Proxy(
-        hdl.derive(oPtr),
-        reactiveObject,
-      ) as unknown as ObjectProxy<object>;
-    }
+    case Type.Array:
+      return newArrayProxy(hdl, hdl.pointer);
+    case Type.Object:
+      return newObjectProxy(hdl, hdl.pointer);
     case Type.Undefined:
     default:
       return undefined;
@@ -137,14 +127,10 @@ function getValueAt<T extends Internal.CJSON>(
       return hdl.access.SKIP_SKJSON_asBoolean(skval) ? true : false;
     case Type.String:
       return hdl.utils.importString(hdl.access.SKIP_SKJSON_asString(skval));
-    case Type.Array: {
-      const aPtr = hdl.access.SKIP_SKJSON_asArray(skval);
-      return new Proxy(hdl.derive(aPtr), reactiveArray);
-    }
-    case Type.Object: {
-      const oPtr = hdl.access.SKIP_SKJSON_asObject(skval);
-      return new Proxy(hdl.derive(oPtr), reactiveObject);
-    }
+    case Type.Array:
+      return newArrayProxy(hdl, skval);
+    case Type.Object:
+      return newObjectProxy(hdl, skval);
     case Type.Undefined:
     default:
       return undefined;
@@ -163,6 +149,17 @@ type ObjectProxy<Base extends Record<string, any>> = {
 function isObjectProxy(x: any): x is ObjectProxy<Record<string, any>> {
   /* eslint-disable-next-line @typescript-eslint/no-unsafe-return */
   return sk_isObjectProxy in x && x[sk_isObjectProxy];
+}
+
+function newObjectProxy<T extends Internal.CJSON>(
+  hdl: WasmHandle<any>,
+  ptr: ptr<T>,
+): ObjectProxy<object> {
+  const oPtr = hdl.access.SKIP_SKJSON_asObject(ptr);
+  return new Proxy(
+    hdl.derive(oPtr),
+    reactiveObject,
+  ) as unknown as ObjectProxy<object>;
 }
 
 export const reactiveObject = {
@@ -247,6 +244,17 @@ type ArrayProxy<T> = {
 function isArrayProxy(x: any): x is ArrayProxy<any> {
   /* eslint-disable-next-line @typescript-eslint/no-unsafe-return */
   return sk_isArrayProxy in x && x[sk_isArrayProxy];
+}
+
+function newArrayProxy<T extends Internal.CJSON>(
+  hdl: WasmHandle<any>,
+  ptr: ptr<T>,
+): ArrayProxy<any> {
+  const aPtr = hdl.access.SKIP_SKJSON_asArray(ptr);
+  return new Proxy(
+    hdl.derive(aPtr),
+    reactiveArray,
+  ) as unknown as ArrayProxy<any>;
 }
 
 export const reactiveArray = {
