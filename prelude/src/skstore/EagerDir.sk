@@ -188,7 +188,7 @@ mutable class IntRef(mutable value: Int) {
 /* Ranges. */
 /*****************************************************************************/
 
-value class KeyRange<K: Key>(start: K, end: K) uses Orderable, Show {
+value class KeyRange<+K: Key>(start: K, end: K) uses Orderable, Show {
   fun toString(): String {
     `[${this.start}, ${this.end}]`
   }
