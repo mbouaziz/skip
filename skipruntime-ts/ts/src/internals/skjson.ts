@@ -389,7 +389,7 @@ export type Exportable =
   | ArrayProxy<any>;
 
 export interface SKJSON extends Shared {
-  importJSON: (value: ptr<Internal.CJSON>, copy?: boolean) => Exportable;
+  importJSON: (value: ptr<Internal.CJSON> | null, copy?: boolean) => Exportable;
   exportJSON(v: null | undefined): ptr<Internal.CJNull>;
   exportJSON(v: number): ptr<Internal.CJFloat>;
   exportJSON(v: boolean): ptr<Internal.CJBool>;
@@ -402,10 +402,6 @@ export interface SKJSON extends Shared {
     },
   ): ptr<T>;
   exportJSON(v: TJSON | null): ptr<Internal.CJSON>;
-  importOptJSON: (
-    value: Opt<ptr<Internal.CJSON>>,
-    copy?: boolean,
-  ) => Exportable;
   importString: (v: ptr<Internal.String>) => string;
   exportString: (v: string) => ptr<Internal.String>;
   runWithGC: <T>(fn: () => T) => T;
@@ -414,14 +410,17 @@ export interface SKJSON extends Shared {
 class SKJSONShared implements SKJSON {
   getName = () => "SKJSON";
 
-  importJSON: (value: ptr<Internal.CJSON>, copy?: boolean) => Exportable;
+  importJSON: (value: ptr<Internal.CJSON> | null, copy?: boolean) => Exportable;
   exportJSON: (v: Exportable) => ptr<Internal.CJSON>;
   importString: (v: ptr<Internal.String>) => string;
   exportString: (v: string) => ptr<Internal.String>;
   runWithGC: <T>(fn: () => T) => T;
 
   constructor(
-    importJSON: (value: ptr<Internal.CJSON>, copy?: boolean) => Exportable,
+    importJSON: (
+      value: ptr<Internal.CJSON> | null,
+      copy?: boolean,
+    ) => Exportable,
     exportJSON: (v: Exportable) => ptr<Internal.CJSON>,
     importString: (v: ptr<Internal.String>) => string,
     exportString: (v: string) => ptr<Internal.String>,
@@ -432,13 +431,6 @@ class SKJSONShared implements SKJSON {
     this.importString = importString;
     this.exportString = exportString;
     this.runWithGC = runWithGC;
-  }
-
-  importOptJSON(value: Opt<ptr<Internal.CJSON>>, copy?: boolean): Exportable {
-    if (value === null || value === 0) {
-      return null;
-    }
-    return this.importJSON(value, copy);
   }
 }
 
@@ -457,9 +449,10 @@ class LinksImpl implements Links {
   complete = (utils: Utils, exports: object) => {
     const fromWasm = exports as FromWasm;
     const importJSON = <T extends Internal.CJSON>(
-      valuePtr: ptr<T>,
+      valuePtr: ptr<T> | null,
       copy?: boolean,
     ): Exportable => {
+      if (valuePtr === null || valuePtr == 0) return null;
       const value = getValue(new WasmHandle(utils, valuePtr, fromWasm));
       return copy && value !== null ? clone(value) : value;
     };

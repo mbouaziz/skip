@@ -355,7 +355,7 @@ class NonEmptyIteratorImpl<T> implements NonEmptyIterator<T> {
   }
 
   next(): Opt<T> {
-    return this.skjson.importOptJSON(
+    return this.skjson.importJSON(
       this.exports.SkipRuntime_iteratorNext(this.pointer),
     ) as Opt<T>;
   }
@@ -367,7 +367,7 @@ class NonEmptyIteratorImpl<T> implements NonEmptyIterator<T> {
   }
 
   uniqueValue(): Opt<T> {
-    return this.skjson.importOptJSON(
+    return this.skjson.importJSON(
       this.exports.SkipRuntime_iteratorUniqueValue(this.pointer),
     ) as Opt<T>;
   }

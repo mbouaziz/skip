@@ -21,9 +21,8 @@ export type CtxMapping<
 };
 
 export interface SKJSON extends Shared {
-  importJSON: (value: ptr<Internal.CJSON>, copy?: boolean) => any;
+  importJSON: (value: ptr<Internal.CJSON> | null, copy?: boolean) => any;
   exportJSON: <T>(v: T) => ptr<Internal.CJSON>;
-  importOptJSON: (value: Opt<ptr<Internal.CJSON>>, copy?: boolean) => any;
   importString: (v: ptr<Internal.String>) => string;
   exportString: (v: string) => ptr<Internal.String>;
   runWithGC: <T>(fn: () => T) => T;
