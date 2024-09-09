@@ -127,6 +127,7 @@ class EagerCollectionImpl<K extends TJSON, V extends TJSON>
       (key: K, it: NonEmptyIterator<V>) =>
         assertNoKeysNaN(mapperObj.mapElement(key, it)),
       options.ranges,
+      options.limit,
     );
     return this.derive<K2, V2>(eagerHdl);
   }

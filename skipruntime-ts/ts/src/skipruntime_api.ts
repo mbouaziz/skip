@@ -41,7 +41,10 @@ export type Schema = {
   alias?: string;
 };
 export class MapOptions<K extends TJSON> {
-  constructor(public ranges: [K, K][] | null = null) {}
+  constructor(
+    public ranges: [K, K][] | null = null,
+    public limit: int | null = null,
+  ) {}
 }
 
 /**
