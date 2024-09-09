@@ -227,6 +227,14 @@ fun asKeyRanges(jsonRanges: SKJSON.CJSON): ?Array<KeyRange> {
   )
 }
 
+fun asIntOpt(json: SKJSON.CJSON): ?Int {
+  json match {
+  | SKJSON.CJNull() -> None()
+  | SKJSON.CJInt(i) -> Some(i)
+  | _ -> invariant_violation("Must be an Int value.")
+  }
+}
+
 @export("SkipRuntime_map")
 fun map(
   context: mutable Context,
@@ -234,6 +242,7 @@ fun map(
   name: String,
   fnPtr: UInt32,
   rangeOpt: SKJSON.CJSON,
+  limitOpt: SKJSON.CJSON,
 ): String {
   eager = EHandle(JSONID::keyType, JSONFile::type, DirName::create(handleId));
   mapHandle = FnHandle::make(fnPtr);
@@ -245,6 +254,7 @@ fun map(
     context,
     mapHandle.map,
     asKeyRanges(rangeOpt),
+    asIntOpt(limitOpt),
   )
     .getDirName()
     .toString()

@@ -304,6 +304,7 @@ export class ContextImpl implements Context {
       this.skjson.exportString(name),
       computeFnId,
       this.skjson.exportJSON(rangeOpt),
+      this.skjson.exportJSON(null),
     );
     return this.skjson.importString(resHdlPtr);
   }

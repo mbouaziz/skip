@@ -163,6 +163,7 @@ export interface FromWasm {
     rangeOpt: ptr<
       Internal.CJArray<Internal.CJArray<Internal.CJSON>> | Internal.CJNull
     >,
+    limitOpt: ptr<Internal.CJInt | Internal.CJNull>,
   ): ptr<Internal.String>;
 
   SkipRuntime_mapReduce<
