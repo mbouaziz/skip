@@ -41,9 +41,27 @@ fun eagerMap<K: Key, V: File, K2: Key, V2: File>(
     mutable NonEmptyIterator<V>,
   ) ~> void,
   rangeOpt: ?Array<KeyRange> = None(),
+  limitOpt: ?Int = None(),
 ): EHandle<K2, V2> {
-  dirName = handle.dirName.sub(name);
-  handle.map(keyConv, fileConv, context, dirName, compute, rangeOpt);
+  resultDirName = handle.dirName.sub(name);
+  limitOpt match {
+  | None() ->
+    handle.map(keyConv, fileConv, context, resultDirName, compute, rangeOpt)
+  | Some(limit) ->
+    interDirName = resultDirName.sub("__nolimit");
+    handle
+      .map(keyConv, fileConv, context, interDirName, compute, rangeOpt)
+      .filter(
+        context,
+        resultDirName,
+        limit,
+        (_context, _key, _value) ~> true,
+        _v ~> 1,
+        (_v, _n) ~>
+          invariant_violation("removeFromFile called on singleton value"),
+        None(),
+      )
+  }
 }
 
 fun eagerMultiMap<K: Key, V: File, K2: Key, V2: File>(
