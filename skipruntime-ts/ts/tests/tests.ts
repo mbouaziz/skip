@@ -321,13 +321,16 @@ function testRangedMap1Init(
     .map(TestParseInt)
     .map(
       SquareValues,
-      new MapOptions([
-        [1, 1],
-        [3, 4],
-        [7, 9],
-        [20, 50],
-        [42, 1337],
-      ]),
+      new MapOptions(
+        [
+          [1, 1],
+          [3, 4],
+          [7, 9],
+          [20, 50],
+          [42, 1337],
+        ],
+        8,
+      ),
     )
     .mapTo(
       output,
@@ -335,6 +338,7 @@ function testRangedMap1Init(
       new MapOptions([
         [0, 7],
         [8, 15],
+        [19, 2000],
       ]),
     );
 }
@@ -349,6 +353,8 @@ async function testRangeMap1Run(input: Table<TJSON[]>, output: Table<TJSON[]>) {
     { value: 49 },
     { value: 64 },
     { value: 81 },
+    { value: 400 },
+    { value: 441 },
   ]);
 }
 
