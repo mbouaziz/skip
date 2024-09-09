@@ -296,6 +296,7 @@ export class ContextImpl implements Context {
     name: string,
     mapper: (key: K, it: NonEmptyIterator<V>) => Iterable<[K2, V2]>,
     rangeOpt: [K, K][] | null = null,
+    limitOpt: int | null = null,
   ) {
     const computeFnId = this.handles.register(mapper);
     const resHdlPtr = this.exports.SkipRuntime_map(
@@ -304,7 +305,7 @@ export class ContextImpl implements Context {
       this.skjson.exportString(name),
       computeFnId,
       this.skjson.exportJSON(rangeOpt),
-      this.skjson.exportJSON(null),
+      this.skjson.exportJSON(limitOpt),
     );
     return this.skjson.importString(resHdlPtr);
   }

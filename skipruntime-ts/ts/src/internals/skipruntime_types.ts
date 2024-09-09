@@ -52,6 +52,7 @@ export interface Context {
     mapperName: string,
     compute: (key: K, it: NonEmptyIterator<V>) => Iterable<[K2, V2]>,
     rangeOpt?: [K, K][] | null,
+    limitOpt?: int | null,
   ) => string;
 
   lazy: <K extends TJSON, V extends TJSON>(
