@@ -294,29 +294,7 @@ export interface AsyncLazyCollection<
   M extends TJSON,
 > extends LazyCollection<K, Loadable<V, M>> {}
 
-/**
- * An _Eager_ reactive collection, whose values are computed eagerly and kept up
- * to date whenever inputs are changed
- */
-export interface EagerCollection<K extends TJSON, V extends TJSON> {
-  /**
-   * Get (and potentially compute) all values mapped to by some key of a lazy reactive
-   * collection.
-   */
-  getArray(key: K): V[];
-
-  /**
-   * Get a value of an eager reactive collection.
-   * @throws {Error} when either zero or multiple such values exist
-   */
-  getOne(key: K): V;
-  /**
-   * Get a value of an eager reactive collection, if one exists.
-   * If multiple values are mapped to by the key, any of them can be returned.
-   * @returns the value for this `key`, or null if no such value exists
-   */
-  maybeGetOne(key: K): Opt<V>;
-
+export interface MappableEagerCollection<K extends TJSON, V extends TJSON> {
   /**
    * Create a new eager collection by mapping some computation over this one
    * @param {Mapper} mapper - function to apply to each element of this collection
@@ -374,11 +352,6 @@ export interface EagerCollection<K extends TJSON, V extends TJSON> {
   ): EagerCollection<K2, V3>;
 
   /**
-   * The current number of elements in the collection
-   */
-  size: () => number;
-
-  /**
    * Eagerly write/update `table` with the contents of this collection
    * @param {TableHandle} table - the table to update
    * @param {Mapper} mapper - function to apply to each key/value pair in this collection
@@ -403,6 +376,36 @@ export interface EagerCollection<K extends TJSON, V extends TJSON> {
     mapper: new (...params: Params) => OutputMapper<R, K, V>,
     ...paramsAndOptions: [...Params, MapOptions<K>]
   ): void;
+}
+
+/**
+ * An _Eager_ reactive collection, whose values are computed eagerly and kept up
+ * to date whenever inputs are changed
+ */
+export interface EagerCollection<K extends TJSON, V extends TJSON>
+  extends MappableEagerCollection<K, V> {
+  /**
+   * Get (and potentially compute) all values mapped to by some key of a lazy reactive
+   * collection.
+   */
+  getArray(key: K): V[];
+
+  /**
+   * Get a value of an eager reactive collection.
+   * @throws {Error} when either zero or multiple such values exist
+   */
+  getOne(key: K): V;
+  /**
+   * Get a value of an eager reactive collection, if one exists.
+   * If multiple values are mapped to by the key, any of them can be returned.
+   * @returns the value for this `key`, or null if no such value exists
+   */
+  maybeGetOne(key: K): Opt<V>;
+
+  /**
+   * The current number of elements in the collection
+   */
+  size: () => number;
 
   getId(): string;
 }
