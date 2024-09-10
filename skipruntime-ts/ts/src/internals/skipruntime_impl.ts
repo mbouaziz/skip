@@ -70,13 +70,10 @@ function splitMapParams<Params extends Param[], K extends TJSON>(
 class EagerCollectionImpl<K extends TJSON, V extends TJSON>
   implements EagerCollection<K, V>
 {
-  //
-  protected context: Context;
-  eagerHdl: string;
-
-  constructor(context: Context, eagerHdl: string) {
-    this.context = context;
-    this.eagerHdl = eagerHdl;
+  constructor(
+    protected context: Context,
+    protected eagerHdl: string,
+  ) {
     Object.defineProperty(this, "__sk_frozen", {
       enumerable: false,
       writable: false,
