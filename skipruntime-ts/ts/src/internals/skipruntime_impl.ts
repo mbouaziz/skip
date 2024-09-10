@@ -29,6 +29,7 @@ import type {
   Local,
   EntryPoint,
   Inputs,
+  SlicedEagerCollection,
 } from "../skipruntime_api.js";
 
 // prettier-ignore
@@ -73,6 +74,12 @@ class EagerCollectionImpl<K extends TJSON, V extends TJSON>
   constructor(
     protected context: Context,
     protected eagerHdl: string,
+    /* ranges is null for normal eager collection.
+      It is non-null for sliced eager collection. In this case, it is
+      meant to be used as ranges for operations happening on the
+      collection, such as map, mapReduce, mapTo.
+     */
+    protected ranges: [K, K][] | null = null,
   ) {
     Object.defineProperty(this, "__sk_frozen", {
       enumerable: false,
@@ -107,11 +114,18 @@ class EagerCollectionImpl<K extends TJSON, V extends TJSON>
     return this.context.size(this.eagerHdl);
   };
 
+  sliced(ranges: [K, K][]): SlicedEagerCollection<K, V> {
+    if (this.ranges !== null) {
+      /* The interface SlicedEagerCollection guarantees it won't happen */
+      throw new Error("Cannot slice a SlicedEagerCollection");
+    }
+    return new EagerCollectionImpl(this.context, this.eagerHdl, ranges);
+  }
+
   map<K2 extends TJSON, V2 extends TJSON, Params extends Param[]>(
     mapper: new (...params: Params) => Mapper<K, V, K2, V2>,
-    ...paramsAndOptions: WithOptions<Params, K>
+    ...params: Params
   ): EagerCollection<K2, V2> {
-    const [params, options] = splitMapParams(paramsAndOptions);
     params.forEach(check);
     const mapperObj = new mapper(...params);
     Object.freeze(mapperObj);
@@ -123,7 +137,7 @@ class EagerCollectionImpl<K extends TJSON, V extends TJSON>
       mapperObj.constructor.name,
       (key: K, it: NonEmptyIterator<V>) =>
         assertNoKeysNaN(mapperObj.mapElement(key, it)),
-      options.ranges,
+      this.ranges,
     );
     return this.derive<K2, V2>(eagerHdl);
   }
@@ -136,9 +150,8 @@ class EagerCollectionImpl<K extends TJSON, V extends TJSON>
   >(
     mapper: new (...params: Params) => Mapper<K, V, K2, V2>,
     accumulator: Accumulator<V2, V3>,
-    ...paramsAndOptions: WithOptions<Params, K>
+    ...params: Params
   ) {
-    const [params, options] = splitMapParams(paramsAndOptions);
     params.forEach(check);
     const mapperObj = new mapper(...params);
     Object.freeze(mapperObj);
@@ -151,7 +164,7 @@ class EagerCollectionImpl<K extends TJSON, V extends TJSON>
       (key: K, it: NonEmptyIterator<V>) =>
         assertNoKeysNaN(mapperObj.mapElement(key, it)),
       accumulator,
-      options.ranges,
+      this.ranges,
     );
     return this.derive<K2, V3>(eagerHdl);
   }
@@ -159,9 +172,8 @@ class EagerCollectionImpl<K extends TJSON, V extends TJSON>
   mapTo<R extends TJSON[], Params extends Param[]>(
     table: TableCollection<R>,
     mapper: new (...params: Params) => OutputMapper<R, K, V>,
-    ...paramsAndOptions: WithOptions<Params, K>
+    ...params: Params
   ): void {
-    const [params, options] = splitMapParams(paramsAndOptions);
     params.forEach(check);
     const mapperObj = new mapper(...params);
     Object.freeze(mapperObj);
@@ -173,7 +185,7 @@ class EagerCollectionImpl<K extends TJSON, V extends TJSON>
       table.getSchema(),
       (key: K, it: NonEmptyIterator<V>) => mapperObj.mapElement(key, it),
       table.isConnected(),
-      options.ranges,
+      this.ranges,
     );
   }
 }

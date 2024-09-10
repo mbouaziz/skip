@@ -27,7 +27,6 @@ import {
   schema,
   ctext as text,
   cjson as json,
-  MapOptions,
 } from "skip-runtime";
 
 function check(name: String, got: TJSON, expected: TJSON): void {
@@ -319,24 +318,19 @@ function testRangedMap1Init(
 ) {
   input
     .map(TestParseInt)
-    .map(
-      SquareValues,
-      new MapOptions([
-        [1, 1],
-        [3, 4],
-        [7, 9],
-        [20, 50],
-        [42, 1337],
-      ]),
-    )
-    .mapTo(
-      output,
-      TestToOutput,
-      new MapOptions([
-        [0, 7],
-        [8, 15],
-      ]),
-    );
+    .sliced([
+      [1, 1],
+      [3, 4],
+      [7, 9],
+      [20, 50],
+      [42, 1337],
+    ])
+    .map(SquareValues)
+    .sliced([
+      [0, 7],
+      [8, 15],
+    ])
+    .mapTo(output, TestToOutput);
 }
 
 async function testRangeMap1Run(input: Table<TJSON[]>, output: Table<TJSON[]>) {
