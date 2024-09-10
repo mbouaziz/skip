@@ -2,7 +2,6 @@
 import { type ptr, type Opt, cloneIfProxy } from "#std/sk_types.js";
 import type { Context } from "./skipruntime_types.js";
 import type * as Internal from "./skipruntime_internal_types.js";
-import { MapOptions } from "../skipruntime_api.js";
 import type {
   Accumulator,
   EagerCollection,
@@ -30,17 +29,13 @@ import type {
   EntryPoint,
   Inputs,
   SlicedEagerCollection,
+  SlicedTableCollection,
 } from "../skipruntime_api.js";
 
 // prettier-ignore
 import type { MirrorDefn, Params, SKDBSync } from "#skdb/skdb_types.js";
 
 type Query = { query: string; params?: JSONObject };
-
-type WithOptions<Params extends Param[], K extends TJSON> = [
-  ...Params,
-  MapOptions<K>?,
-];
 
 function assertNoKeysNaN<K extends TJSON, V extends TJSON>(
   kv_pairs: Iterable<[K, V]>,
@@ -54,19 +49,6 @@ function assertNoKeysNaN<K extends TJSON, V extends TJSON>(
   return kv_pairs;
 }
 export const serverResponseSuffix = "__skdb_mirror_feedback";
-
-function splitMapParams<Params extends Param[], K extends TJSON>(
-  paramsAndOptions: WithOptions<Params, K>,
-): [Params, MapOptions<K>] {
-  if (paramsAndOptions.length > 0) {
-    const last = paramsAndOptions[paramsAndOptions.length - 1];
-    if (last instanceof MapOptions) {
-      paramsAndOptions.pop();
-      return [paramsAndOptions as unknown as Params, last as MapOptions<K>];
-    }
-  }
-  return [paramsAndOptions as unknown as Params, new MapOptions()];
-}
 
 class EagerCollectionImpl<K extends TJSON, V extends TJSON>
   implements EagerCollection<K, V>
@@ -255,6 +237,8 @@ export class TableCollectionImpl<R extends TJSON[]>
     protected context: Context,
     protected skdb: SKDBSync,
     protected schema: Schema,
+    /* See comment above ranges in EagerCollectionImpl */
+    protected ranges: [R, R][] | null = null,
   ) {
     Object.defineProperty(this, "__sk_frozen", {
       enumerable: false,
@@ -279,11 +263,23 @@ export class TableCollectionImpl<R extends TJSON[]>
     return this.context.getFromTable(this.getName(), key, index);
   }
 
+  sliced(ranges: [R, R][]): SlicedTableCollection<R> {
+    if (this.ranges !== null) {
+      /* The interface SlicedTableCollection guarantees it won't happen */
+      throw new Error("Cannot slice a SlicedTableCollection");
+    }
+    return new TableCollectionImpl(
+      this.context,
+      this.skdb,
+      this.schema,
+      ranges,
+    );
+  }
+
   map<K extends TJSON, V extends TJSON, Params extends Param[]>(
     mapper: new (...params: Params) => InputMapper<R, K, V>,
-    ...paramsAndOptions: WithOptions<Params, R>
+    ...params: Params
   ): EagerCollection<K, V> {
-    const [params, options] = splitMapParams(paramsAndOptions);
     params.forEach(check);
     const mapperObj = new mapper(...params);
     Object.freeze(mapperObj);
@@ -297,7 +293,7 @@ export class TableCollectionImpl<R extends TJSON[]>
       skname,
       (entry: R, occ: number) =>
         assertNoKeysNaN(mapperObj.mapElement(entry, occ)),
-      options.ranges,
+      this.ranges,
     );
     return new EagerCollectionImpl<K, V>(this.context, eagerHdl);
   }
