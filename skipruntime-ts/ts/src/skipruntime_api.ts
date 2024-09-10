@@ -381,25 +381,7 @@ export interface EagerCollection<K extends TJSON, V extends TJSON>
   getId(): string;
 }
 
-/**
- * A `TableCollection` is a restricted form of eager collection, whose structure
- * allows it to be serialized and replicated over the wire.  `TableCollection`s
- * serve as inputs and outputs of reactive services.
- */
-export interface TableCollection<R extends TJSON[]> {
-  getName(): string;
-  getSchema(): Schema;
-  isConnected(): boolean;
-  /**
-   * Lookup in the table using specified index
-   * @param key - the key to lookup in the table
-   * @param index - the index which you want lookup the table
-   * @returns The results of the lookup
-   * @throws {TableIndexError} when an index is not found
-   *          or the index type is not valid
-   */
-  // TODO get(key: TJSON, index?: string): R[];
-
+export interface MappableTableCollection<R extends TJSON[]> {
   /**
    * Create a new eager reactive collection by mapping over each entry in
    * a table collection
@@ -419,6 +401,27 @@ export interface TableCollection<R extends TJSON[]> {
     mapper: new (...params: Params) => InputMapper<R, K, V>,
     ...paramsAndOptions: [...Params, MapOptions<R>]
   ): EagerCollection<K, V>;
+}
+
+/**
+ * A `TableCollection` is a restricted form of eager collection, whose structure
+ * allows it to be serialized and replicated over the wire.  `TableCollection`s
+ * serve as inputs and outputs of reactive services.
+ */
+export interface TableCollection<R extends TJSON[]>
+  extends MappableTableCollection<R> {
+  getName(): string;
+  getSchema(): Schema;
+  isConnected(): boolean;
+  /**
+   * Lookup in the table using specified index
+   * @param key - the key to lookup in the table
+   * @param index - the index which you want lookup the table
+   * @returns The results of the lookup
+   * @throws {TableIndexError} when an index is not found
+   *          or the index type is not valid
+   */
+  // TODO get(key: TJSON, index?: string): R[];
 }
 
 export type Inputs = {
