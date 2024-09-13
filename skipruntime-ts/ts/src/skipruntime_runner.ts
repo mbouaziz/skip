@@ -87,11 +87,9 @@ class WriterImpl<V extends TJSON> implements Writer<V> {
 function toWriters(
   tables: Record<string, Table<TJSON[]>>,
 ): Record<string, Writer<TJSON>> {
-  const writers: Record<string, Writer<TJSON>> = {};
-  for (const key of Object.keys(tables)) {
-    writers[key] = new WriterImpl(tables[key]);
-  }
-  return writers;
+  return Object.fromEntries(
+    Object.entries(tables).map(([key, table]) => [key, new WriterImpl(table)]),
+  );
 }
 
 class SimpleToGenericSkipService implements GenericSkipService {
