@@ -1,3 +1,4 @@
+import type { UUID } from "crypto";
 import type {
   SKStore,
   TJSON,
@@ -53,41 +54,51 @@ type Command = {
 type Set = { name: string; key: string; value: number };
 type Delete = { name: string; keys: string[] };
 
-class Service implements SimpleSkipService {
-  name: string = "sum";
-  inputTables = ["input1", "input2"];
+class SortPost extends .... {
+  constructor(private votes);
+
+  mapElement(key: UUID, posts: NonEmptyIterator<{date;message}>) {
+    const post = posts.uniqueValue();
+    return [[[-(this.votes.maybeGetOne(key) ?? 0), -post.date], key]];
+  }
+}
+
+class HackerNews implements SimpleSkipService {
+  inputTables = ["posts", "votes"]; // uuid -> date, message | uuid -> upvotes
 
   async init(tables: Record<string, Writer<TJSON[]>>) {
     console.log("Init called with tables", Object.keys(tables));
   }
-
+  
   reactiveCompute(
-    _store: SKStore,
-    requests: EagerCollection<string, TJSON>,
-    inputCollections: Record<string, EagerCollection<string, TJSON>>,
-  ): SimpleServiceOutput {
-    const addResult = inputCollections.input1.map(Add, inputCollections.input2);
-    const output = requests.map(Request, addResult);
-    return {
-      output,
-      update: async (event: TJSON, writers: Record<string, Writer<TJSON>>) => {
-        const cmd = event as Command;
-        if (cmd.command == "set") {
-          const payload = cmd.payload as Set[];
-          for (const e of payload) {
-            const writer = writers[e.name];
-            writer.set(e.key, e.value);
-          }
-        } else if (cmd.command == "delete") {
-          const payload = cmd.payload as Delete[];
-          for (const e of payload) {
-            const writer = writers[e.name];
-            writer.delete(e.keys);
-          }
-        }
-      },
-    };
+    _store,
+    inputCollections: {posts: EagerCollection<UUID, {date;message}>, votes: EagerCollection<UUID, int>}
+  ) {
+    const {posts, votes} = inputCollections;
+    const sortedPosts = posts.map(SortPost, votes);
+    return {sortedPosts};
   }
+
+  getRequests = {last: {schema:...; f:GetLast}, message: GetMessage};
 }
 
 runWithServer(new Service(), { port: 8081 });
+
+  // POST newMessage(message) -> uuid
+  // POST upvote(uuid) -> void
+
+  // GET last(n) -> uuid[]
+  // GET message(uuid) -> date, message
+
+class GetLast extends ... {
+  constructor(private n:int) {
+
+  }
+
+  reactiveCompute(_store,
+    inputCollections:..., {sortedPosts}
+  ) {
+    return sortedPosts.take(n)
+  }
+}
+
