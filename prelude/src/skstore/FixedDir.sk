@@ -141,12 +141,24 @@ class FixedDir<T: frozen> extends IFixedDir<T, FixedRow<T>> {
   }
 }
 
-value class CompactRow<T>(
+value class CompactRow<T: Orderable> uses Orderable(
   values: Array<T>,
   repeat: Int,
   tag: TickRange,
   sourceKey: ?SKStore.Key,
-)
+) {
+  fun compare(other: CompactRow<T>): Order {
+    (this.values, this.repeat).compare((other.values, other.repeat)) match {
+      res @ LT() | res @ GT() -> res
+      | EQ() ->
+        (this.sourceKey, other.sourceKey) match {
+          | None(), None() -> EQ()
+          | Some(a), Some(b) -> a.compare(b)
+          | None(), 
+        }
+    }
+  }
+}
 
 class FixedDirMetadata{
   sourceDir: DirName,
@@ -224,8 +236,8 @@ class CompactFixedDir{
 
 //Defines the public interface of a FixedDir, allowing for some alternative
 // internal RowRepresentation of conceptually-FixedRow<T> rows.
-base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
-  data: Array<RowRepresentation> = Array[],
+base class IFixedDir<T: frozen, RowRepresentation: frozen & Orderable> protected {
+  data: SortedArray<RowRepresentation> = SortedArray[],
 } extends FixedData<T> {
   protected fun decode(repr: RowRepresentation): FixedRow<T>;
 
