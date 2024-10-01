@@ -22,6 +22,8 @@ export type Param =
 
 export type RefreshToken = Opaque<number, "SkipRefreshToken">;
 
+export type Watermark = Opaque<string, "SkipWatermark">;
+
 /**
  * Skip Runtime async function calls return a `Loadable` value which is one of `Success`,
  * `Loading`, or `Error`
@@ -249,7 +251,7 @@ export interface CollectionReader<K extends TJSON, V extends TJSON> {
    * @param from The from watermark to retrieve diff from
    * @returns {Watermarked} an array en key, values pair with the corresponding watermark.
    */
-  getDiff(from: string): Watermarked<K, V>;
+  getDiff(from: Watermark): Watermarked<K, V>;
 
   /**
    * Allow to subsribe the updates of the collection
@@ -257,7 +259,7 @@ export interface CollectionReader<K extends TJSON, V extends TJSON> {
    * @param notify The function to call on collection update
    * @returns {Watermarked} an array en key, values pair with the corresponding watermark.
    */
-  subscribe(from: string, notify: Notifier<K, V>): bigint;
+  subscribe(from: Watermark, notify: Notifier<K, V>): bigint;
 }
 
 /**
@@ -438,18 +440,18 @@ export type Entry<K extends TJSON, V extends TJSON> = [K, V[]];
 
 export type ReactiveResponse = {
   collection: string;
-  watermark: string;
+  watermark: Watermark;
 };
 
 export type Watermarked<K extends TJSON, V extends TJSON> = {
   values: Entry<K, V>[];
-  watermark: string;
+  watermark: Watermark;
   update?: boolean;
 };
 
 export type Notifier<K extends TJSON, V extends TJSON> = (
   values: Entry<K, V>[],
-  watermark: string,
+  watermark: Watermark,
   update: boolean,
 ) => void;
 
