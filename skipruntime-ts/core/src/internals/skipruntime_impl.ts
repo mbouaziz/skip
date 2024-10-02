@@ -278,7 +278,7 @@ export class SKStoreImpl extends SkFrozen implements SKStore {
     const lazyHdl = this.context.asyncLazy<K, V, P, M>(
       name,
       (key: K) => computeObj.params(key),
-      (key: K, params: P) => computeObj.call(key, params),
+      computeObj.call.bind(undefined), // call must not access instance members
     );
     return new LazyCollectionImpl<K, Loadable<V, M>>(this.context, lazyHdl);
   }
@@ -300,7 +300,7 @@ export class SKStoreImpl extends SkFrozen implements SKStore {
     const lazyHdl = this.context.asyncLazy<K, V, number, TJSON>(
       name,
       (_key: K) => this.getRefreshToken(refreshToken),
-      (key: K, timestamp: number) => computeObj.call(key, timestamp),
+      computeObj.call.bind(undefined), // call must not access instance members
     );
     return new LazyCollectionImpl<K, Loadable<V, Metadata>>(
       this.context,

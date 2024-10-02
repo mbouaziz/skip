@@ -372,7 +372,12 @@ export interface AsyncLazyCompute<
   M extends TJSON,
 > {
   params: (key: K) => P;
-  call: (key: K, params: P) => Promise<AValue<V, M>>;
+
+  call(
+    this: undefined, // call must not access instance members
+    key: K,
+    params: P,
+  ): Promise<AValue<V, M>>;
 }
 
 export interface ExternalCall<
@@ -380,7 +385,11 @@ export interface ExternalCall<
   V extends TJSON,
   Metadata extends TJSON,
 > {
-  call(key: K, timestamp: number): Promise<AValue<V, Metadata>>;
+  call(
+    this: undefined, // call must not access instance members
+    key: K,
+    timestamp: number,
+  ): Promise<AValue<V, Metadata>>;
 }
 
 export interface SKStore extends Constant {
