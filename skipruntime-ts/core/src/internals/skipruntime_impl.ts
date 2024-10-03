@@ -9,7 +9,6 @@ import type {
   Mapper,
   SKStore,
   SKStoreFactory,
-  Loadable,
   JSONObject,
   TJSON,
   Param,
@@ -280,10 +279,7 @@ export class SKStoreImpl extends SkFrozen implements SKStore {
       (key: K) => computeObj.params(key),
       (key: K, params: P) => computeObj.call(key, params),
     );
-    return new LazyCollectionImpl<K, Loadable<V, Metadata>>(
-      this.context,
-      lazyHdl,
-    );
+    return new LazyCollectionImpl(this.context, lazyHdl);
   }
 
   external<
