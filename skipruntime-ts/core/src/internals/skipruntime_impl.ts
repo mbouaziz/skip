@@ -71,6 +71,20 @@ abstract class SkFrozen implements Constant {
   }
 }
 
+function instantiateUserObj<M extends object, Params extends Param[]>(
+  mapper: new (...params: Params) => M,
+  params: Params,
+): { obj: M; name: string } {
+  params.forEach(check);
+  const obj = new mapper(...params);
+  Object.freeze(obj);
+  const name = obj.constructor.name;
+  if (!name) {
+    throw new Error("Mapper classes must be defined at top-level.");
+  }
+  return { obj, name };
+}
+
 export class EagerCollectionImpl<K extends TJSON, V extends TJSON>
   extends SkFrozen
   implements EagerCollection<K, V>
@@ -132,17 +146,12 @@ export class EagerCollectionImpl<K extends TJSON, V extends TJSON>
     mapper: new (...params: Params) => Mapper<K, V, K2, V2>,
     ...params: Params
   ): EagerCollection<K2, V2> {
-    params.forEach(check);
-    const mapperObj = new mapper(...params);
-    Object.freeze(mapperObj);
-    if (!mapperObj.constructor.name) {
-      throw new Error("Mapper classes must be defined at top-level.");
-    }
+    const { obj, name } = instantiateUserObj(mapper, params);
     const eagerHdl = this.context.map(
       this.eagerHdl,
-      mapperObj.constructor.name,
+      name,
       (key: K, it: NonEmptyIterator<V>) =>
-        assertNoKeysNaN(mapperObj.mapElement(key, it)),
+        assertNoKeysNaN(obj.mapElement(key, it)),
     );
     return this.derive<K2, V2>(eagerHdl);
   }
@@ -157,17 +166,12 @@ export class EagerCollectionImpl<K extends TJSON, V extends TJSON>
     accumulator: Accumulator<V2, V3>,
     ...params: Params
   ) {
-    params.forEach(check);
-    const mapperObj = new mapper(...params);
-    Object.freeze(mapperObj);
-    if (!mapperObj.constructor.name) {
-      throw new Error("Mapper classes must be defined at top-level.");
-    }
+    const { obj, name } = instantiateUserObj(mapper, params);
     const eagerHdl = this.context.mapReduce(
       this.eagerHdl,
-      mapperObj.constructor.name,
+      name,
       (key: K, it: NonEmptyIterator<V>) =>
-        assertNoKeysNaN(mapperObj.mapElement(key, it)),
+        assertNoKeysNaN(obj.mapElement(key, it)),
       accumulator,
     );
     return this.derive<K2, V3>(eagerHdl);
@@ -249,14 +253,8 @@ export class SKStoreImpl extends SkFrozen implements SKStore {
     compute: new (...params: Params) => LazyCompute<K, V>,
     ...params: Params
   ): LazyCollection<K, V> {
-    params.forEach(check);
-    const computeObj = new compute(...params);
-    Object.freeze(computeObj);
-    const name = computeObj.constructor.name;
-    const lazyHdl = this.context.lazy(
-      name,
-      computeObj.compute.bind(computeObj),
-    );
+    const { obj, name } = instantiateUserObj(compute, params);
+    const lazyHdl = this.context.lazy(name, obj.compute.bind(obj));
     return new LazyCollectionImpl<K, V>(this.context, lazyHdl);
   }
 
@@ -270,14 +268,11 @@ export class SKStoreImpl extends SkFrozen implements SKStore {
     compute: new (...params: Params) => AsyncLazyCompute<K, V, P, Metadata>,
     ...params: Params
   ): AsyncLazyCollection<K, V, Metadata> {
-    params.forEach(check);
-    const computeObj = new compute(...params);
-    const name = computeObj.constructor.name;
-    Object.freeze(computeObj);
+    const { obj, name } = instantiateUserObj(compute, params);
     const lazyHdl = this.context.asyncLazy<K, V, P, Metadata>(
       name,
-      (key: K) => computeObj.params(key),
-      (key: K, params: P) => computeObj.call(key, params),
+      (key: K) => obj.params(key),
+      (key: K, params: P) => obj.call(key, params),
     );
     return new LazyCollectionImpl(this.context, lazyHdl);
   }
@@ -292,14 +287,11 @@ export class SKStoreImpl extends SkFrozen implements SKStore {
     compute: new (...params: Params) => ExternalCall<K, V, Metadata>,
     ...params: Params
   ): AsyncLazyCollection<K, V, Metadata> {
-    params.forEach(check);
-    const computeObj = new compute(...params);
-    const name = computeObj.constructor.name;
-    Object.freeze(computeObj);
+    const { obj, name } = instantiateUserObj(compute, params);
     const lazyHdl = this.context.asyncLazy<K, V, number, Metadata>(
       name,
       (_key: K) => this.getRefreshToken(refreshToken),
-      (key: K, timestamp: number) => computeObj.call(key, timestamp),
+      (key: K, timestamp: number) => obj.call(key, timestamp),
     );
     return new LazyCollectionImpl(this.context, lazyHdl);
   }
