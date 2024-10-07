@@ -1,8 +1,13 @@
+import { metadata } from "std";
 import type { AValue, ExternalCall, TJSON } from "./skipruntime_api.js";
+import { promises as fs } from "fs";
 
 type RefreshTokenId = string;
 
-type RefreshPolicy = RefreshTokenId | ["headers", RefreshTokenId];
+type RefreshPolicy<K> =
+  | RefreshTokenId
+  | ["expiryDate", RefreshTokenId]
+  | AsyncLazyCollection<K, any, { timestamp: number }>;
 
 export abstract class GenericFetch<
   V extends TJSON,
@@ -90,4 +95,28 @@ export class FetchJSON extends Fetch<TJSON> {
   override processOkResponse(response: Response): Promise<TJSON> {
     return response.json();
   }
+}
+
+export type FileMetadata = { timestamp: number };
+
+export class File implements ExternalCall<string, string, FileMetadata> {
+  constructor(private encoding: BufferEncoding) {}
+
+  async call(
+    filePath: string,
+    timestamp: number,
+  ): Promise<AValue<string, FileMetadata>> {
+    const payload = await fs.readFile(filePath, this.encoding);
+    const metadata = { timestamp };
+    return { payload, metadata };
+  }
+}
+
+export class FileLastModification
+  implements ExternalCall<string, number, FileMetadata>
+{
+  async call(
+    filePath: string,
+    timestamp: number,
+  ): Promise<AValue<number, FileMetadata>> {}
 }
