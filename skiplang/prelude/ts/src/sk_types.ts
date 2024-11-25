@@ -23,12 +23,12 @@ export enum Stream {
 
 export class State {
   exceptionId = 0;
-  exceptions = new Map<int, Exception>();
+  readonly exceptions = new Map<int, Exception>();
 }
 
 export class Exception {
-  id: int;
-  err: Error;
+  readonly id: int;
+  readonly err: Error;
 
   constructor(err: Error, state: State) {
     this.id = ++state.exceptionId;
@@ -38,7 +38,7 @@ export class Exception {
 }
 
 class SkRuntimeExit extends Error {
-  code: int;
+  readonly code: int;
 
   constructor(code: int, message?: string) {
     super(message ?? `Runtime exit with code: ${code}`);
@@ -61,28 +61,14 @@ const O_TRUNC = 1000;
 const O_APPEND = 4000;
 
 export class Options {
-  read: boolean;
-  write: boolean;
-  append: boolean;
-  truncate: boolean;
-  create: boolean;
-  create_new: boolean;
-
   constructor(
-    read: boolean = true,
-    write: boolean = false,
-    append: boolean = false,
-    truncate: boolean = false,
-    create: boolean = true,
-    create_new: boolean = false,
-  ) {
-    this.read = read;
-    this.write = write;
-    this.append = append;
-    this.truncate = truncate;
-    this.create = create;
-    this.create_new = create_new;
-  }
+    readonly read: boolean = true,
+    readonly write: boolean = false,
+    readonly append: boolean = false,
+    readonly truncate: boolean = false,
+    readonly create: boolean = true,
+    readonly create_new: boolean = false,
+  ) {}
 
   static w() {
     return new Options(false, true);
@@ -226,10 +212,10 @@ export type App = {
 };
 
 export class Utils {
-  private exports: Exported;
-  private env: Environment;
-  private state: State;
-  private states: Map<string, any>;
+  private readonly exports: Exported;
+  private readonly env: Environment;
+  private readonly state: State;
+  private readonly states: Map<string, any>;
 
   args: string[];
   private current_stdin: number;
@@ -237,11 +223,11 @@ export class Utils {
   private stdout: string[];
   private stderr: string[];
   private stddebug: string[];
-  private mainFn?: string;
+  private readonly mainFn?: string;
   private exception?: Error;
   private stacks: Map<ptr<Internal.Exception>, string>;
 
-  exit = (code: int) => {
+  readonly exit = (code: int) => {
     const message =
       code != 0 && this.stderr.length > 0 ? this.stderr.join("") : undefined;
     throw new SkRuntimeExit(code, message);
@@ -261,7 +247,7 @@ export class Utils {
     this.state = new State();
     this.mainFn = mainFn;
   }
-  log = (str: string, kind?: Stream, newLine: boolean = false) => {
+  readonly log = (str: string, kind?: Stream, newLine: boolean = false) => {
     kind = kind ? kind : Stream.OUT;
     str += newLine ? "\n" : "";
     if (kind == Stream.DEBUG) {
@@ -272,7 +258,7 @@ export class Utils {
       this.stdout.push(str);
     }
   };
-  sklog = (
+  readonly sklog = (
     strPtr: ptr<Internal.String>,
     kind?: Stream,
     newLine: boolean = false,
@@ -281,7 +267,10 @@ export class Utils {
     this.log(str, kind, newLine);
   };
 
-  clearMainEnvironment = (new_args: string[] = [], new_stdin: string = "") => {
+  readonly clearMainEnvironment = (
+    new_args: string[] = [],
+    new_stdin: string = "",
+  ) => {
     this.args = [this.mainFn ?? "main"].concat(new_args);
     this.exception = undefined;
     this.stacks = new Map();
@@ -292,7 +281,7 @@ export class Utils {
     this.stddebug = [];
   };
 
-  runCheckError = <T>(fn: () => T) => {
+  readonly runCheckError = <T>(fn: () => T) => {
     this.clearMainEnvironment();
     const res = fn();
     if (this.stddebug.length > 0) {
@@ -306,7 +295,7 @@ export class Utils {
     return res;
   };
 
-  main = (new_args: string[], new_stdin: string) => {
+  readonly main = (new_args: string[], new_stdin: string) => {
     let exitCode = 0;
     this.clearMainEnvironment(new_args, new_stdin);
     try {
@@ -368,18 +357,18 @@ export class Utils {
     return this.stdout.join("");
   };
 
-  importOptString = (strPtr: ptr<Internal.String>) => {
+  readonly importOptString = (strPtr: ptr<Internal.String>) => {
     if (strPtr > 0) {
       return this.importString(strPtr);
     }
     return null;
   };
-  importString = (strPtr: ptr<Internal.String>) => {
+  readonly importString = (strPtr: ptr<Internal.String>) => {
     const size = this.exports.SKIP_String_byteSize(strPtr);
     const utf8 = new Uint8Array(this.exports.memory.buffer, strPtr, size);
     return this.env.decodeUTF8(utf8);
   };
-  exportString = (s: string): ptr<Internal.String> => {
+  readonly exportString = (s: string): ptr<Internal.String> => {
     const data = new Uint8Array(this.exports.memory.buffer);
     let i = 0;
     const addr = this.exports.SKIP_Obstack_alloc(s.length * 4);
@@ -410,7 +399,7 @@ export class Utils {
     }
     return this.exports.sk_string_create(addr, i);
   };
-  importBytes = (
+  readonly importBytes = (
     skArray: ptr<Internal.Array<Internal.Byte>>,
     sizeof: int = 1,
   ) => {
@@ -420,13 +409,13 @@ export class Utils {
     copy.set(skData);
     return copy;
   };
-  importBytes2 = (skBytes: ptr<Internal.T<any>>, size: int = 1) => {
+  readonly importBytes2 = (skBytes: ptr<Internal.T<any>>, size: int = 1) => {
     const skData = new Uint8Array(this.exports.memory.buffer, skBytes, size);
     const copy = new Uint8Array(size);
     copy.set(skData);
     return copy;
   };
-  exportBytes = (view: Uint8Array) => {
+  readonly exportBytes = (view: Uint8Array) => {
     const skArray = this.exports.SKIP_createByteArray(view.byteLength);
     const data = new Uint8Array(
       this.exports.memory.buffer,
@@ -436,7 +425,7 @@ export class Utils {
     data.set(view);
     return skArray;
   };
-  exportBytes2 = (view: Uint8Array, skBytes: ptr<Internal.T<any>>) => {
+  readonly exportBytes2 = (view: Uint8Array, skBytes: ptr<Internal.T<any>>) => {
     const data = new Uint8Array(
       this.exports.memory.buffer,
       skBytes,
@@ -444,7 +433,7 @@ export class Utils {
     );
     data.set(view);
   };
-  importUInt32s = (skArray: ptr<Internal.Array<Internal.UInt32>>) => {
+  readonly importUInt32s = (skArray: ptr<Internal.Array<Internal.UInt32>>) => {
     const size = this.exports.SKIP_getArraySize(skArray);
     const skData = new Uint32Array(this.exports.memory.buffer, skArray, size);
     const copy = new Uint32Array(size);
@@ -462,7 +451,7 @@ export class Utils {
     skData.set(array);
     return skArray;
   }
-  importFloats = (skArray: ptr<Internal.Array<Internal.Float>>) => {
+  readonly importFloats = (skArray: ptr<Internal.Array<Internal.Float>>) => {
     const size = this.exports.SKIP_getArraySize(skArray);
     const skData = new Float64Array(this.exports.memory.buffer, skArray, size);
     const copy = new Float64Array(size);
@@ -480,12 +469,12 @@ export class Utils {
     skData.set(array);
     return skArray;
   }
-  call = <Ret>(
+  readonly call = <Ret>(
     fnId: ptr<Internal.Function<Internal.Void, Internal.T<Ret>>>,
   ): ptr<Internal.T<Ret>> => {
     return this.exports.SKIP_call0(fnId);
   };
-  callWithException = <Ret>(
+  readonly callWithException = <Ret>(
     fnId: ptr<Internal.Function<Internal.Void, Internal.T<Ret>>>,
     exception: Exception | null,
   ): ptr<Internal.T<Ret>> => {
@@ -494,17 +483,20 @@ export class Utils {
       exception ? exception.id : 0,
     );
   };
-  getBytesFromBuffer = (dataPtr: ptr<Internal.T<any>>, length: int) => {
+  readonly getBytesFromBuffer = (
+    dataPtr: ptr<Internal.T<any>>,
+    length: int,
+  ) => {
     return new Uint8ClampedArray(this.exports.memory.buffer, dataPtr, length);
   };
-  init = () => {
+  readonly init = () => {
     const heapBase = this.exports.__heap_base.valueOf();
     const size = this.exports.memory.buffer.byteLength - heapBase;
     this.exports.SKIP_skstore_init(size);
     this.exports.SKIP_initializeSkip();
     this.exports.SKIP_skstore_end_of_init();
   };
-  etry = <Ret>(
+  readonly etry = <Ret>(
     f: ptr<Internal.Function<Internal.Void, Internal.T<Ret>>>,
     exn_handler: ptr<Internal.Function<Internal.Void, Internal.T<Ret>>>,
   ): ptr<Internal.T<Ret>> => {
@@ -526,7 +518,7 @@ export class Utils {
       }
     }
   };
-  ethrow = (skExc: ptr<Internal.Exception>, rethrow: boolean) => {
+  readonly ethrow = (skExc: ptr<Internal.Exception>, rethrow: boolean) => {
     this.env.onException();
     if (rethrow && this.exception) {
       throw this.exception;
@@ -562,11 +554,11 @@ export class Utils {
       this.stacks.set(newex, stack);
     }
   }
-  deleteException = (exc: int) => {
+  readonly deleteException = (exc: int) => {
     this.state.exceptions.delete(exc);
   };
 
-  getExceptionMessage = (exc: int) => {
+  readonly getExceptionMessage = (exc: int) => {
     if (this.state.exceptions.has(exc)) {
       return this.state.exceptions.get(exc)!.err.message;
     } else {
@@ -574,7 +566,7 @@ export class Utils {
     }
   };
 
-  getExceptionStack = (exc: int) => {
+  readonly getExceptionStack = (exc: int) => {
     if (this.state.exceptions.has(exc)) {
       return this.state.exceptions.get(exc)!.err.stack ?? "";
     } else {
@@ -582,7 +574,7 @@ export class Utils {
     }
   };
 
-  getErrorObject = (skExc: ptr<Internal.Exception>): ErrorObject => {
+  readonly getErrorObject = (skExc: ptr<Internal.Exception>): ErrorObject => {
     if (skExc == 0) {
       return { message: "SKStore Internal error" };
     }
@@ -630,11 +622,11 @@ export class Utils {
     }
   };
 
-  getPersistentSize = () => this.exports.SKIP_get_persistent_size();
-  getVersion = () => this.exports.SKIP_get_version();
-  getMemoryBuffer = () => this.exports.memory.buffer;
+  readonly getPersistentSize = () => this.exports.SKIP_get_persistent_size();
+  readonly getVersion = () => this.exports.SKIP_get_version();
+  readonly getMemoryBuffer = () => this.exports.memory.buffer;
 
-  readStdInLine = () => {
+  readonly readStdInLine = () => {
     const lineBuffer = new Array<int>();
     const endOfLine = 10;
     if (this.current_stdin >= this.stdin.length) {
@@ -655,7 +647,7 @@ export class Utils {
     return lineBuffer;
   };
 
-  readStdInToEnd = () => {
+  readonly readStdInToEnd = () => {
     const lineBuffer = new Array<int>();
     while (this.current_stdin < this.stdin.length) {
       lineBuffer.push(this.stdin[this.current_stdin]!); // checked by while condition
@@ -664,7 +656,7 @@ export class Utils {
     return lineBuffer;
   };
 
-  runWithGc = <T>(fn: () => T) => {
+  readonly runWithGc = <T>(fn: () => T) => {
     this.stddebug = [];
     const obsPos = this.exports.SKIP_new_Obstack();
     try {
@@ -713,13 +705,13 @@ export interface Text {
 }
 
 export class Raw implements Text {
-  text: string;
+  readonly text: string;
 
   constructor(text: string, _category?: string) {
     this.text = text;
   }
 
-  toJSON: () => object = () => {
+  readonly toJSON: () => object = () => {
     return {
       type: "text",
       fields: {
@@ -731,15 +723,12 @@ export class Raw implements Text {
 }
 
 export class Locale implements Text {
-  text: string;
-  category: Nullable<string>;
+  constructor(
+    readonly text: string,
+    readonly category: Nullable<string> = null,
+  ) {}
 
-  constructor(text: string, category?: string) {
-    this.text = text;
-    this.category = category ? category : null;
-  }
-
-  toJSON: () => object = () => {
+  readonly toJSON: () => object = () => {
     return {
       type: "text",
       fields: {
@@ -768,15 +757,12 @@ export const check: (value: Text | string) => Text = (value: Text | string) => {
 };
 
 export class Format implements Text {
-  format: Text | string;
-  parameters: (Text | string)[];
+  constructor(
+    readonly format: Text | string,
+    readonly parameters: (Text | string)[],
+  ) {}
 
-  constructor(format: Text | string, parameters: (Text | string)[]) {
-    this.format = format;
-    this.parameters = parameters;
-  }
-
-  toJSON: () => object = () => {
+  readonly toJSON: () => object = () => {
     return {
       type: "text",
       fields: {

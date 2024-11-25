@@ -7,9 +7,9 @@ export class Wrappable {
 class UnmanagedMessage extends Error {}
 
 export class Function {
-  fn: string;
+  readonly fn: string;
   parameters: any[];
-  wrap?: { wrap: boolean; autoremove: boolean };
+  readonly wrap?: { wrap: boolean; autoremove: boolean };
 
   constructor(
     fn: string,
@@ -37,10 +37,10 @@ export class Function {
 }
 
 export class Caller {
-  wrapped: number;
-  fn: string;
+  readonly wrapped: number;
+  readonly fn: string;
   parameters: any[];
-  remove: boolean;
+  readonly remove: boolean;
 
   constructor(
     wrapped: number,
@@ -77,13 +77,10 @@ export class Caller {
 }
 
 export class Return {
-  success: boolean;
-  value: any;
-
-  constructor(success: boolean, value: any) {
-    this.success = success;
-    this.value = value;
-  }
+  constructor(
+    readonly success: boolean,
+    readonly value: any,
+  ) {}
 
   static as(obj: object) {
     if (!("success" in obj) || !("value" in obj)) return null;
@@ -92,13 +89,10 @@ export class Return {
 }
 
 export class MessageId {
-  source: number;
-  id: number;
-
-  constructor(source: number, id: number) {
-    this.source = source;
-    this.id = id;
-  }
+  constructor(
+    readonly source: number,
+    readonly id: number,
+  ) {}
 
   static as(obj: object) {
     if (!("source" in obj) || !("id" in obj)) return null;
@@ -107,11 +101,7 @@ export class MessageId {
 }
 
 export class Wrapped {
-  wrapped: number;
-
-  constructor(wrapped: number) {
-    this.wrapped = wrapped;
-  }
+  constructor(readonly wrapped: number) {}
 
   static as(obj: object) {
     if (!("wrapped" in obj)) return null;
@@ -124,23 +114,17 @@ function asKey(messageId: MessageId) {
 }
 
 export class Sender {
-  close: () => void;
-  send: <T>() => Promise<T>;
-
-  constructor(close: () => void, send: <T>() => Promise<T>) {
-    this.close = close;
-    this.send = send;
-  }
+  constructor(
+    readonly close: () => void,
+    readonly send: <T>() => Promise<T>,
+  ) {}
 }
 
 export class Message {
-  id: MessageId;
-  payload: unknown;
-
-  constructor(id: MessageId, payload: unknown) {
-    this.id = id;
-    this.payload = payload;
-  }
+  constructor(
+    readonly id: MessageId,
+    readonly payload: unknown,
+  ) {}
 
   private static convert(f: (_: object) => unknown, obj: object) {
     if (!("id" in obj && typeof obj.id === "object")) return null;

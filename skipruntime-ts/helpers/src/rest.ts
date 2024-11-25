@@ -42,7 +42,7 @@ export async function fetchJSON<V>(
 }
 
 export class RESTWrapperOfSkipService {
-  private entrypoint: string;
+  private readonly entrypoint: string;
 
   constructor(
     entrypoint: Entrypoint = {

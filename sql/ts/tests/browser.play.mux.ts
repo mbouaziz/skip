@@ -24,9 +24,9 @@ function runMS(t) {
     let res = await page.evaluate(async () => {
       var encoder = new TextEncoder();
       class Env {
-        crypto = () => crypto;
-        createSocket = (uri: string) => new WebSocket(uri);
-        encodeUTF8 = (v) => encoder.encode(v);
+        readonly crypto = () => crypto;
+        readonly createSocket = (uri: string) => new WebSocket(uri);
+        readonly encodeUTF8 = (v) => encoder.encode(v);
       }
       // @ts-ignore
       var mu = await import("./muxed_utils.mjs");

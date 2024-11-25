@@ -11,7 +11,7 @@ export interface Constant {
 
 export abstract class Frozen implements Constant {
   // tsc misses that Object.defineProperty in the constructor inits this
-  [sk_frozen]!: true;
+  readonly [sk_frozen]!: true;
 
   constructor() {
     this.freeze();

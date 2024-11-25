@@ -21,7 +21,7 @@ class LinksImpl implements Links {
   ) => ptr<Internal.String>;
   SKIP_locale!: (code: int, value: int) => ptr<Internal.String>;
 
-  complete = (utils: Utils, _exports: object) => {
+  readonly complete = (utils: Utils, _exports: object) => {
     this.SKIP_localetimezone = (year: int, month: int, day: int) => {
       const date = new Date(year, month - 1, day);
       return -(date.getTimezoneOffset() * 60);
@@ -83,7 +83,7 @@ class LinksImpl implements Links {
 }
 
 class Manager implements ToWasmManager {
-  prepare = (wasm: object) => {
+  readonly prepare = (wasm: object) => {
     const toWasm = wasm as ToWasm;
     const links = new LinksImpl();
     toWasm.SKIP_localetimezone = (year: int, month: int, day: int) =>

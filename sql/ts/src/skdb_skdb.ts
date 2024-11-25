@@ -43,40 +43,21 @@ interface Exported {
 }
 
 class SKDBHandleImpl implements SKDBHandle {
-  runner: (fn: () => string) => SKDBTable;
-  main: (new_args: string[], new_stdin: string) => string;
-  watch: (
-    query: string,
-    params: Params,
-    onChange: (rows: SKDBTable) => void,
-  ) => { close: () => void };
-  watchChanges: (
-    query: string,
-    params: Params,
-    init: (rows: SKDBTable) => void,
-    update: (added: SKDBTable, removed: SKDBTable) => void,
-  ) => { close: () => void };
-
   constructor(
-    main: (new_args: string[], new_stdin: string) => string,
-    runner: (fn: () => string) => SKDBTable,
-    watch: (
+    readonly main: (new_args: string[], new_stdin: string) => string,
+    readonly runner: (fn: () => string) => SKDBTable,
+    readonly watch: (
       query: string,
       params: Params,
       onChange: (rows: SKDBTable) => void,
     ) => { close: () => void },
-    watchChanges: (
+    readonly watchChanges: (
       query: string,
       params: Params,
       init: (rows: SKDBTable) => void,
       update: (added: SKDBTable, removed: SKDBTable) => void,
     ) => { close: () => void },
-  ) {
-    this.runner = runner;
-    this.main = main;
-    this.watch = watch;
-    this.watchChanges = watchChanges;
-  }
+  ) {}
 
   init() {
     this.main([], "");
@@ -101,11 +82,11 @@ interface ToWasm {
 }
 
 class SKDBMemory implements PagedMemory {
-  memory: ArrayBuffer;
-  persistentSize: number;
-  nbrInitPages: number;
-  pageSize: number;
-  popDirtyPage: () => number;
+  readonly memory: ArrayBuffer;
+  readonly persistentSize: number;
+  readonly nbrInitPages: number;
+  readonly pageSize: number;
+  readonly popDirtyPage: () => number;
   private dirtyPagesMap!: number[];
   private dirtyPages!: number[];
 
@@ -122,12 +103,12 @@ class SKDBMemory implements PagedMemory {
     this.popDirtyPage = popDirtyPage;
   }
 
-  clear = () => {
+  readonly clear = () => {
     this.dirtyPagesMap = [];
     this.dirtyPages = [];
   };
 
-  update = () => {
+  readonly update = () => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
       const dirtyPage = this.popDirtyPage();
@@ -193,8 +174,11 @@ class SKDBMemory implements PagedMemory {
 
 class SKDBSharedImpl implements SKDBShared {
   getName = () => "SKDB";
-  createSync: (dbName?: string, asWorker?: boolean) => Promise<SKDBSync>;
-  notify: () => void;
+  readonly createSync: (
+    dbName?: string,
+    asWorker?: boolean,
+  ) => Promise<SKDBSync>;
+  readonly notify: () => void;
 
   constructor(
     createSync: (dbName?: string, asWorker?: boolean) => Promise<SKDBSync>,
@@ -211,7 +195,7 @@ class SKDBSharedImpl implements SKDBShared {
 }
 
 class LinksImpl implements Links, ToWasm {
-  private environment: Environment;
+  private readonly environment: Environment;
   private state: ExternalFuns;
   private field_names: string[];
   private objectIdx: number;
@@ -273,7 +257,7 @@ class LinksImpl implements Links, ToWasm {
     this.stdout_objects = [[], [], [], []];
   }
 
-  complete = (utils: Utils, exports: object) => {
+  readonly complete = (utils: Utils, exports: object) => {
     const exported = exports as Exported;
     const skjson = () => {
       if (this.skjson == undefined) {
@@ -533,13 +517,9 @@ class LinksImpl implements Links, ToWasm {
 }
 
 class Manager implements ToWasmManager {
-  private environment: Environment;
+  constructor(private readonly environment: Environment) {}
 
-  constructor(environment: Environment) {
-    this.environment = environment;
-  }
-
-  prepare = (wasm: object) => {
+  readonly prepare = (wasm: object) => {
     const toWasm = wasm as ToWasm;
     const links = new LinksImpl(this.environment);
     toWasm.SKIP_clear_field_names = () => {

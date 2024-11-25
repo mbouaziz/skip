@@ -21,10 +21,10 @@ async function getCreds(host: string, port: number, database: string) {
 }
 
 class DevServer {
-  database: string;
+  readonly database: string;
   creds: Map<string, string>;
-  host: string;
-  port: number;
+  readonly host: string;
+  readonly port: number;
 
   constructor(
     database: string,

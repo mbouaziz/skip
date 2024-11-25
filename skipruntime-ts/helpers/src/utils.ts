@@ -3,7 +3,7 @@ import { ManyToOneMapper } from "@skipruntime/api";
 import type { Reducer, NonEmptyIterator, Json } from "@skipruntime/api";
 
 export class Sum implements Reducer<number, number> {
-  default = 0;
+  readonly default = 0;
 
   add(acc: number, value: number): number {
     return acc + value;
@@ -15,7 +15,7 @@ export class Sum implements Reducer<number, number> {
 }
 
 export class Min implements Reducer<number, number> {
-  default = null;
+  readonly default = null;
 
   add(acc: Nullable<number>, value: number): number {
     return acc === null ? value : Math.min(acc, value);
@@ -27,7 +27,7 @@ export class Min implements Reducer<number, number> {
 }
 
 export class Max implements Reducer<number, number> {
-  default = null;
+  readonly default = null;
 
   add(acc: Nullable<number>, value: number): number {
     return acc === null ? value : Math.max(acc, value);

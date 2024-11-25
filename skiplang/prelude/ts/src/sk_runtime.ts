@@ -12,13 +12,10 @@ import { Stream } from "./sk_types.js";
 import type * as Internal from "./sk_internal_types.js";
 
 class LinksImpl implements Links {
-  env: Environment | undefined;
   lineBuffer!: int[];
   lastTime!: int;
 
-  constructor(env?: Environment) {
-    this.env = env;
-  }
+  constructor(readonly env?: Environment) {}
 
   SKIP_read_line_fill!: () => int;
   SKIP_read_to_end_fill!: () => int;
@@ -52,7 +49,7 @@ class LinksImpl implements Links {
   SKIP_js_time_ms_lo!: () => int;
   SKIP_js_time_ms_hi!: () => int;
 
-  SKIP_js_get_entropy = () => {
+  readonly SKIP_js_get_entropy = () => {
     const buf = new Uint8Array(4);
     const crypto = this.env == undefined ? new Crypto() : this.env.crypto();
     crypto.getRandomValues(buf);
@@ -80,7 +77,7 @@ class LinksImpl implements Links {
     /* nop since js is sequential */
   }
 
-  complete = (utils: Utils, _exports: object) => {
+  readonly complete = (utils: Utils, _exports: object) => {
     this.SKIP_etry = utils.etry;
     this.SKIP_print_error = (msg: ptr<Internal.String>) => {
       utils.sklog(msg, Stream.ERR, true);
@@ -193,13 +190,9 @@ class LinksImpl implements Links {
 }
 
 class Manager implements ToWasmManager {
-  env: Environment | undefined;
+  constructor(readonly env?: Environment) {}
 
-  constructor(env?: Environment) {
-    this.env = env;
-  }
-
-  prepare = (wasm: object) => {
+  readonly prepare = (wasm: object) => {
     const toWasm = wasm as ToWasm;
     const links = new LinksImpl(this.env);
     toWasm._ZSt9terminatev = () => {

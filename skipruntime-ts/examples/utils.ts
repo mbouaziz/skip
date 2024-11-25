@@ -21,10 +21,10 @@ interface Delete {
 }
 
 export class SkipHttpAccessV1 {
-  private service: RESTWrapperOfSkipService;
+  private readonly service: RESTWrapperOfSkipService;
 
   constructor(
-    private streaming_port: number = 8080,
+    private readonly streaming_port: number = 8080,
     control_port: number = 8081,
   ) {
     this.service = new RESTWrapperOfSkipService({
@@ -118,9 +118,9 @@ interface DeleteQuery {
 export type Step = RequestQuery | LogQuery | WriteQuery | DeleteQuery;
 
 class Session {
-  scenario: Step[];
-  perform: (l: Step) => void;
-  error: (e: string) => void;
+  readonly scenario: Step[];
+  readonly perform: (l: Step) => void;
+  readonly error: (e: string) => void;
   current = 0;
   on = false;
 
@@ -166,11 +166,11 @@ class Player {
   running?: Session;
 
   constructor(
-    private scenarios: Step[][],
-    private perform: (l: string) => void,
-    private send: (l: Step) => void,
-    private error: (e: string) => void,
-    private exit: () => void,
+    private readonly scenarios: Step[][],
+    private readonly perform: (l: string) => void,
+    private readonly send: (l: Step) => void,
+    private readonly error: (e: string) => void,
+    private readonly exit: () => void,
   ) {}
 
   start(idx: number) {

@@ -2,10 +2,10 @@ import type { SKDB, SKDBGroup } from "./skdb_types.js";
 import { SKDBTransaction } from "./skdb_util.js";
 
 export class SKDBGroupImpl implements SKDBGroup {
-  skdb: SKDB;
-  ownerGroupID: string;
-  adminGroupID: string;
-  groupID: string;
+  readonly skdb: SKDB;
+  readonly ownerGroupID: string;
+  readonly adminGroupID: string;
+  readonly groupID: string;
 
   constructor(
     skdb: SKDB,

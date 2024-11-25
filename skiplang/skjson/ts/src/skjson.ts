@@ -56,9 +56,9 @@ interface ToWasm {
 }
 
 class WasmHandle<T extends Internal.CJSON> {
-  utils: Utils;
-  pointer: ptr<T>;
-  access: WasmAccess;
+  readonly utils: Utils;
+  readonly pointer: ptr<T>;
+  readonly access: WasmAccess;
   fields?: Map<string, int>;
 
   constructor(utils: Utils, pointer: ptr<T>, access: WasmAccess) {
@@ -266,8 +266,8 @@ interface FromWasm extends WasmAccess {
 
 class Mapping {
   private nextID: number = 0;
-  private objects: any[] = [];
-  private freeIDs: int[] = [];
+  private readonly objects: any[] = [];
+  private readonly freeIDs: int[] = [];
 
   register(v: any) {
     const freeID = this.freeIDs.pop();
@@ -325,20 +325,24 @@ export interface SKJSON extends Shared {
 }
 
 class SKJSONShared implements SKJSON {
-  getName = () => "SKJSON";
+  readonly getName = () => "SKJSON";
 
   constructor(
-    public importJSON: (
+    public readonly importJSON: (
       value: ptr<Internal.CJSON>,
       copy?: boolean,
     ) => Exportable,
-    public exportJSON: (v: Exportable) => ptr<Internal.CJSON>,
-    public importString: (v: ptr<Internal.String>) => string,
-    public exportString: (v: string) => ptr<Internal.String>,
-    public exportBytes: (v: Uint8Array) => ptr<Internal.Array<Internal.Byte>>,
-    public importBytes: (v: ptr<Internal.Array<Internal.Byte>>) => Uint8Array,
-    public runWithGC: <T>(fn: () => T) => T,
-    public clone: <T>(v: T) => T,
+    public readonly exportJSON: (v: Exportable) => ptr<Internal.CJSON>,
+    public readonly importString: (v: ptr<Internal.String>) => string,
+    public readonly exportString: (v: string) => ptr<Internal.String>,
+    public readonly exportBytes: (
+      v: Uint8Array,
+    ) => ptr<Internal.Array<Internal.Byte>>,
+    public readonly importBytes: (
+      v: ptr<Internal.Array<Internal.Byte>>,
+    ) => Uint8Array,
+    public readonly runWithGC: <T>(fn: () => T) => T,
+    public readonly clone: <T>(v: T) => T,
   ) {}
 
   importOptJSON(
@@ -353,8 +357,8 @@ class SKJSONShared implements SKJSON {
 }
 
 class LinksImpl implements Links {
-  env: Environment;
-  mapping: Mapping;
+  readonly env: Environment;
+  readonly mapping: Mapping;
 
   SKJSON_console!: (json: ptr<Internal.CJSON>) => void;
   SKJSON_error!: (json: ptr<Internal.CJSON>) => void;
@@ -364,7 +368,7 @@ class LinksImpl implements Links {
     this.mapping = new Mapping();
   }
 
-  complete = (utils: Utils, exports: object) => {
+  readonly complete = (utils: Utils, exports: object) => {
     const fromWasm = exports as FromWasm;
     const importJSON = <T extends Internal.CJSON>(
       valuePtr: ptr<T>,
@@ -435,11 +439,7 @@ class LinksImpl implements Links {
 }
 
 class Manager implements ToWasmManager {
-  env: Environment;
-
-  constructor(env: Environment) {
-    this.env = env;
-  }
+  constructor(readonly env: Environment) {}
 
   prepare = (wasm: object) => {
     const toWasm = wasm as ToWasm;

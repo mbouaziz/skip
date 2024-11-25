@@ -19,13 +19,10 @@ import { SKDBGroupImpl } from "./skdb_group.js";
 /* eslint-disable @typescript-eslint/no-invalid-void-type */
 
 class WrappedRemote implements RemoteSKDB {
-  private worker: PromiseWorker;
-  private wrapped: number;
-
-  constructor(worker: PromiseWorker, wrapped: number) {
-    this.worker = worker;
-    this.wrapped = wrapped;
-  }
+  constructor(
+    private readonly worker: PromiseWorker,
+    private readonly wrapped: number,
+  ) {}
 
   createDatabase(dbName: string) {
     return this.worker
@@ -109,13 +106,13 @@ class WrappedRemote implements RemoteSKDB {
 }
 
 export class SKDBWorker implements SKDB {
-  private worker: PromiseWorker;
+  private readonly worker: PromiseWorker;
 
   constructor(worker: Wrk) {
     this.worker = new PromiseWorker(worker);
   }
 
-  create = async (
+  readonly create = async (
     dbName?: string,
     disableWarnings: boolean = false,
   ): Promise<void> => {
@@ -124,14 +121,14 @@ export class SKDBWorker implements SKDB {
       .send();
   };
 
-  exec = async (query: string, params: Params = new Map()) => {
+  readonly exec = async (query: string, params: Params = new Map()) => {
     const rows = await this.worker
       .post(new Function("exec", [query, params]))
       .send<Record<string, any>[]>();
     return new SKDBTable(...rows);
   };
 
-  watch = async (
+  readonly watch = async (
     query: string,
     params: Params,
     onChange: (rows: SKDBTable) => void,
@@ -152,7 +149,7 @@ export class SKDBWorker implements SKDB {
     });
   };
 
-  watchChanges = async (
+  readonly watchChanges = async (
     query: string,
     params: Params,
     init: (rows: SKDBTable) => void,
@@ -174,35 +171,38 @@ export class SKDBWorker implements SKDB {
     });
   };
 
-  tableSchema = async (tableName: string) => {
+  readonly tableSchema = async (tableName: string) => {
     return this.worker
       .post(new Function("tableSchema", [tableName]))
       .send<string>();
   };
 
-  notifyConnectedAs = async (userName: string, replicationId: string) => {
+  readonly notifyConnectedAs = async (
+    userName: string,
+    replicationId: string,
+  ) => {
     return this.worker
       .post(new Function("notifyConnectedAs", [userName, replicationId]))
       .send<void>();
   };
 
-  viewSchema = async (viewName: string) => {
+  readonly viewSchema = async (viewName: string) => {
     return this.worker
       .post(new Function("viewSchema", [viewName]))
       .send<string>();
   };
 
-  schema = async (tableName?: string) => {
+  readonly schema = async (tableName?: string) => {
     return this.worker.post(new Function("schema", [tableName])).send<string>();
   };
 
-  insert = async (tableName: string, values: unknown[]) => {
+  readonly insert = async (tableName: string, values: unknown[]) => {
     return this.worker
       .post(new Function("insert", [tableName, values]))
       .send<boolean>();
   };
 
-  insertMany = async (
+  readonly insertMany = async (
     tableName: string,
     valuesArray: Record<string, unknown>[],
   ) => {
@@ -215,33 +215,33 @@ export class SKDBWorker implements SKDB {
     return result as number;
   };
 
-  save = async () => {
+  readonly save = async () => {
     return this.worker.post(new Function("save", [])).send<boolean>();
   };
 
-  createServerDatabase = async (dbName: string) => {
+  readonly createServerDatabase = async (dbName: string) => {
     return this.worker
       .post(new Function("createServerDatabase", [dbName]))
       .send<ProtoResponseCreds>();
   };
 
-  createServerUser = async () => {
+  readonly createServerUser = async () => {
     return this.worker
       .post(new Function("createServerUser", []))
       .send<ProtoResponseCreds>();
   };
 
-  mirror = async (...tables: MirrorDefn[]) => {
+  readonly mirror = async (...tables: MirrorDefn[]) => {
     return this.worker.post(new Function("mirror", tables)).send<void>();
   };
 
-  closeConnection = async () => {
+  readonly closeConnection = async () => {
     return this.worker.post(new Function("closeConnection", [])).send<void>();
   };
 
   currentUser?: string;
 
-  connect = async (
+  readonly connect = async (
     db: string,
     accessKey: string,
     privateKey: CryptoKey,
@@ -253,7 +253,7 @@ export class SKDBWorker implements SKDB {
       .send<void>();
   };
 
-  connectedRemote = async () => {
+  readonly connectedRemote = async () => {
     return this.worker
       .post(
         new Function("connectedRemote", [], { wrap: true, autoremove: false }),
@@ -262,21 +262,20 @@ export class SKDBWorker implements SKDB {
       .then((wrapped) => new WrappedRemote(this.worker, wrapped.wrapped));
   };
 
-  getUser = async () => {
+  readonly getUser = async () => {
     return this.worker
       .post(new Function("getUser", []))
       .send<string | undefined>();
   };
 
-  createGroup: () => Promise<SKDBGroup> = async () => {
+  readonly createGroup: () => Promise<SKDBGroup> = async () => {
     return SKDBGroupImpl.create(this);
   };
 
-  lookupGroup: (groupID: string) => Promise<SKDBGroup | undefined> = async (
-    groupID: string,
-  ) => {
-    return SKDBGroupImpl.lookup(this, groupID);
-  };
+  readonly lookupGroup: (groupID: string) => Promise<SKDBGroup | undefined> =
+    async (groupID: string) => {
+      return SKDBGroupImpl.lookup(this, groupID);
+    };
 }
 
 /* eslint-enable @typescript-eslint/no-invalid-void-type */
