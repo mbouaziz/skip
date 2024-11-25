@@ -32,7 +32,7 @@ interface ToWasm {
 }
 
 class LinksImpl implements Links, ToWasm {
-  private fs: FileSystem;
+  private readonly fs: FileSystem;
   SKIP_check_if_file_exists!: (skPath: ptr<Internal.String>) => boolean;
   SKIP_js_open!: (skPath: ptr<Internal.String>, flags: int, mode: int) => int;
   SKIP_js_close!: (fd: int) => void;
@@ -59,7 +59,7 @@ class LinksImpl implements Links, ToWasm {
     this.fs = environment.fs();
   }
 
-  complete = (utils: Utils, _exports: object) => {
+  readonly complete = (utils: Utils, _exports: object) => {
     this.SKIP_check_if_file_exists = (skPath) => {
       return this.fs.exists(utils.importString(skPath));
     };
@@ -126,13 +126,9 @@ class LinksImpl implements Links, ToWasm {
 }
 
 class Manager implements ToWasmManager {
-  private environment: Environment;
+  constructor(private readonly environment: Environment) {}
 
-  constructor(environment: Environment) {
-    this.environment = environment;
-  }
-
-  prepare = (wasm: object) => {
+  readonly prepare = (wasm: object) => {
     const toWasm = wasm as ToWasm;
     const links = new LinksImpl(this.environment);
     toWasm.SKIP_js_open = (

@@ -14,24 +14,27 @@ import { SKDBGroupImpl } from "./skdb_group.js";
 import { connect } from "./skdb_orchestration.js";
 
 class SKDBMechanismImpl implements SKDBMechanism {
-  writeCsv: (payload: string, source: string) => void;
-  watermark: (replicationUid: string, table: string) => bigint;
-  watchFile: (fileName: string, fn: (change: ArrayBuffer) => void) => void;
-  getReplicationUid: (deviceUuid: string) => string;
-  subscribe: (
+  readonly writeCsv: (payload: string, source: string) => void;
+  readonly watermark: (replicationUid: string, table: string) => bigint;
+  readonly watchFile: (
+    fileName: string,
+    fn: (change: ArrayBuffer) => void,
+  ) => void;
+  readonly getReplicationUid: (deviceUuid: string) => string;
+  readonly subscribe: (
     replicationUid: string,
     tables: string[],
     updateFile: string,
   ) => string;
-  unsubscribe: (session: string) => void;
-  diff: (
+  readonly unsubscribe: (session: string) => void;
+  readonly diff: (
     session: string,
     watermarks: Map<string, bigint>,
   ) => ArrayBuffer | null;
-  assertCanBeMirrored: (table: string, schema: string) => void;
-  tableExists: (tableName: string) => boolean;
-  exec: (query: string) => SKDBTable;
-  toggleView: (tableName: string) => void;
+  readonly assertCanBeMirrored: (table: string, schema: string) => void;
+  readonly tableExists: (tableName: string) => boolean;
+  readonly exec: (query: string) => SKDBTable;
+  readonly toggleView: (tableName: string) => void;
 
   constructor(
     client: SKDBSyncImpl,
@@ -109,11 +112,11 @@ class SKDBMechanismImpl implements SKDBMechanism {
 }
 
 export class SKDBSyncImpl implements SKDBSync {
-  private environment: Environment;
+  private readonly environment: Environment;
   private subscriptionCount: number = 0;
   private clientUuid: string = "";
   private accessKey?: string;
-  private fs: FileSystem;
+  private readonly fs: FileSystem;
 
   save!: () => Promise<boolean>;
   runLocal!: (new_args: string[], new_stdin: string) => string;
@@ -223,7 +226,7 @@ export class SKDBSyncImpl implements SKDBSync {
     );
   }
 
-  subscribe = (viewName: string, f: (change: string) => void) => {
+  readonly subscribe = (viewName: string, f: (change: string) => void) => {
     const fileName = `/subscriptions/sub ${this.subscriptionCount}`;
     this.fs.watchFile(fileName, f);
     this.subscriptionCount++;
@@ -233,7 +236,7 @@ export class SKDBSyncImpl implements SKDBSync {
     );
   };
 
-  addParams = (
+  readonly addParams = (
     args: string[],
     params: Params,
     stdin: string,
@@ -246,29 +249,29 @@ export class SKDBSyncImpl implements SKDBSync {
     return [args1, stdin1];
   };
 
-  exec = (stdin: string, params: Params = new Map()) => {
+  readonly exec = (stdin: string, params: Params = new Map()) => {
     return this.runner(() => {
       const [args1, stdin1] = this.addParams(["--format=js"], params, stdin);
       return this.runLocal(args1, stdin1);
     });
   };
 
-  tableSchema = (tableName: string) => {
+  readonly tableSchema = (tableName: string) => {
     return this.runLocal(["dump-table", tableName], "");
   };
 
-  notifyConnectedAs = (userName: string, replicationId: string) => {
+  readonly notifyConnectedAs = (userName: string, replicationId: string) => {
     return this.runLocal(
       ["connected-as", "--userId", userName, "--replicationId", replicationId],
       "",
     );
   };
 
-  viewSchema = (viewName: string) => {
+  readonly viewSchema = (viewName: string) => {
     return this.runLocal(["dump-view", viewName], "");
   };
 
-  schema = (tableName?: string) => {
+  readonly schema = (tableName?: string) => {
     if (tableName === undefined) {
       const tables = this.runLocal(["dump-tables"], "");
       const views = this.runLocal(["dump-views"], "");
@@ -283,7 +286,7 @@ export class SKDBSyncImpl implements SKDBSync {
     return this.tableSchema(tableName);
   };
 
-  insert = (tableName: string, values: any[]) => {
+  readonly insert = (tableName: string, values: any[]) => {
     const params = new Map();
     const keys = values.map((val, i) => {
       const key = `@key${i.toString()}`;
@@ -295,7 +298,10 @@ export class SKDBSyncImpl implements SKDBSync {
     return this.runLocal(args1, stdin1) == "";
   };
 
-  insertMany = (tableName: string, valuesArray: Record<string, object>[]) => {
+  readonly insertMany = (
+    tableName: string,
+    valuesArray: Record<string, object>[],
+  ) => {
     const params = new Map();
     let valueIndex = 0;
     let keyNbr = 0;
@@ -424,11 +430,7 @@ export class SKDBSyncImpl implements SKDBSync {
 }
 
 export class SKDBImpl implements SKDB {
-  private skdbSync: SKDBSync;
-
-  constructor(skdbSync: SKDBSync) {
-    this.skdbSync = skdbSync;
-  }
+  constructor(private readonly skdbSync: SKDBSync) {}
 
   currentUser?: string;
 

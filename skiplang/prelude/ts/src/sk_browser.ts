@@ -2,11 +2,7 @@ import type { float, int, Environment, Wrk, Shared } from "./sk_types.js";
 import { MemFS, MemSys } from "./sk_mem_utils.js";
 
 class WrkImpl implements Wrk {
-  worker: Worker;
-
-  constructor(worker: Worker) {
-    this.worker = worker;
-  }
+  constructor(private readonly worker: Worker) {}
 
   static fromPath(url: URL, options?: WorkerOptions) {
     return new this(new Worker(url, options));
@@ -22,22 +18,22 @@ class WrkImpl implements Wrk {
 }
 
 class Env implements Environment {
-  shared: Map<string, Shared>;
+  readonly shared: Map<string, Shared>;
   disableWarnings: boolean = false;
-  fileSystem: MemFS;
-  system: MemSys;
-  timestamp: () => float;
-  decodeUTF8: (utf8: ArrayBuffer) => string;
-  encodeUTF8: (str: string) => Uint8Array;
-  storage: () => Storage;
-  onException: () => void;
-  base64Decode: (base64: string) => Uint8Array;
-  base64Encode: (toEncode: string, url?: boolean) => string;
-  createSocket: (url: string) => WebSocket;
-  createWorker: (url: URL, options?: WorkerOptions) => Wrk;
-  createWorkerWrapper: (worker: Worker) => Wrk;
-  crypto: () => Crypto;
-  environment: string[];
+  readonly fileSystem: MemFS;
+  readonly system: MemSys;
+  readonly timestamp: () => float;
+  readonly decodeUTF8: (utf8: ArrayBuffer) => string;
+  readonly encodeUTF8: (str: string) => Uint8Array;
+  readonly storage: () => Storage;
+  readonly onException: () => void;
+  readonly base64Decode: (base64: string) => Uint8Array;
+  readonly base64Encode: (toEncode: string, url?: boolean) => string;
+  readonly createSocket: (url: string) => WebSocket;
+  readonly createWorker: (url: URL, options?: WorkerOptions) => Wrk;
+  readonly createWorkerWrapper: (worker: Worker) => Wrk;
+  readonly crypto: () => Crypto;
+  readonly environment: string[];
 
   throwRuntime = (code: int) => {
     this.onException();

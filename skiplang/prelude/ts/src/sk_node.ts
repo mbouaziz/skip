@@ -9,11 +9,7 @@ import * as crypto from "crypto";
 import { Worker } from "worker_threads";
 
 class WrkImpl implements Wrk {
-  worker: Worker;
-
-  constructor(worker: Worker) {
-    this.worker = worker;
-  }
+  constructor(private readonly worker: Worker) {}
 
   static fromPath(url: URL, options: WorkerOptions | undefined): Wrk {
     const filename = "./" + path.relative(process.cwd(), url.pathname);
@@ -33,21 +29,21 @@ const decoder = new util.TextDecoder("utf8");
 const encoder = new util.TextEncoder();
 
 class Env implements Environment {
-  shared: Map<string, Shared>;
-  fileSystem: MemFS;
+  readonly shared: Map<string, Shared>;
+  readonly fileSystem: MemFS;
   disableWarnings: boolean = false;
-  system: MemSys;
-  timestamp: () => float;
-  decodeUTF8: (utf8: ArrayBuffer) => string;
-  encodeUTF8: (str: string) => Uint8Array;
-  base64Decode: (base64: string) => Uint8Array;
-  base64Encode: (toEncode: string, url?: boolean) => string;
-  environment: string[];
-  throwRuntime: (code: int) => void;
-  createSocket: (url: string) => WebSocket;
-  createWorker: (url: URL, options?: WorkerOptions) => Wrk;
-  createWorkerWrapper: (worker: any) => Wrk;
-  crypto: () => Crypto;
+  readonly system: MemSys;
+  readonly timestamp: () => float;
+  readonly decodeUTF8: (utf8: ArrayBuffer) => string;
+  readonly encodeUTF8: (str: string) => Uint8Array;
+  readonly base64Decode: (base64: string) => Uint8Array;
+  readonly base64Encode: (toEncode: string, url?: boolean) => string;
+  readonly environment: string[];
+  readonly throwRuntime: (code: int) => void;
+  readonly createSocket: (url: string) => WebSocket;
+  readonly createWorker: (url: URL, options?: WorkerOptions) => Wrk;
+  readonly createWorkerWrapper: (worker: any) => Wrk;
+  readonly crypto: () => Crypto;
 
   fs() {
     return this.fileSystem;
