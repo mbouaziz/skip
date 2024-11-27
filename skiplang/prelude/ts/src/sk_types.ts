@@ -212,7 +212,7 @@ function utf8Encode(str: string): Uint8Array {
   return new TextEncoder().encode(str);
 }
 
-export type Main = (new_args: string[], new_stdin: string) => string;
+export type Main = (new_args: readonly string[], new_stdin: string) => string;
 
 export type App = {
   readonly environment: Environment;
@@ -276,7 +276,7 @@ export class Utils {
   };
 
   readonly clearMainEnvironment = (
-    new_args: string[] = [],
+    new_args: readonly string[] = [],
     new_stdin: string = "",
   ) => {
     this.args = [this.mainFn ?? "main"].concat(new_args);
@@ -303,7 +303,7 @@ export class Utils {
     return res;
   };
 
-  readonly main = (new_args: string[], new_stdin: string) => {
+  readonly main = (new_args: readonly string[], new_stdin: string) => {
     let exitCode = 0;
     this.clearMainEnvironment(new_args, new_stdin);
     try {
@@ -333,7 +333,7 @@ export class Utils {
       const lines: string[] = [];
       message?.split("\n").forEach((line) => {
         const matches = [...line.matchAll(/external:([0-9]+)/g)].sort(
-          (v1: string[], v2: string[]) => {
+          (v1: readonly string[], v2: readonly string[]) => {
             const i1 = parseInt(v1[1]!); // matched regexp has a pair of parens
             const i2 = parseInt(v2[1]!);
             if (i2 < i1) {
@@ -767,7 +767,7 @@ export const check: (value: Text | string) => Text = (value: Text | string) => {
 export class Format implements Text {
   constructor(
     readonly format: Text | string,
-    readonly parameters: (Text | string)[],
+    readonly parameters: readonly (Text | string)[],
   ) {}
 
   readonly toJSON: () => object = () => {
@@ -828,7 +828,7 @@ export function humanSize(bytes: int) {
 
 export function loadWasm(
   buffer: ArrayBuffer,
-  managers: ToWasmManager[],
+  managers: readonly ToWasmManager[],
   environment: Environment,
   main?: string,
 ) {
@@ -849,7 +849,7 @@ export function loadWasm(
 }
 
 async function start(
-  modules: ModuleInit[],
+  modules: readonly ModuleInit[],
   buffer: Uint8Array,
   environment: Environment,
   main?: string,
@@ -863,7 +863,10 @@ export function isNode() {
   return typeof process !== "undefined" && process.release.name == "node";
 }
 
-export async function loadEnv(extensions: EnvInit[], envVals?: string[]) {
+export async function loadEnv(
+  extensions: readonly EnvInit[],
+  envVals?: string[],
+) {
   // hack: this way of importing is deliberate so that web bundlers
   // don't follow the node dynamic import
   const nodeImport = "./sk_node.js";

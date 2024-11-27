@@ -83,7 +83,7 @@ export class RESTWrapperOfSkipService {
   async put<K extends Json, V extends Json>(
     collection: string,
     key: K,
-    value: readonly V[],
+    value: V[],
   ): Promise<void> {
     return await this.patch(collection, [[key, value]]);
   }

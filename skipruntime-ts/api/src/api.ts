@@ -285,7 +285,7 @@ export interface Context extends Constant {
   jsonExtract(value: JsonObject, pattern: string): Json[];
 }
 
-export type Entry<K extends Json, V extends Json> = readonly [K, readonly V[]];
+export type Entry<K extends Json, V extends Json> = readonly [K, V[]];
 
 export type Watermark = Opaque<string, "watermark">;
 export type SubscriptionID = Opaque<bigint, "subscription">;
