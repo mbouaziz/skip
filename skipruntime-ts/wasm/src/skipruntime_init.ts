@@ -18,7 +18,7 @@ const modules: ModuleInit[] = [
 ];
 
 interface Imported {
-  default: string;
+  readonly default: string;
 }
 
 async function wasmUrl(): Promise<URL | string> {

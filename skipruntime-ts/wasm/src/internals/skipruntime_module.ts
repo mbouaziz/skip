@@ -1175,14 +1175,14 @@ export class ServiceInstanceFactory implements Shared {
 }
 
 export type GetResult<T> = {
-  request?: string;
-  payload: T;
-  errors: Json[];
+  readonly request?: string;
+  readonly payload: T;
+  readonly errors: Json[];
 };
 
 export type Executor<T> = {
-  resolve: (value: T) => void;
-  reject: (reason?: any) => void;
+  readonly resolve: (value: T) => void;
+  readonly reject: (reason?: any) => void;
 };
 
 interface Checker {

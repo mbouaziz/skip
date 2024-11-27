@@ -14,50 +14,50 @@ const npmVersion = "";
 /* ***************************************************************************/
 
 type ProtoQuery = {
-  type: "query";
-  query: string;
-  format: "json" | "raw" | "csv";
+  readonly type: "query";
+  readonly query: string;
+  readonly format: "json" | "raw" | "csv";
 };
 
 type ProtoQuerySchema = {
-  type: "schema";
-  name?: string;
-  scope: "all" | "table" | "view" | "legacy_schema";
-  suffix?: string;
+  readonly type: "schema";
+  readonly name?: string;
+  readonly scope: "all" | "table" | "view" | "legacy_schema";
+  readonly suffix?: string;
 };
 
 type ProtoRequestTail = {
-  type: "tail";
-  table: string;
-  expectedColumns: string;
-  since: bigint;
-  filterExpr: string;
-  params: Params;
+  readonly type: "tail";
+  readonly table: string;
+  readonly expectedColumns: string;
+  readonly since: bigint;
+  readonly filterExpr: string;
+  readonly params: Params;
 };
 
 type ProtoRequestTailBatch = {
-  type: "tailBatch";
-  requests: ProtoRequestTail[];
+  readonly type: "tailBatch";
+  readonly requests: ProtoRequestTail[];
 };
 
 type ProtoPushPromise = {
-  type: "pushPromise";
-  schemas: Record<string, string>;
+  readonly type: "pushPromise";
+  readonly schemas: Record<string, string>;
 };
 
 type ProtoRequestCreateDb = {
-  type: "createDatabase";
-  name: string;
+  readonly type: "createDatabase";
+  readonly name: string;
 };
 
 type ProtoRequestCreateUser = {
-  type: "createUser";
+  readonly type: "createUser";
 };
 
 type ProtoResponseCreds = {
-  type: "credentials";
-  accessKey: string;
-  privateKey: Uint8Array;
+  readonly type: "credentials";
+  readonly accessKey: string;
+  readonly privateKey: Uint8Array;
 };
 
 type ProtoCtrlMsg =
@@ -70,8 +70,8 @@ type ProtoCtrlMsg =
   | ProtoRequestTailBatch;
 
 type ProtoData = {
-  type: "data";
-  payload: ArrayBuffer;
+  readonly type: "data";
+  readonly payload: ArrayBuffer;
 };
 
 type ProtoResponse = ProtoResponseCreds | ProtoData;
@@ -349,8 +349,8 @@ class ProtoMsgDecoder {
 /* ***************************************************************************/
 
 interface ResiliencyPolicy {
-  notifyFailedStream: () => void;
-  shouldReconnect: (socket: ResilientMuxedSocket) => Promise<boolean>;
+  readonly notifyFailedStream: () => void;
+  readonly shouldReconnect: (socket: ResilientMuxedSocket) => Promise<boolean>;
 }
 
 class ResilientMuxedSocket {
@@ -651,28 +651,28 @@ enum MuxedSocketState {
 }
 
 type MuxAuth = {
-  type: "auth";
+  readonly type: "auth";
 };
 type MuxGoaway = {
-  type: "goaway";
-  lastStream: number;
-  errorCode: number;
-  msg: string;
+  readonly type: "goaway";
+  readonly lastStream: number;
+  readonly errorCode: number;
+  readonly msg: string;
 };
 type MuxStreamData = {
-  type: "data";
-  stream: number;
-  payload: ArrayBuffer;
+  readonly type: "data";
+  readonly stream: number;
+  readonly payload: ArrayBuffer;
 };
 type MuxStreamClose = {
-  type: "close";
-  stream: number;
+  readonly type: "close";
+  readonly stream: number;
 };
 type MuxStreamReset = {
-  type: "reset";
-  stream: number;
-  errorCode: number;
-  msg: string;
+  readonly type: "reset";
+  readonly stream: number;
+  readonly errorCode: number;
+  readonly msg: string;
 };
 type MuxMessage =
   | MuxAuth
@@ -682,9 +682,9 @@ type MuxMessage =
   | MuxStreamReset;
 
 export interface Creds {
-  accessKey: string;
-  privateKey: CryptoKey;
-  deviceUuid: string;
+  readonly accessKey: string;
+  readonly privateKey: CryptoKey;
+  readonly deviceUuid: string;
 }
 
 export class MuxedSocket {

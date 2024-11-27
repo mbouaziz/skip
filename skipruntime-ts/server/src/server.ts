@@ -9,7 +9,7 @@ export type SkipServer = {
   /**
    * Stop accepting new connections, close existing connections, and halt a running service.
    */
-  close: () => void;
+  readonly close: () => void;
 };
 
 /**

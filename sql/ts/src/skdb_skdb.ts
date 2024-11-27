@@ -23,23 +23,23 @@ import type { SKJSON } from "@skip-wasm/json";
 import type * as InternalJ from "@skip-wasm/json/internal.js";
 
 interface Exported {
-  sk_pop_dirty_page: () => number;
-  SKIP_get_version: () => number;
-  skip_main: () => void;
+  readonly sk_pop_dirty_page: () => number;
+  readonly SKIP_get_version: () => number;
+  readonly skip_main: () => void;
   //
-  SKIP_reactive_query: (
+  readonly SKIP_reactive_query: (
     queryID: number,
     query: number,
     encoded_params: number,
   ) => void;
-  SKIP_reactive_query_changes: (
+  readonly SKIP_reactive_query_changes: (
     queryID: number,
     query: number,
     encoded_params: number,
   ) => void;
-  SKIP_reactive_print_result: (queryID: number) => void;
-  SKIP_delete_reactive_query: (queryID: number) => void;
-  getVersion: () => number;
+  readonly SKIP_reactive_print_result: (queryID: number) => void;
+  readonly SKIP_delete_reactive_query: (queryID: number) => void;
+  readonly getVersion: () => number;
 }
 
 class SKDBHandleImpl implements SKDBHandle {

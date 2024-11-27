@@ -6,18 +6,18 @@ import { RESTWrapperOfSkipService } from "@skipruntime/helpers";
 import { createInterface } from "readline";
 
 export interface ClientDefinition {
-  port: number;
-  scenarios: () => Step[][];
+  readonly port: number;
+  readonly scenarios: () => Step[][];
 }
 
 interface Write {
-  collection: string;
-  entries: Entry<Json, Json>[];
+  readonly collection: string;
+  readonly entries: readonly Entry<Json, Json>[];
 }
 
 interface Delete {
-  collection: string;
-  keys: string[];
+  readonly collection: string;
+  readonly keys: readonly string[];
 }
 
 export class SkipHttpAccessV1 {
@@ -34,7 +34,7 @@ export class SkipHttpAccessV1 {
     });
   }
 
-  async writeMany(data: Write[]) {
+  async writeMany(data: readonly Write[]) {
     const promises = data.map(async (w) =>
       this.service.patch(w.collection, w.entries),
     );
@@ -44,7 +44,7 @@ export class SkipHttpAccessV1 {
     return Promise.allSettled(promises);
   }
 
-  async deleteMany(data: Delete[]) {
+  async deleteMany(data: readonly Delete[]) {
     const promises: Promise<void>[] = [];
     for (const x of data) {
       for (const key of x.keys) {
@@ -57,12 +57,12 @@ export class SkipHttpAccessV1 {
     return Promise.allSettled(promises);
   }
 
-  async log(resource: string, params: { [param: string]: string }) {
+  async log(resource: string, params: { readonly [param: string]: string }) {
     const result = await this.service.getAll(resource, params);
     console.log(JSON.stringify(result));
   }
 
-  request(resource: string, params: { [param: string]: string }) {
+  request(resource: string, params: { readonly [param: string]: string }) {
     this.service
       .getStreamUUID(resource, params)
       .then((uuid) => {
@@ -88,31 +88,31 @@ export class SkipHttpAccessV1 {
 }
 
 interface RequestQuery {
-  type: "request";
-  payload: {
-    resource: string;
-    params?: { [param: string]: string };
-    port?: number;
+  readonly type: "request";
+  readonly payload: {
+    readonly resource: string;
+    readonly params?: { readonly [param: string]: string };
+    readonly port?: number;
   };
 }
 
 interface LogQuery {
-  type: "log";
-  payload: {
-    resource: string;
-    params?: { [param: string]: string };
-    port?: number;
+  readonly type: "log";
+  readonly payload: {
+    readonly resource: string;
+    readonly params?: { readonly [param: string]: string };
+    readonly port?: number;
   };
 }
 
 interface WriteQuery {
-  type: "write";
-  payload: Write[];
+  readonly type: "write";
+  readonly payload: readonly Write[];
 }
 
 interface DeleteQuery {
-  type: "delete";
-  payload: Delete[];
+  readonly type: "delete";
+  readonly payload: readonly Delete[];
 }
 
 export type Step = RequestQuery | LogQuery | WriteQuery | DeleteQuery;
