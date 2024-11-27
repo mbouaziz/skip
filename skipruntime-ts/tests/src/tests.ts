@@ -311,10 +311,7 @@ const merge1Service: SkipService<Input_NN_NN, Input_NN_NN> = {
 };
 
 function sorted(entries: Entry<Json, Json>[]): Entry<Json, Json>[] {
-  for (const entry of entries) {
-    entry[1].sort();
-  }
-  return entries;
+  return entries.map(([k, v]): Entry<Json, Json> => [k, v.toSorted()]);
 }
 
 //// testMergeReduce

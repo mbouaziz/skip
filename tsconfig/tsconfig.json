@@ -26,6 +26,6 @@
     // Projects
     "incremental": true,
     // Language and Environment
-    "target": "ES2021"
+    "target": "ES2023"
   }
 }
