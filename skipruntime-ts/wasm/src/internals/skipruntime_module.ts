@@ -310,14 +310,14 @@ export interface FromWasm {
     resource: ptr<Internal.String>,
     jsonParams: ptr<Internal.CJObject>,
     request: ptr<Internal.Request> | null,
-  ): ptr<Internal.CJObject | Internal.CJFloat>;
+  ): ptr<Internal.CJObject | Internal.CJInt>;
 
   SkipRuntime_Runtime__getForKey(
     resource: ptr<Internal.String>,
     jsonParams: ptr<Internal.CJObject>,
     key: ptr<Internal.CJSON>,
     request: ptr<Internal.Request> | null,
-  ): ptr<Internal.CJObject | Internal.CJFloat>;
+  ): ptr<Internal.CJObject | Internal.CJInt>;
 
   SkipRuntime_Runtime__closeResource(
     identifier: ptr<Internal.String>,

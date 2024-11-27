@@ -2,7 +2,7 @@ module SkipRuntime;
 
 @cpp_extern("SkipRuntime_getErrorHdl")
 @debug
-native fun getErrorHdl(exn: .Exception): Float;
+native fun getErrorHdl(exn: .Exception): Int32;
 
 @cpp_extern("SkipRuntime_pushContext")
 native fun pushContext(context: mutable SKStore.Context): void;
@@ -204,7 +204,7 @@ fun updateOfCollectionWriter(
   collection: String,
   values: SKJSON.CJArray,
   isInit: Int32,
-): Float {
+): Int32 {
   writer = CollectionWriter(SKStore.DirName::create(collection));
   writer.update(
     values match {
@@ -216,25 +216,25 @@ fun updateOfCollectionWriter(
     },
     isInit != 0,
   ) match {
-  | Success _ -> 0.0
+  | Success _ -> Int32::truncate(0)
   | Failure(err) -> getErrorHdl(err)
   };
 }
 
 @export("SkipRuntime_CollectionWriter__loading")
-fun loadingOfCollectionWriter(collection: String): Float {
+fun loadingOfCollectionWriter(collection: String): Int32 {
   writer = CollectionWriter(SKStore.DirName::create(collection));
   writer.loading() match {
-  | Success _ -> 0.0
+  | Success _ -> Int32::truncate(0)
   | Failure(err) -> getErrorHdl(err)
   };
 }
 
 @export("SkipRuntime_CollectionWriter__error")
-fun errorOfCollectionWriter(collection: String, error: SKJSON.CJSON): Float {
+fun errorOfCollectionWriter(collection: String, error: SKJSON.CJSON): Int32 {
   writer = CollectionWriter(SKStore.DirName::create(collection));
   writer.error(error) match {
-  | Success _ -> 0.0
+  | Success _ -> Int32::truncate(0)
   | Failure(err) -> getErrorHdl(err)
   };
 }
@@ -583,11 +583,11 @@ fun createResourceOfRuntime(
   identifier: String,
   resource: String,
   jsonParams: SKJSON.CJObject,
-): Float {
+): Int32 {
   SKStore.runWithResult(context ~> {
     createReactiveResource(context, identifier, resource, params(jsonParams))
   }) match {
-  | Success _ -> 0.0
+  | Success _ -> Int32::truncate(0)
   | Failure(err) -> getErrorHdl(err)
   };
 }
@@ -628,7 +628,7 @@ fun getAllOfRuntime(
     SKJSON.CJObject(
       SKJSON.CJFields::create(fields.sortedBy(x ~> x.i0).toArray(), x -> x),
     )
-  | Failure(err) -> SKJSON.CJFloat(getErrorHdl(err))
+  | Failure(err) -> SKJSON.CJInt(getErrorHdl(err).toInt())
   }
 }
 
@@ -662,16 +662,16 @@ fun getForKeyOfRuntime(
     SKJSON.CJObject(
       SKJSON.CJFields::create(fields.sortedBy(x ~> x.i0).toArray(), x -> x),
     )
-  | Failure(err) -> SKJSON.CJFloat(getErrorHdl(err))
+  | Failure(err) -> SKJSON.CJInt(getErrorHdl(err).toInt())
   };
 }
 
 @export("SkipRuntime_Runtime__closeResource")
-fun closeResourceOfRuntime(identifier: String): Float {
+fun closeResourceOfRuntime(identifier: String): Int32 {
   SKStore.runWithResult(context ~> {
     closeReactiveResource(context, identifier)
   }) match {
-  | Success _ -> 0.0
+  | Success _ -> Int32::truncate(0)
   | Failure(err) -> getErrorHdl(err)
   };
 }
@@ -691,17 +691,17 @@ fun subscribeOfRuntime(
 }
 
 @export("SkipRuntime_Runtime__unsubscribe")
-fun unsubscribeOfRuntime(session: Int): Float {
+fun unsubscribeOfRuntime(session: Int): Int32 {
   SKStore.runWithResult(context ~> {
     unsubscribe(context, session)
   }) match {
-  | Success _ -> 0.0
+  | Success _ -> Int32::truncate(0)
   | Failure(err) -> getErrorHdl(err)
   };
 }
 
 @export("SkipRuntime_Runtime__update")
-fun updateOfRuntime(input: String, values: SKJSON.CJArray): Float {
+fun updateOfRuntime(input: String, values: SKJSON.CJArray): Int32 {
   SKStore.runWithResult(context ~> {
     update(
       context,
@@ -715,7 +715,7 @@ fun updateOfRuntime(input: String, values: SKJSON.CJArray): Float {
       },
     )
   }) match {
-  | Success _ -> 0.0
+  | Success _ -> Int32::truncate(0)
   | Failure(err) -> getErrorHdl(err)
   };
 }
