@@ -12,8 +12,13 @@ import type { Opaque, Nullable, int, Constant } from "./internals.js";
  * reactive computation engine.
  */
 // Replicate definition of Json from skjson to avoid a dependency
-export type Json = number | boolean | string | JsonObject | Nullable<Json>[];
-export type JsonObject = { [key: string]: Nullable<Json> };
+export type Json =
+  | number
+  | boolean
+  | string
+  | JsonObject
+  | readonly Nullable<Json>[];
+export type JsonObject = { readonly [key: string]: Nullable<Json> };
 
 /**
  * A `Param` is a valid parameter to a Skip runtime mapper function: either a constant JS
@@ -100,7 +105,7 @@ export abstract class ManyToOneMapper<
  * value over a collection as values are added/removed
  */
 export interface Reducer<T extends Json, V extends Json> {
-  default: Nullable<V>;
+  readonly default: Nullable<V>;
   /**
    * The computation to perform when an input value is added
    * @param acc - the current accumulated value
@@ -272,15 +277,15 @@ export interface Context extends Constant {
    * @returns An eager reactive collection of the external resource
    */
   useExternalResource<K extends Json, V extends Json>(resource: {
-    service: string;
-    identifier: string;
-    params?: { [param: string]: string | number };
+    readonly service: string;
+    readonly identifier: string;
+    readonly params?: { readonly [param: string]: string | number };
   }): EagerCollection<K, V>;
 
   jsonExtract(value: JsonObject, pattern: string): Json[];
 }
 
-export type Entry<K extends Json, V extends Json> = [K, V[]];
+export type Entry<K extends Json, V extends Json> = readonly [K, readonly V[]];
 
 export type Watermark = Opaque<string, "watermark">;
 export type SubscriptionID = Opaque<bigint, "subscription">;
@@ -292,9 +297,9 @@ export type SubscriptionID = Opaque<bigint, "subscription">;
  * the initial chunk of data rather than an update to the preceding state.
  */
 export type CollectionUpdate<K extends Json, V extends Json> = {
-  values: Entry<K, V>[];
-  watermark: Watermark;
-  isInitial?: boolean;
+  readonly values: readonly Entry<K, V>[];
+  readonly watermark: Watermark;
+  readonly isInitial?: boolean;
 };
 
 /**
@@ -323,11 +328,11 @@ export interface ExternalService {
    */
   subscribe(
     resource: string,
-    params: { [param: string]: string | number },
+    params: { readonly [param: string]: string | number },
     callbacks: {
-      update: (updates: Entry<Json, Json>[], isInit: boolean) => void;
-      error: (error: Json) => void;
-      loading: () => void;
+      readonly update: (updates: Entry<Json, Json>[], isInit: boolean) => void;
+      readonly error: (error: Json) => void;
+      readonly loading: () => void;
     },
   ): void;
 
@@ -338,7 +343,7 @@ export interface ExternalService {
    */
   unsubscribe(
     resource: string,
-    params: { [param: string]: string | number },
+    params: { readonly [param: string]: string | number },
   ): void;
 
   /**
@@ -347,7 +352,9 @@ export interface ExternalService {
   shutdown(): void;
 }
 
-export type NamedCollections = { [name: string]: EagerCollection<Json, Json> };
+export type NamedCollections = {
+  [name: string]: EagerCollection<Json, Json>;
+};
 
 /**
  * `Resource`s make up the public interface of a SkipService, specifying how to respond
@@ -374,7 +381,10 @@ export interface Resource<
 // Initial data for services' initial collections are provided as an object with arrays of
 // entries for each input collection
 export type InitialData<Inputs extends NamedCollections> = {
-  [Name in keyof Inputs]: Inputs[Name] extends EagerCollection<infer K, infer V>
+  readonly [Name in keyof Inputs]: Inputs[Name] extends EagerCollection<
+    infer K,
+    infer V
+  >
     ? Entry<K, V>[]
     : Entry<Json, Json>[];
 };
@@ -384,11 +394,11 @@ export interface SkipService<
   ResourceInputs extends NamedCollections = NamedCollections,
 > {
   /** The data used to initially populate the input collections of the service */
-  initialData?: InitialData<Inputs>;
+  readonly initialData?: InitialData<Inputs>;
   /** The external service dependencies of the service */
-  externalServices?: { [name: string]: ExternalService };
+  readonly externalServices?: { [name: string]: ExternalService };
   /** The reactive resources which compose the public interface of this reactive service */
-  resources?: {
+  readonly resources?: {
     [name: string]: new (params: {
       [param: string]: string;
     }) => Resource<ResourceInputs>;

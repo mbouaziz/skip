@@ -1,5 +1,5 @@
 interface Imported {
-  default: string;
+  readonly default: string;
 }
 
 export async function getWasmUrl(): Promise<URL | string> {

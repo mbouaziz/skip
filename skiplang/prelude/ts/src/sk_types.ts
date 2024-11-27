@@ -8,9 +8,9 @@ export type ptr<InternalType extends Internal.T<any>> = Internal.Opaque<
   InternalType
 >;
 export type ErrorObject = {
-  message: string;
-  stack?: string[];
-  cause?: ErrorObject;
+  readonly message: string;
+  readonly stack?: string[];
+  readonly cause?: ErrorObject;
 };
 
 export type Nullable<T> = T | null;
@@ -49,7 +49,7 @@ class SkRuntimeExit extends Error {
 class SkError extends Error {}
 
 export interface Shared {
-  getName: () => string;
+  readonly getName: () => string;
 }
 
 const O_RDONLY = 0;
@@ -134,70 +134,78 @@ export interface System {
 }
 
 export interface Wrk {
-  postMessage: (message: any) => void;
-  onMessage: (listener: (value: any) => void) => void;
+  readonly postMessage: (message: any) => void;
+  readonly onMessage: (listener: (value: any) => void) => void;
 }
 
 export interface Environment {
-  shared: Map<string, Shared>;
-  name: () => string;
+  readonly shared: Map<string, Shared>;
+  readonly name: () => string;
   disableWarnings: boolean;
-  environment: string[];
-  createSocket: (url: string) => WebSocket;
-  createWorker: (url: URL, options?: WorkerOptions) => Wrk;
-  createWorkerWrapper: (worker: Worker) => Wrk;
-  timestamp: () => float;
-  decodeUTF8: (utf8: ArrayBuffer) => string;
-  encodeUTF8: (str: string) => Uint8Array;
-  onException: () => void;
-  base64Decode: (base64: string) => Uint8Array;
-  base64Encode: (toEncode: string, url?: boolean) => string;
-  fs: () => FileSystem;
-  sys: () => System;
-  crypto: () => Crypto;
-  fetch: (url: URL | string) => Promise<Uint8Array>;
+  readonly environment: string[];
+  readonly createSocket: (url: string) => WebSocket;
+  readonly createWorker: (url: URL, options?: WorkerOptions) => Wrk;
+  readonly createWorkerWrapper: (worker: Worker) => Wrk;
+  readonly timestamp: () => float;
+  readonly decodeUTF8: (utf8: ArrayBuffer) => string;
+  readonly encodeUTF8: (str: string) => Uint8Array;
+  readonly onException: () => void;
+  readonly base64Decode: (base64: string) => Uint8Array;
+  readonly base64Encode: (toEncode: string, url?: boolean) => string;
+  readonly fs: () => FileSystem;
+  readonly sys: () => System;
+  readonly crypto: () => Crypto;
+  readonly fetch: (url: URL | string) => Promise<Uint8Array>;
 }
 
 export interface Memory {
-  buffer: ArrayBuffer;
+  readonly buffer: ArrayBuffer;
 }
 
 interface Exported {
-  SKIP_throw_EndOfFile: () => void;
-  SKIP_String_byteSize: (strPtr: ptr<Internal.String>) => int;
-  SKIP_Obstack_alloc: (size: int) => ptr<Internal.Raw>;
-  SKIP_new_Obstack: () => ptr<Internal.Obstack>;
-  SKIP_destroy_Obstack: (pos: ptr<Internal.Obstack>) => void;
-  sk_string_create: (
+  readonly SKIP_throw_EndOfFile: () => void;
+  readonly SKIP_String_byteSize: (strPtr: ptr<Internal.String>) => int;
+  readonly SKIP_Obstack_alloc: (size: int) => ptr<Internal.Raw>;
+  readonly SKIP_new_Obstack: () => ptr<Internal.Obstack>;
+  readonly SKIP_destroy_Obstack: (pos: ptr<Internal.Obstack>) => void;
+  readonly sk_string_create: (
     addr: ptr<Internal.Raw>,
     size: int,
   ) => ptr<Internal.String>;
-  SKIP_createByteArray: (size: int) => ptr<Internal.Array<Internal.Byte>>;
-  SKIP_createFloatArray: (size: int) => ptr<Internal.Array<Internal.Float>>;
-  SKIP_createUInt32Array: (size: int) => ptr<Internal.Array<Internal.UInt32>>;
-  SKIP_getArraySize: <Ty>(skArray: ptr<Internal.Array<Internal.T<Ty>>>) => int;
-  SKIP_call0: <Ret>(
+  readonly SKIP_createByteArray: (
+    size: int,
+  ) => ptr<Internal.Array<Internal.Byte>>;
+  readonly SKIP_createFloatArray: (
+    size: int,
+  ) => ptr<Internal.Array<Internal.Float>>;
+  readonly SKIP_createUInt32Array: (
+    size: int,
+  ) => ptr<Internal.Array<Internal.UInt32>>;
+  readonly SKIP_getArraySize: <Ty>(
+    skArray: ptr<Internal.Array<Internal.T<Ty>>>,
+  ) => int;
+  readonly SKIP_call0: <Ret>(
     fnc: ptr<Internal.Function<Internal.Void, Internal.T<Ret>>>,
   ) => ptr<Internal.T<Ret>>;
-  SKIP_skstore_init: (size: int) => void;
-  SKIP_initializeSkip: () => void;
-  SKIP_skstore_end_of_init: () => void;
-  SKIP_callWithException: <Ret>(
+  readonly SKIP_skstore_init: (size: int) => void;
+  readonly SKIP_initializeSkip: () => void;
+  readonly SKIP_skstore_end_of_init: () => void;
+  readonly SKIP_callWithException: <Ret>(
     fnc: ptr<Internal.Function<Internal.Void, Internal.T<Ret>>>,
     exc: int,
   ) => ptr<Internal.T<Ret>>;
-  SKIP_getExceptionMessage: (
+  readonly SKIP_getExceptionMessage: (
     skExc: ptr<Internal.Exception>,
   ) => ptr<Internal.String>;
-  SKIP_get_persistent_size: () => int;
-  SKIP_get_version: () => number;
-  skip_main: () => void;
-  memory: Memory;
-  __heap_base: number;
+  readonly SKIP_get_persistent_size: () => int;
+  readonly SKIP_get_version: () => number;
+  readonly skip_main: () => void;
+  readonly memory: Memory;
+  readonly __heap_base: number;
 }
 
 export interface WasmSupplier {
-  completeWasm: (wasm: object, utils: Utils) => void;
+  readonly completeWasm: (wasm: object, utils: Utils) => void;
 }
 
 function utf8Encode(str: string): Uint8Array {
@@ -207,8 +215,8 @@ function utf8Encode(str: string): Uint8Array {
 export type Main = (new_args: string[], new_stdin: string) => string;
 
 export type App = {
-  environment: Environment;
-  main: Main;
+  readonly environment: Environment;
+  readonly main: Main;
 };
 
 export class Utils {
@@ -684,11 +692,11 @@ export class Utils {
 }
 
 export interface Links {
-  complete: (utils: Utils, exports: object) => void;
+  readonly complete: (utils: Utils, exports: object) => void;
 }
 
 export interface ToWasmManager {
-  prepare: (wasm: object) => Links | null;
+  readonly prepare: (wasm: object) => Links | null;
 }
 
 export type ModuleInit = (e: Environment) => Promise<ToWasmManager>;
@@ -701,7 +709,7 @@ enum I18N {
 }
 
 export interface Text {
-  toJSON: () => object;
+  readonly toJSON: () => object;
 }
 
 export class Raw implements Text {
@@ -869,9 +877,9 @@ export async function loadEnv(extensions: EnvInit[], envVals?: string[]) {
 }
 
 export type Metadata = {
-  filepath: string;
-  line: number;
-  column: number;
+  readonly filepath: string;
+  readonly line: number;
+  readonly column: number;
 };
 
 /**

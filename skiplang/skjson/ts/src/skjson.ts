@@ -26,28 +26,34 @@ export enum Type {
 }
 
 interface WasmAccess {
-  SKIP_SKJSON_typeOf: (json: ptr<Internal.CJSON>) => int;
-  SKIP_SKJSON_asNumber: (json: ptr<Internal.CJSON>) => number;
-  SKIP_SKJSON_asBoolean: (json: ptr<Internal.CJSON>) => boolean;
-  SKIP_SKJSON_asString: (json: ptr<Internal.CJSON>) => ptr<Internal.String>;
-  SKIP_SKJSON_asArray: (json: ptr<Internal.CJSON>) => ptr<Internal.CJArray>;
-  SKIP_SKJSON_asObject: (json: ptr<Internal.CJSON>) => ptr<Internal.CJObject>;
+  readonly SKIP_SKJSON_typeOf: (json: ptr<Internal.CJSON>) => int;
+  readonly SKIP_SKJSON_asNumber: (json: ptr<Internal.CJSON>) => number;
+  readonly SKIP_SKJSON_asBoolean: (json: ptr<Internal.CJSON>) => boolean;
+  readonly SKIP_SKJSON_asString: (
+    json: ptr<Internal.CJSON>,
+  ) => ptr<Internal.String>;
+  readonly SKIP_SKJSON_asArray: (
+    json: ptr<Internal.CJSON>,
+  ) => ptr<Internal.CJArray>;
+  readonly SKIP_SKJSON_asObject: (
+    json: ptr<Internal.CJSON>,
+  ) => ptr<Internal.CJObject>;
 
-  SKIP_SKJSON_fieldAt: (
+  readonly SKIP_SKJSON_fieldAt: (
     json: ptr<Internal.CJObject>,
     idx: int,
   ) => ptr<Internal.String>; // Should be Nullable<...>
-  SKIP_SKJSON_get: (
+  readonly SKIP_SKJSON_get: (
     json: ptr<Internal.CJObject>,
     idx: int,
   ) => Nullable<ptr<Internal.CJSON>>;
-  SKIP_SKJSON_at: <T extends Internal.CJSON>(
+  readonly SKIP_SKJSON_at: <T extends Internal.CJSON>(
     json: ptr<Internal.CJArray<T>>,
     idx: int,
   ) => Nullable<ptr<T>>;
 
-  SKIP_SKJSON_objectSize: (json: ptr<Internal.CJObject>) => int;
-  SKIP_SKJSON_arraySize: (json: ptr<Internal.CJArray>) => int;
+  readonly SKIP_SKJSON_objectSize: (json: ptr<Internal.CJObject>) => int;
+  readonly SKIP_SKJSON_arraySize: (json: ptr<Internal.CJArray>) => int;
 }
 
 interface ToWasm {
@@ -136,13 +142,13 @@ function getFieldAt<T extends Internal.CJObject>(
 }
 
 type ObjectProxy<Base extends { [k: string]: Exportable }> = {
-  [sk_isObjectProxy]: true;
-  [sk_frozen]: true;
-  __pointer: ptr<Internal.CJSON>;
-  clone: () => ObjectProxy<Base>;
-  toJSON: () => Base;
-  keys: IterableIterator<keyof Base>;
-} & Base;
+  readonly [sk_isObjectProxy]: true;
+  readonly [sk_frozen]: true;
+  readonly __pointer: ptr<Internal.CJSON>;
+  readonly clone: () => ObjectProxy<Base>;
+  readonly toJSON: () => Base;
+  readonly keys: IterableIterator<keyof Base>;
+} & Readonly<Base>;
 
 export function isObjectProxy(
   x: any,
@@ -238,30 +244,32 @@ type PartialCJObj = Internal.Vector<
 type PartialCJArray<T extends Internal.CJSON> = Internal.Vector<T>;
 
 interface FromWasm extends WasmAccess {
-  SKIP_SKJSON_startCJObject: () => ptr<PartialCJObj>;
-  SKIP_SKJSON_addToCJObject: (
+  readonly SKIP_SKJSON_startCJObject: () => ptr<PartialCJObj>;
+  readonly SKIP_SKJSON_addToCJObject: (
     obj: ptr<PartialCJObj>,
     name: ptr<Internal.String>,
     value: ptr<Internal.CJSON>,
   ) => void;
-  SKIP_SKJSON_endCJObject: (obj: ptr<PartialCJObj>) => ptr<Internal.CJObject>;
-  SKIP_SKJSON_startCJArray: <T extends Internal.CJSON>() => ptr<
+  readonly SKIP_SKJSON_endCJObject: (
+    obj: ptr<PartialCJObj>,
+  ) => ptr<Internal.CJObject>;
+  readonly SKIP_SKJSON_startCJArray: <T extends Internal.CJSON>() => ptr<
     PartialCJArray<T>
   >;
-  SKIP_SKJSON_addToCJArray: <T extends Internal.CJSON>(
+  readonly SKIP_SKJSON_addToCJArray: <T extends Internal.CJSON>(
     arr: ptr<PartialCJArray<T>>,
     value: ptr<T>,
   ) => void;
-  SKIP_SKJSON_endCJArray: <T extends Internal.CJSON>(
+  readonly SKIP_SKJSON_endCJArray: <T extends Internal.CJSON>(
     arr: ptr<PartialCJArray<T>>,
   ) => ptr<Internal.CJArray<T>>;
-  SKIP_SKJSON_createCJNull: () => ptr<Internal.CJNull>;
-  SKIP_SKJSON_createCJInt: (v: int) => ptr<Internal.CJInt>;
-  SKIP_SKJSON_createCJFloat: (v: float) => ptr<Internal.CJFloat>;
-  SKIP_SKJSON_createCJString: (
+  readonly SKIP_SKJSON_createCJNull: () => ptr<Internal.CJNull>;
+  readonly SKIP_SKJSON_createCJInt: (v: int) => ptr<Internal.CJInt>;
+  readonly SKIP_SKJSON_createCJFloat: (v: float) => ptr<Internal.CJFloat>;
+  readonly SKIP_SKJSON_createCJString: (
     str: ptr<Internal.String>,
   ) => ptr<Internal.CJString>;
-  SKIP_SKJSON_createCJBool: (v: boolean) => ptr<Internal.CJBool>;
+  readonly SKIP_SKJSON_createCJBool: (v: boolean) => ptr<Internal.CJBool>;
 }
 
 class Mapping {
@@ -288,15 +296,20 @@ class Mapping {
   }
 }
 
-export type Json = number | boolean | string | (Json | null)[] | JsonObject;
-export type JsonObject = { [key: string]: Json | null };
+export type Json =
+  | number
+  | boolean
+  | string
+  | readonly (Json | null)[]
+  | JsonObject;
+export type JsonObject = { readonly [key: string]: Json | null };
 
 export type Exportable =
   | Json
   | null
   | undefined
-  | ObjectProxy<{ [k: string]: Exportable }>
-  | Exportable[];
+  | ObjectProxy<{ readonly [k: string]: Exportable }>
+  | readonly Exportable[];
 
 export interface SKJSON extends Shared {
   importJSON(value: ptr<Internal.CJSON>, copy?: boolean): Exportable;
@@ -320,8 +333,8 @@ export interface SKJSON extends Shared {
   exportString(v: string): ptr<Internal.String>;
   exportBytes(v: Uint8Array): ptr<Internal.Array<Internal.Byte>>;
   importBytes(v: ptr<Internal.Array<Internal.Byte>>): Uint8Array;
-  runWithGC: <T>(fn: () => T) => T;
-  clone: <T>(v: T) => T;
+  readonly runWithGC: <T>(fn: () => T) => T;
+  readonly clone: <T>(v: T) => T;
 }
 
 class SKJSONShared implements SKJSON {

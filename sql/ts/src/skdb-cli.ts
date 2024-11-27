@@ -66,10 +66,10 @@ const skdbDir = path.join(os.homedir(), ".skdb");
 const credsFileName = path.join(skdbDir, "credentials");
 
 type Cmd = {
-  type: string;
-  valName: string;
-  default: boolean;
-  help: string;
+  readonly type: string;
+  readonly valName: string;
+  readonly default: boolean;
+  readonly help: string;
 };
 
 const argSchema = {

@@ -1,10 +1,10 @@
 import type { Json, Entry } from "@skipruntime/api";
 
 export type Entrypoint = {
-  host: string;
-  streaming_port: number;
-  control_port: number;
-  secured?: boolean;
+  readonly host: string;
+  readonly streaming_port: number;
+  readonly control_port: number;
+  readonly secured?: boolean;
 };
 
 function toHttp(entrypoint: Entrypoint) {
@@ -83,14 +83,14 @@ export class RESTWrapperOfSkipService {
   async put<K extends Json, V extends Json>(
     collection: string,
     key: K,
-    value: V[],
+    value: readonly V[],
   ): Promise<void> {
     return await this.patch(collection, [[key, value]]);
   }
 
   async patch<K extends Json, V extends Json>(
     collection: string,
-    values: Entry<K, V>[],
+    values: readonly Entry<K, V>[],
   ): Promise<void> {
     await fetchJSON(
       `${this.entrypoint}/v1/inputs/${collection}`,
@@ -106,7 +106,7 @@ export class RESTWrapperOfSkipService {
 
   async getStreamUUID(
     resource: string,
-    params: { [param: string]: string } = {},
+    params: { readonly [param: string]: string } = {},
   ): Promise<string> {
     return fetch(`${this.entrypoint}/v1/streams`, {
       method: "POST",

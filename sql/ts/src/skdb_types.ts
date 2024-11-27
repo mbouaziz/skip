@@ -2,14 +2,14 @@ import type { Shared } from "@skip-wasm/std";
 import { SKDBTable } from "./skdb_util.js";
 
 export interface SKDBHandle {
-  runner: (fn: () => string) => SKDBTable;
-  main: (new_args: string[], new_stdin: string) => string;
-  watch: (
+  readonly runner: (fn: () => string) => SKDBTable;
+  readonly main: (new_args: string[], new_stdin: string) => string;
+  readonly watch: (
     query: string,
     params: Params,
     onChange: (rows: SKDBTable) => void,
   ) => { close: () => void };
-  watchChanges: (
+  readonly watchChanges: (
     query: string,
     params: Params,
     init: (rows: SKDBTable) => void,
@@ -18,117 +18,122 @@ export interface SKDBHandle {
 }
 
 export type MirrorDefn = {
-  table: string;
-  expectedColumns: string;
-  filterExpr?: string;
-  filterParams?: Params;
+  readonly table: string;
+  readonly expectedColumns: string;
+  readonly filterExpr?: string;
+  readonly filterParams?: Params;
 };
 
 export interface SKDBSync {
   // CLIENT
-  exec: (query: string, params?: Params) => SKDBTable;
-  watch: (
+  readonly exec: (query: string, params?: Params) => SKDBTable;
+  readonly watch: (
     query: string,
     params: Params,
     onChange: (rows: SKDBTable) => void,
   ) => { close: () => void };
-  watchChanges: (
+  readonly watchChanges: (
     query: string,
     params: Params,
     init: (rows: SKDBTable) => void,
     update: (added: SKDBTable, removed: SKDBTable) => void,
   ) => { close: () => void };
-  insert: (tableName: string, values: any[]) => boolean;
-  insertMany: (
+  readonly insert: (tableName: string, values: any[]) => boolean;
+  readonly insertMany: (
     tableName: string,
     valuesArray: Record<string, any>[],
   ) => number | Error;
 
-  tableSchema: (tableName: string) => string;
-  viewSchema: (viewName: string) => string;
-  schema: (tableName?: string) => string;
-  subscribe: (viewName: string, f: (change: string) => void) => void;
-  save: () => Promise<boolean>;
+  readonly tableSchema: (tableName: string) => string;
+  readonly viewSchema: (viewName: string) => string;
+  readonly schema: (tableName?: string) => string;
+  readonly subscribe: (viewName: string, f: (change: string) => void) => void;
+  readonly save: () => Promise<boolean>;
 
   // SERVER
-  connect: (
+  readonly connect: (
     db: string,
     accessKey: string,
     privateKey: CryptoKey,
     endpoint?: string,
   ) => Promise<void>;
-  mirror: (...tables: MirrorDefn[]) => Promise<void>;
+  readonly mirror: (...tables: MirrorDefn[]) => Promise<void>;
 
-  connectedRemote?: RemoteSKDB;
-  createServerDatabase: (dbName: string) => Promise<ProtoResponseCreds>;
-  createServerUser: () => Promise<ProtoResponseCreds>;
-  serverExec: (query: string, params?: Params) => Promise<SKDBTable>;
-  serverTableSchema: (tableName: string) => Promise<string>;
-  serverViewSchema: (tableName: string) => Promise<string>;
-  serverSchema: () => Promise<string>;
-  serverClose: () => Promise<void>;
+  readonly connectedRemote?: RemoteSKDB;
+  readonly createServerDatabase: (
+    dbName: string,
+  ) => Promise<ProtoResponseCreds>;
+  readonly createServerUser: () => Promise<ProtoResponseCreds>;
+  readonly serverExec: (query: string, params?: Params) => Promise<SKDBTable>;
+  readonly serverTableSchema: (tableName: string) => Promise<string>;
+  readonly serverViewSchema: (tableName: string) => Promise<string>;
+  readonly serverSchema: () => Promise<string>;
+  readonly serverClose: () => Promise<void>;
 }
 
 export interface SKDB {
-  exec: (query: string, params?: Params) => Promise<SKDBTable>;
-  watch: (
+  readonly exec: (query: string, params?: Params) => Promise<SKDBTable>;
+  readonly watch: (
     query: string,
     params: Params,
     onChange: (rows: SKDBTable) => void,
   ) => Promise<{ close: () => Promise<void> }>;
-  watchChanges: (
+  readonly watchChanges: (
     query: string,
     params: Params,
     init: (rows: SKDBTable) => void,
     update: (added: SKDBTable, removed: SKDBTable) => void,
   ) => Promise<{ close: () => Promise<void> }>;
 
-  insertMany: (
+  readonly insertMany: (
     tableName: string,
     valuesArray: Record<string, any>[],
   ) => Promise<number>;
 
-  insert: (tableName: string, valuesArray: any[]) => Promise<boolean>;
+  readonly insert: (tableName: string, valuesArray: any[]) => Promise<boolean>;
 
-  connect: (
+  readonly connect: (
     db: string,
     accessKey: string,
     privateKey: CryptoKey,
     endpoint?: string,
   ) => Promise<void>;
-  connectedRemote: () => Promise<RemoteSKDB | undefined>;
-  closeConnection: () => Promise<void>;
+  readonly connectedRemote: () => Promise<RemoteSKDB | undefined>;
+  readonly closeConnection: () => Promise<void>;
 
-  createGroup: () => Promise<SKDBGroup>;
-  lookupGroup: (groupID: string) => Promise<SKDBGroup | undefined>;
+  readonly createGroup: () => Promise<SKDBGroup>;
+  readonly lookupGroup: (groupID: string) => Promise<SKDBGroup | undefined>;
 
-  currentUser?: string;
+  readonly currentUser?: string;
 
-  mirror: (...tables: MirrorDefn[]) => Promise<void>;
+  readonly mirror: (...tables: MirrorDefn[]) => Promise<void>;
 
-  schema: (tableName?: string) => Promise<string>;
-  save: () => Promise<boolean>;
+  readonly schema: (tableName?: string) => Promise<string>;
+  readonly save: () => Promise<boolean>;
 }
 
 export interface SKDBMechanism {
-  writeCsv: (payload: string, source: string) => void;
-  watermark: (replicationUid: string, table: string) => bigint;
-  watchFile: (fileName: string, fn: (change: ArrayBuffer) => void) => void;
-  getReplicationUid: (deviceUuid: string) => string;
-  subscribe: (
+  readonly writeCsv: (payload: string, source: string) => void;
+  readonly watermark: (replicationUid: string, table: string) => bigint;
+  readonly watchFile: (
+    fileName: string,
+    fn: (change: ArrayBuffer) => void,
+  ) => void;
+  readonly getReplicationUid: (deviceUuid: string) => string;
+  readonly subscribe: (
     replicationUid: string,
     tables: string[],
     updateFile: string,
   ) => string;
-  unsubscribe: (session: string) => void;
-  diff: (
+  readonly unsubscribe: (session: string) => void;
+  readonly diff: (
     session: string,
     watermarks: Map<string, bigint>,
   ) => ArrayBuffer | null;
-  tableExists: (tableName: string) => boolean;
-  exec: (query: string) => SKDBTable;
-  assertCanBeMirrored: (table: string, schema: string) => void;
-  toggleView: (tableName: string) => void;
+  readonly tableExists: (tableName: string) => boolean;
+  readonly exec: (query: string) => SKDBTable;
+  readonly assertCanBeMirrored: (table: string, schema: string) => void;
+  readonly toggleView: (tableName: string) => void;
 }
 
 export interface Storage {
@@ -136,9 +141,9 @@ export interface Storage {
 }
 
 export type ProtoResponseCreds = {
-  type: "credentials";
-  accessKey: string;
-  privateKey: Uint8Array;
+  readonly type: "credentials";
+  readonly accessKey: string;
+  readonly privateKey: Uint8Array;
 };
 
 export type Params =
@@ -149,24 +154,24 @@ export interface RemoteSKDB {
   connectedAs(): Promise<string>;
 
   createUser(): Promise<ProtoResponseCreds>;
-  schema: () => Promise<string>;
-  tableSchema: (tableName: string) => Promise<string>;
-  viewSchema: (viewName: string) => Promise<string>;
+  readonly schema: () => Promise<string>;
+  readonly tableSchema: (tableName: string) => Promise<string>;
+  readonly viewSchema: (viewName: string) => Promise<string>;
 
-  createDatabase: (dbName: string) => Promise<ProtoResponseCreds>;
+  readonly createDatabase: (dbName: string) => Promise<ProtoResponseCreds>;
 
-  mirror: (...tables: MirrorDefn[]) => Promise<void>;
-  exec: (query: string, params?: Params) => Promise<SKDBTable>;
+  readonly mirror: (...tables: MirrorDefn[]) => Promise<void>;
+  readonly exec: (query: string, params?: Params) => Promise<SKDBTable>;
 
-  isConnectionHealthy: () => Promise<boolean>;
-  tablesAwaitingSync: () => Promise<Set<string>>;
+  readonly isConnectionHealthy: () => Promise<boolean>;
+  readonly tablesAwaitingSync: () => Promise<Set<string>>;
 
-  onReboot: (fn: () => void) => Promise<void>;
+  readonly onReboot: (fn: () => void) => Promise<void>;
 
   close(): Promise<void>;
 }
 
-export type Page = { pageid: number; content: any };
+export type Page = { readonly pageid: number; readonly content: any };
 
 export interface PagedMemory {
   init(fn: (page: Page) => void): void;
@@ -177,31 +182,34 @@ export interface PagedMemory {
 }
 
 export interface SKDBShared extends Shared {
-  create: (dbName?: string, asWorker?: boolean) => Promise<SKDB>;
-  createSync: (dbName?: string, asWorker?: boolean) => Promise<SKDBSync>;
-  notify: () => void;
+  readonly create: (dbName?: string, asWorker?: boolean) => Promise<SKDB>;
+  readonly createSync: (
+    dbName?: string,
+    asWorker?: boolean,
+  ) => Promise<SKDBSync>;
+  readonly notify: () => void;
 }
 
 export interface SKDBGroup {
-  ownerGroupID: string;
-  adminGroupID: string;
-  groupID: string;
+  readonly ownerGroupID: string;
+  readonly adminGroupID: string;
+  readonly groupID: string;
 
-  setDefaultPermission: (perm: string) => Promise<void>;
-  setMemberPermission: (userID: string, perm: string) => Promise<void>;
+  readonly setDefaultPermission: (perm: string) => Promise<void>;
+  readonly setMemberPermission: (userID: string, perm: string) => Promise<void>;
 
-  addAdmin: (userID: string) => Promise<void>;
-  removeAdmin: (userID: string) => Promise<void>;
+  readonly addAdmin: (userID: string) => Promise<void>;
+  readonly removeAdmin: (userID: string) => Promise<void>;
 
-  addOwner: (userID: string) => Promise<void>;
-  removeOwner: (userID: string) => Promise<void>;
-  transferOwnership: (userID: string) => Promise<void>;
+  readonly addOwner: (userID: string) => Promise<void>;
+  readonly removeOwner: (userID: string) => Promise<void>;
+  readonly transferOwnership: (userID: string) => Promise<void>;
 
-  removeMember: (userID: string) => Promise<void>;
+  readonly removeMember: (userID: string) => Promise<void>;
 }
 
 export interface SKDBTransaction {
-  add: (stmt: string) => SKDBTransaction;
-  addParams: (params: Params) => SKDBTransaction;
-  commit: (additionalParams?: Params) => Promise<SKDBTable>;
+  readonly add: (stmt: string) => SKDBTransaction;
+  readonly addParams: (params: Params) => SKDBTransaction;
+  readonly commit: (additionalParams?: Params) => Promise<SKDBTable>;
 }

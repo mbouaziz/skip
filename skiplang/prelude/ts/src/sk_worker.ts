@@ -273,9 +273,9 @@ let wrappedId = 0;
 const wrapped = new Map<number, { value: any; autoremove: boolean }>();
 
 export interface Creator<T> {
-  getName: () => string;
-  getType: () => string;
-  create: (...args: any[]) => Promise<T>;
+  readonly getName: () => string;
+  readonly getType: () => string;
+  readonly create: (...args: any[]) => Promise<T>;
 }
 
 export const onWorkerMessage = <T>(
