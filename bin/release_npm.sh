@@ -2,6 +2,8 @@
 
 set -e
 
+# Usage: release_npm.sh PACKAGE_NAME PATH_TO_PACKAGE_DOT_JSON [OTP]
+
 current_version=$(npm view "$1" version) || true
 
 if grep -q "\"version\": \"$current_version\"" "$2"
