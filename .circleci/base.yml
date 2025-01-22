@@ -10,7 +10,7 @@ commands:
             git submodule update --init --recursive
 
 jobs:
-  check-format:
+  fast-checks:
     docker:
       - image: skiplabs/skdb-base:latest
     steps:
