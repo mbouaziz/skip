@@ -6,9 +6,9 @@ fi
 
 if [ $# -eq 0 ]
 then
-	echo "USAGE: `basename $0` <SF> [<DOP>...]"
+	echo "USAGE: $(basename "$0") <SF> [<DOP>...]"
 	echo "    generate the commands for the load balancer"
-	echo "    if DOP is ommitted, {1,2,3,4,7,8,11,13,16,17,32,64} is used"
+	echo "    if DOP is omitted, {1,2,3,4,7,8,11,13,16,17,32,64} is used"
 	exit
 fi
 

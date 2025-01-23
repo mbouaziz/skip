@@ -17,5 +17,5 @@ case $# in
 esac
 for sf in $SF
 do
-./new55.sh $sf "`./dop.sh $sf`" $dop 
+./new55.sh "$sf" "$(./dop.sh "$sf")" "$dop"
 done

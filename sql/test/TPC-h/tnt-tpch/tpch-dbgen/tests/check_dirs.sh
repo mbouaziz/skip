@@ -9,12 +9,12 @@ else
 fi
 
 for d in $DIRS;do
-  echo Checking dir $d
-  cd $d
+  echo "Checking dir $d"
+  cd "$d" || exit
   for f in results.*;do
-    c=`sed 's/^[0-9]* *//' <$f |uniq |wc -l`
-    if [ $c -ne 1 ]; then
-      echo BAD RESULT $d/$f
+    c=$(sed 's/^[0-9]* *//' < "$f" | uniq | wc -l)
+    if [ "$c" -ne 1 ]; then
+      echo BAD RESULT "$d/$f"
       er=1;
     fi
   done

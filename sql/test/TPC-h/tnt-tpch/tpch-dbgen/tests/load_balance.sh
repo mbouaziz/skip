@@ -3,22 +3,22 @@ DOP=4
 #
 lock()
 {
-	while [ true ]
+	while true
 	do
 		sleep 1
-		[ -f $LOCK ] && continue
-		echo $$ > $LOCK
-		[ `cat $LOCK` -ne $$ ] && continue
+		[ -f "$LOCK" ] && continue
+		echo $$ > "$LOCK"
+		[ $(cat "$LOCK") -ne $$ ] && continue
 		return
 	done
 }
 unlock()
 {
-	rm -f $LOCK
+	rm -f "$LOCK"
 }
 usage()
 {
-	echo "USAGE: `basename $0` <task list> [<DOP=4>]"
+	echo "USAGE: $(basename "$0") <task list> [<DOP=4>]"
 	echo "	work through commands in <task list>, keeping <DOP> tasks active"
 	exit
 }
@@ -31,8 +31,8 @@ case $# in
 	usage
 	;;
 1)	# default DOP
-	[ $1 = "-h" ] && usage
-	[ $1 = "--help" ] && usage
+	[ "$1" = "-h" ] && usage
+	[ "$1" = "--help" ] && usage
 	TASKS=$1
 	;;
 2) 	# set DOP and tasks
@@ -59,26 +59,26 @@ then
 	TID=$JOBID.task
 	echo 1 > $TID
 	unlock
-	while [ $DOP -gt 0  ]
+	while [ "$DOP" -gt 0  ]
 	do
-		./`basename $0` $TASKS $DOP $JOBID  &
-		DOP=`expr $DOP - 1`
+		./$(basename "$0") $TASKS $DOP $JOBID  &
+		DOP=$(expr $DOP - 1)
 	done
 	wait
 	rm -f $TID $LOCK
 else
 	LOCK=$JOBID.lck
 	TID=$JOBID.task
-	while [ true ]
+	while true
 	do
 		lock
-		CMD_NUM=`cat $TID`
-		echo `expr $CMD_NUM + 1` > $TID
+		CMD_NUM=$(cat $TID)
+		echo $(expr $CMD_NUM + 1) > $TID
 		unlock
-		CMD=`sed -n ${CMD_NUM}p $TASKS`
+		CMD=$(sed -n ${CMD_NUM}p $TASKS)
 		[ -z "$CMD" ] && break
 		echo -n "."
-		$CMD >> lb_${JOBID}_$DOP.out 2>&1
+		$CMD >> "lb_${JOBID}_$DOP.out" 2>&1
 	done
 fi
 

@@ -3,8 +3,8 @@
 function check_q {
 	local query=queries/$*.sql
 	(
-		echo $query
-		time ( sqlite3 TPC-H.db < $query  > /dev/null )
+		echo "$query"
+		time ( sqlite3 TPC-H.db < "$query"  > /dev/null )
 	)
 }
 

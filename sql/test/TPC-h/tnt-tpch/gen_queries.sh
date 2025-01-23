@@ -4,15 +4,15 @@
 RANDOM_SEED=1433771997
 SIZING=1
 (
-        cd queries
+        cd queries || exit
         tpcgen_root=$(readlink -f ../tpch-dbgen/)
-        for q in `seq 1 22`;
+        for q in $(seq 1 22);
         do
-                echo $q.sql
-                DSS_QUERY=$tpcgen_root/queries/ \
-                $tpcgen_root/qgen \
+                echo "$q.sql"
+                DSS_QUERY="$tpcgen_root/queries/" \
+                "$tpcgen_root/qgen" \
                 -s $SIZING -r $RANDOM_SEED \
-                -b $tpcgen_root/dists.dss \
-                $q > $q.sql
+                -b "$tpcgen_root/dists.dss" \
+                "$q" > "$q.sql"
         done
 )

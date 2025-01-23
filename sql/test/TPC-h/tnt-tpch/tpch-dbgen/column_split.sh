@@ -8,8 +8,8 @@ do
 	count=1
 	while [ $# -gt 0 ]
 	do
-		echo $1 >> ${TABLE}$count
-		count=`expr $count + 1`
+		echo "$1" >> "${TABLE}$count"
+		count=$(expr "$count" + 1)
 		shift
 	done
 done

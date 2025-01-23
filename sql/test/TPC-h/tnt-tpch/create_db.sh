@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-TABLES=$@
+TABLES=( "$@" )
 db="TPC-H.db"
 
-if [ -z "$TABLES" ]; then
+if [ $# -eq 0 ]; then
 	echo "Error! No table specified." >&2
 	echo "Usage: $0 [TABLE_NAME] [TABLE_NAME]..." >&2
 	exit 1
@@ -15,7 +15,7 @@ echo "Creating the database structure..." >&2
 sqlite3 "$db" < sqlite-ddl.sql
 
 RET_CODE=0
-for table in $TABLES; do
+for table in "${TABLES[@]}"; do
 	echo "Importing table '$table'..." >&2
 	data_file="tpch-dbgen/$table.tbl"
 	if [ ! -e "$data_file" ]; then
@@ -25,15 +25,15 @@ for table in $TABLES; do
 	fi
 
 	fifo=$(mktemp -u)
-	mkfifo $fifo
+	mkfifo "$fifo"
 	sed -e 's/|$//' < "$data_file" > "$fifo" &
 	(
 		echo ".mode csv";
 		echo ".separator |";
 		echo -n ".import $fifo ";
-		echo $table | tr a-z A-Z;
+		echo "$table" | tr '[:lower:]' '[:upper:]';
 	) | sqlite3 "$db"
-	rm $fifo
+	rm "$fifo"
 
 	if [ $? != 0 ]; then
 		echo "Import failed." >&2

@@ -62,7 +62,7 @@ bench_tarantool() {
                   SCALE_FACTOR=$scale_factor \
                   MEM_SIZE=$mem_size
         echo "** bench TNT database memtx_size=$MEM_SIZE"
-        time make MEM_SIZE=$mem_size bench-tnt
+        time make MEM_SIZE="$mem_size" bench-tnt
 }
 
 checkout

@@ -7,12 +7,12 @@ if [ ! -f release.h ]
 then
 BUILD=1
 else
-BUILD=`grep BUILD release.h |cut -f3 -d' '`
-BUILD=`expr $BUILD + 1`
+BUILD=$(grep BUILD release.h |cut -f3 -d' ')
+BUILD=$(expr "$BUILD" + 1)
 fi
 cat > release.h << __EOF__
 /*
- * $Id: update_release.sh,v 1.4 2008/03/21 17:38:39 jms Exp $
+ * \$Id: update_release.sh,v 1.4 2008/03/21 17:38:39 jms Exp $
  */
 #define VERSION $1
 #define RELEASE $2
