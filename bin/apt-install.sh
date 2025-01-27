@@ -6,12 +6,9 @@ LLVM_VERSION=15
 
 apt-get update
 apt-get install -q -y wget gnupg
-wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 wget -O - https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | apt-key add -
-echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-$LLVM_VERSION main" >> /etc/apt/sources.list.d/llvm.list
-echo "deb-src http://apt.llvm.org/jammy/ llvm-toolchain-jammy-$LLVM_VERSION main" >> /etc/apt/sources.list.d/llvm.list
 echo "deb https://deb.nodesource.com/node_22.x nodistro main" >> /etc/apt/sources.list.d/nodejs.list
-apt-get update
+wget -O - https://apt.llvm.org/llvm.sh | bash -s -- $LLVM_VERSION
 apt-get install -q -y automake clang-$LLVM_VERSION clang-format-$LLVM_VERSION curl file gawk gcc git jq lld-$LLVM_VERSION llvm-$LLVM_VERSION make nodejs parallel unzip zip
 npm install -g bun
 npm install -g prettier
