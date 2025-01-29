@@ -22,7 +22,7 @@ for step in "${steps[@]}"; do
             LLVM_VERSION=15
 
             apt-get update
-            apt-get install -q -y wget gnupg
+            apt-get install -q -y wget gnupg lsb-release software-properties-common
             wget -O - https://apt.llvm.org/llvm.sh | bash -s -- $LLVM_VERSION # This runs apt-get update
             apt-get install -q -y automake clang-$LLVM_VERSION clang-format-$LLVM_VERSION curl file gawk gcc git jq lld-$LLVM_VERSION llvm-$LLVM_VERSION make parallel unzip zip
 
