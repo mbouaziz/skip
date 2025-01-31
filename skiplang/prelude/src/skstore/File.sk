@@ -187,7 +187,44 @@ class StringFile(value: .String) extends File {
   }
 }
 
-class ErrorFile(value: .Exception) extends File
+class ErrorFile(value: .Exception) extends File {
+  static fun makeFileGetter<V2: File>(type: File ~> V2): File ~> V2 {
+    (v: File) ~> {
+      v match {
+      | ErrorFile(value) -> throw value
+      | _ -> type(v)
+      }
+    }
+  }
+
+  static fun wrapMapper<K: Key, V: File, V2: File>(
+    f: (
+      mutable Context,
+      mutable TWriter<K, V2>,
+      K,
+      mutable NonEmptyIterator<V>,
+    ) ~> void,
+  ): (
+    mutable Context,
+    mutable TWriter<K, V2>,
+    K,
+    mutable NonEmptyIterator<V>,
+  ) ~> void {
+    (
+      context: mutable Context,
+      twriter: mutable TWriter<K, V2>,
+      key: K,
+      it: mutable NonEmptyIterator<V>,
+    ) ~> {
+      try {
+        f(context, twriter, key, it)
+      } catch {
+      | e -> twriter.!writes[key] = Array[static(e)]
+      }
+    }
+  }
+}
+
 class ArrayCharFile(value: Array<Char>) extends File
 class ArrayStringFile(value: Array<String>) extends File
 
