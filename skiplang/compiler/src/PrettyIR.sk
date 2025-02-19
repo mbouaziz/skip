@@ -1663,6 +1663,7 @@ private fun prettyWriteName(instr: Instr, out: mutable PrettyDefBuilder): void {
   | FloatCmpNe _
   | FloatDiv _
   | FloatMul _
+  | FloatNextAfter _
   | FloatSub _
   | FloatToInt _
   | FloatToString _
@@ -1861,6 +1862,7 @@ private fun debugWriteName(instr: Instr, out: mutable PrettyDefBuilder): void {
   | FloatCmpNe _
   | FloatDiv _
   | FloatMul _
+  | FloatNextAfter _
   | FloatSub _
   | FloatToInt _
   | FloatToString _
@@ -2067,6 +2069,7 @@ private fun debugWriteExtraOperands(
   | FloatCmpNe _
   | FloatDiv _
   | FloatMul _
+  | FloatNextAfter _
   | FloatSub _
   | GetCurrentAwaitable _
   | IntAdd _

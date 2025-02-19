@@ -1237,6 +1237,7 @@ base class FloatBinOp extends BinOp {
   | FloatCmpNe
   | FloatDiv
   | FloatMul
+  | FloatNextAfter
   | FloatSub
 
   fun isCommutative(): Bool
@@ -1248,6 +1249,7 @@ base class FloatBinOp extends BinOp {
   | FloatCmpLe _
   | FloatCmpLt _
   | FloatDiv _
+  | FloatNextAfter _
   | FloatSub _ ->
     false
 }

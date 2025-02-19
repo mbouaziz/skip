@@ -213,6 +213,7 @@ fun instrCanThrow(
   | FloatCmpNe _
   | FloatDiv _
   | FloatMul _
+  | FloatNextAfter _
   | FloatSub _
   | FloatToInt _
   | FloatToString _
