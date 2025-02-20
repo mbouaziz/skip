@@ -163,7 +163,7 @@ mutable class CJSONBuilder{
   }
 
   mutable fun makeFields(fields: .Array<(.String, CJSON)>): CJFields {
-    CJFields::create(fields.sortedBy(x ~> x.i0), this.internFieldNames)
+    CJFields::create(fields, this.internFieldNames)
   }
 
   mutable fun makeObject(fields: CJFields): CJSON {

@@ -131,7 +131,7 @@ fun addToCJObject(
 @export("SKIP_SKJSON_endCJObject")
 fun endCJObject(object: mutable Vector<(String, CJSON)>): CJObject {
   fields = object.toArray();
-  CJObject(CJFields::create(fields.sortedBy(x ~> x.i0), x -> x))
+  CJObject(CJFields::create(fields, x -> x))
 }
 
 @export("SKIP_SKJSON_startCJArray")
@@ -242,9 +242,8 @@ fun add(
   obj match {
   | SKJSON.CJObject(fields) ->
     SKJSON.CJObject(
-      SKJSON.CJFields::create(
-        fields.items().collect(Array).concat(toAdd).sortedBy(x ~> x.i0),
-        x -> x,
+      SKJSON.CJFields::create(fields.items().collect(Array).concat(toAdd), x ->
+        x
       ),
     )
   }

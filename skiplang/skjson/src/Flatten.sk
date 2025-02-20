@@ -191,9 +191,7 @@ fun reconstructHelper(
     }
   };
   if (array.isEmpty()) {
-    return CJObject(
-      CJFields::create(fields.sortedBy(x ~> x.i0).toArray(), internFieldNames),
-    )
+    return CJObject(CJFields::create(fields.toArray(), internFieldNames))
   };
   if (fields.isEmpty()) {
     arr = array.sortedBy(x ~> x.i0);

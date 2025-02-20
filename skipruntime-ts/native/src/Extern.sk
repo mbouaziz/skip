@@ -644,9 +644,7 @@ fun getAllOfRuntime(
     result.request.each(request ->
       fields.push(("request", SKJSON.CJString(request)))
     );
-    SKJSON.CJObject(
-      SKJSON.CJFields::create(fields.sortedBy(x ~> x.i0).toArray(), x -> x),
-    )
+    SKJSON.CJObject(SKJSON.CJFields::create(fields.toArray(), x -> x))
   | Failure(err) -> SKJSON.CJFloat(getErrorHdl(err))
   }
 }
@@ -681,9 +679,7 @@ fun getForKeyOfRuntime(
     result.request.each(request ->
       fields.push(("request", SKJSON.CJString(request)))
     );
-    SKJSON.CJObject(
-      SKJSON.CJFields::create(fields.sortedBy(x ~> x.i0).toArray(), x -> x),
-    )
+    SKJSON.CJObject(SKJSON.CJFields::create(fields.toArray(), x -> x))
   | Failure(err) -> SKJSON.CJFloat(getErrorHdl(err))
   };
 }
