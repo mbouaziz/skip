@@ -62,9 +62,10 @@ fi
 if (( skjson != 0 ))
 then
     cat <<EOF
-  skjson:
+  skiplang-libs-tests:
     jobs:
-      - skjson
+      - skiplang-libs-tests
+          skjson: true
 EOF
 fi
 
