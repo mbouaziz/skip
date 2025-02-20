@@ -64,7 +64,7 @@ then
     cat <<EOF
   skiplang-libs-tests:
     jobs:
-      - skiplang-libs-tests
+      - skiplang-libs-tests:
           skjson: true
 EOF
 fi
