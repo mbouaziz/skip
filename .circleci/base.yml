@@ -11,14 +11,14 @@ commands:
 
   run-skiplang-lib-test:
     parameters:
-      name:
+      libname:
         type: string
     steps:
       - run:
-          name: Run << parameters.name >> tests
+          name: Run << parameters.libname >> tests
           command: |
             mkdir -p ~/test-results
-            cd skiplang/<< parameters.name >> && skargo test --junitxml ~/test-results/<< parameters.name >>.xml
+            cd skiplang/<< parameters.libname >> && skargo test --junitxml ~/test-results/<< parameters.libname >>.xml
 
 jobs:
   fast-checks:
@@ -115,7 +115,7 @@ jobs:
           condition: << parameters.skjson >>
           steps:
             - run-skiplang-lib-test:
-                name: skjson
+                libname: skjson
       - store_test_results:
           path: ~/test-results
 
