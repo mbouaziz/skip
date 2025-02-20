@@ -107,6 +107,10 @@ mutable native class .Array<+T>
     static::mfillBy(this.size(), i -> this.unsafe_get(i))
   }
 
+  readonly fun toArray(): Array<T> {
+    static::fillBy(this.size(), i -> this.unsafe_get(i))
+  }
+
   @intrinsic
   native readonly fun chill(): this;
 

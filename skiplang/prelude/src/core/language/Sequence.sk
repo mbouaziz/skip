@@ -42,6 +42,11 @@ mutable base class .Sequence<+T> uses IntoIterator<T> {
     cls::createFromIterator(this.iterator())
   }
 
+  // Specialization of collect for arrays, may be optimized by some overrides
+  overridable readonly fun toArray(): Array<T> {
+    Array::createFromItems(this)
+  }
+
   // # Iteration
   // Methods for iterating over the items of a sequence for the purpose
   // of executing side effects.
