@@ -251,7 +251,7 @@ extension class RowValues extends Row {
     // schemas which permute and/or elide columns
     indices = format match {
     | SKStore.OCSV(indices) -> indices
-    | _ -> Range(0, values.size()).collect(Array)
+    | _ -> Range(0, values.size()).toArray()
     };
     size = indices.size();
 

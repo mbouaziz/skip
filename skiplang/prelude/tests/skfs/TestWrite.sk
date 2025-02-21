@@ -87,7 +87,7 @@ fun testWriteChunk(): void {
     buffer.clear();
 
     parsedEntries = SortedMap[];
-    for (kv in SKStore.getWriteKeyValuesIter(next).collect(Array)) {
+    for (kv in SKStore.getWriteKeyValuesIter(next).toArray()) {
       (key, values) = kv;
       !parsedEntries[key] = values;
     };

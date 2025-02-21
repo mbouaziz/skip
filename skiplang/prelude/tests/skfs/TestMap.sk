@@ -91,9 +91,7 @@ fun testMap2(): mutable SKStore.Context {
           SKStore.IntFile::type,
           context,
           dirName,
-          (_, writer, key, values) ~>
-            writer.setArray(key, values.collect(Array))
-          ,
+          (_, writer, key, values) ~> writer.setArray(key, values.toArray()),
         );
         writer.set(key, values.first);
       },
@@ -164,7 +162,7 @@ fun testMultiMap(): void {
     .getChangesAfter(tick);
   T.expectEq(
     Array<SKStore.Key>[SKStore.IID(0), SKStore.IID(1)],
-    changedKeys.collect(Array).sorted(),
+    changedKeys.toArray().sorted(),
     "Test multiMap 0",
   );
   T.expectEq(
@@ -182,7 +180,7 @@ fun testMultiMap(): void {
     .getChangesAfter(tick);
   T.expectEq(
     Array[0, 1],
-    changedKeys.collect(Array).sorted().map(keyToInt),
+    changedKeys.toArray().sorted().map(keyToInt),
     "Test multiMap 1",
   );
   T.expectEq(
@@ -252,7 +250,7 @@ fun testMultiMapSameParent(): void {
     .getChangesAfter(tick);
   T.expectEq(
     Array<SKStore.Key>[SKStore.IID(0), SKStore.IID(1)],
-    changedKeys.collect(Array).sorted(),
+    changedKeys.toArray().sorted(),
     "Test multiMap 0",
   );
   T.expectEq(
@@ -277,7 +275,7 @@ fun testMultiMapSameParent(): void {
     .getChangesAfter(tick);
   T.expectEq(
     Array[0, 1],
-    changedKeys.collect(Array).sorted().map(keyToInt),
+    changedKeys.toArray().sorted().map(keyToInt),
     "Test multiMap 1",
   );
   T.expectEq(

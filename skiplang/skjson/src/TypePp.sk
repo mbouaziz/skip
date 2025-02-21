@@ -190,10 +190,7 @@ fun prettyPrintType(compact: Bool, ty: Type): String {
   if (compact) {
     !strings = strings.map(str ~> {
       String::fromChars(
-        str
-          .getIter()
-          .filter(c ~> c != '\t' && c != '\n' && c != ' ')
-          .collect(Array),
+        str.getIter().filter(c ~> c != '\t' && c != '\n' && c != ' ').toArray(),
       )
     })
   };

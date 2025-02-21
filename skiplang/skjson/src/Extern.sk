@@ -228,7 +228,7 @@ fun filter(obj: SKJSON.CJObject, predicate: String ~> Bool): SKJSON.CJObject {
   | SKJSON.CJObject(fields) ->
     SKJSON.CJObject(
       SKJSON.CJFields::create(
-        fields.items().collect(Array).filter(e -> predicate(e.i0)),
+        fields.items().toArray().filter(e -> predicate(e.i0)),
         x -> x,
       ),
     )
@@ -243,7 +243,7 @@ fun add(
   | SKJSON.CJObject(fields) ->
     SKJSON.CJObject(
       SKJSON.CJFields::create(
-        fields.items().collect(Array).concat(toAdd).sortedBy(x ~> x.i0),
+        fields.items().toArray().concat(toAdd).sortedBy(x ~> x.i0),
         x -> x,
       ),
     )

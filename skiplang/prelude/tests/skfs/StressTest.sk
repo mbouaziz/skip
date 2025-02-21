@@ -143,8 +143,8 @@ fun evalMDir(context: mutable SKStore.Context, dir: MDir): void {
         Array[
           (
             (context, writer, key, valueIter) ~> {
-              values = valueIter.collect(Array);
-              if (values.size() == 0) return void;
+              values = valueIter.toArray();
+              if (values.isEmpty()) return void;
               evalFun(
                 input,
                 context,

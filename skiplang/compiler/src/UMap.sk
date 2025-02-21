@@ -142,6 +142,10 @@ class .UMap<+V>(
     this.inner.values()
   }
 
+  fun toArray(): Array<V> {
+    this.inner.toArray()
+  }
+
   fun items(): mutable Iterator<(Name, V)> {
     this.inner.items().map(p -> {
       (nk, v) = p;

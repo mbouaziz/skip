@@ -59,7 +59,7 @@ private fun normalizeJSON(json: JSON.Value): JSON.Value {
   | JSON.Array(arr) -> JSON.Array(arr.map(normalizeJSON))
   | JSON.Object(map) ->
     JSON.Object(
-      Map::createFromItems(map.items().collect(Array).sortedBy(x ~> x.i0)).map(
+      Map::createFromItems(map.items().toArray().sortedBy(x ~> x.i0)).map(
         (_, v) -> normalizeJSON(v),
       ),
     )

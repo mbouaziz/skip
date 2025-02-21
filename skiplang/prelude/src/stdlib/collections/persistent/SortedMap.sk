@@ -536,6 +536,10 @@ base class .SortedMap<+K: Orderable, +V> uses  //  extends KeyedSequence<K, V>
     ValuesIterator::make(this)
   }
 
+  fun toArray(): Array<V> {
+    this.values().toArray()
+  }
+
   /* Folds */
   fun reduce<R>(f: (R, K, V) -> R, init: R): R {
     result = init;

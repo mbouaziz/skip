@@ -54,15 +54,13 @@ mutable class ParsePosition{
   }
 
   readonly fun getComments(): Array<Token.Comment> {
-    this.tokens.values()
-      .flatMap(result ~> result.token.comments())
-      .collect(Array);
+    this.tokens.values().flatMap(result ~> result.token.comments()).toArray();
   }
 
   readonly fun getLexErrors(): Array<SyntaxError> {
     this.tokens.values()
       .flatMap(result ~> result.token.errors.values())
-      .collect(Array);
+      .toArray();
   }
 
   mutable fun clone(): mutable ParsePosition {
@@ -468,7 +466,7 @@ mutable base class Parser{
     while (peekElement(this)) {
       elements.push(parseElement(this));
     };
-    elements.collect(Array)
+    elements.toArray()
   }
 
   // Parse an unseparated, possibly empty list of elements.
@@ -510,7 +508,7 @@ mutable base class Parser{
       }
     }) void;
     invariant((separators.size() + 1) == elements.size());
-    (elements.collect(Array), separators.collect(Array));
+    (elements.toArray(), separators.toArray());
   }
 
   // Parse a non-empty separated list. No trailing separator.
@@ -559,8 +557,8 @@ mutable base class Parser{
     }) void;
     ParseTree.ParseTreeList::makeSeparatedList{
       range => createRangeOfTrees(head, last),
-      elements => elements.collect(Array),
-      separators => separators.collect(Array),
+      elements => elements.toArray(),
+      separators => separators.toArray(),
       separatorKind,
     };
   }

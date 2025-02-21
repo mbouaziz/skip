@@ -1857,7 +1857,7 @@ class Converter{file: FileCache.InputSource} {
   ): Parameters<SkipAst.Parameter> {
     positionalParams = params.mapWithIndex(this.convertParameter);
     this.checkPositionalParamNames(positionalParams.map(param ~> param.name));
-    Positional(positionalParams.collect(Array))
+    Positional(positionalParams.toArray())
   }
 
   fun convertParameters(tree: ParseTree): Parameters<SkipAst.Parameter> {

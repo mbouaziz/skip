@@ -108,9 +108,9 @@ fun charLiteralCode(value: String): Int {
       | '`' -> 0x60
       | '$' -> 0x24
       | '{' -> 0x7B
-      | 'x' -> Chars.hexDigitsToInt(String::fromChars(i.take(2).collect(Array)))
-      | 'u' -> Chars.hexDigitsToInt(String::fromChars(i.take(4).collect(Array)))
-      | 'U' -> Chars.hexDigitsToInt(String::fromChars(i.take(8).collect(Array)))
+      | 'x' -> Chars.hexDigitsToInt(String::fromChars(i.take(2).toArray()))
+      | 'u' -> Chars.hexDigitsToInt(String::fromChars(i.take(4).toArray()))
+      | 'U' -> Chars.hexDigitsToInt(String::fromChars(i.take(8).toArray()))
       | _ -> invariant_violation("Unexpected simple char escape")
       }
     | None() -> invariant_violation("Unexpected end of string after escape")

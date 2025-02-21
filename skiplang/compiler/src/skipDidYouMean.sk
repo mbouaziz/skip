@@ -94,7 +94,7 @@ fun findTypos(potentials: Map<String, String>, source: String): Array<String> {
         false
       }
     })
-    .collect(Array)
+    .toArray()
     .sortedBy(e ~> e.i2)
     .slice(0, 3)
     .map(e -> e.i0)

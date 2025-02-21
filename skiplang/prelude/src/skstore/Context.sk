@@ -36,7 +36,7 @@ class CopyTo(from: DirName, to: DirName) extends Postponable {
       context.unsafeMaybeGetEagerDir(this.to).each(tdir -> {
         for (kv in fdir.unsafeGetFileIter()) {
           (key, files) = kv;
-          rvalues = files.collect(Array);
+          rvalues = files.toArray();
           tdir.writeArray(context, key, rvalues)
         };
       })
@@ -614,7 +614,7 @@ mutable class Context{
             creator => this.currentArrow(),
           };
           dir.unsafeIterKeys((key, _time) -> {
-            values = dir.getArrayRaw(key).collect(Array);
+            values = dir.getArrayRaw(key).toArray();
             !withChange = true;
             source = Path::create(preDir.dirName, key);
             !preDir = preDir.writeEntry(this, source, source, key, values);
@@ -625,7 +625,7 @@ mutable class Context{
         | Some(preDir) ->
           (isReset, changes) = dir.getChangesAfter(this.tick.prev());
           for (key in changes) {
-            values = dir.getArrayRaw(key).collect(Array);
+            values = dir.getArrayRaw(key).toArray();
             !withChange = true;
             source = Path::create(preDir.dirName, key);
             !preDir = preDir.writeEntry(this, source, source, key, values);

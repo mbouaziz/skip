@@ -205,7 +205,7 @@ base class Pattern {
       }
     | CJObject(fields) ->
       yield (path.reversed(), json);
-      sortedFields = fields.items().collect(Array).sortedBy(x ~> x.i0);
+      sortedFields = fields.items().toArray().sortedBy(x ~> x.i0);
       for (kv in sortedFields) {
         (fieldName, fieldValue) = kv;
         newPath = List.Cons(PEField(fieldName), path);
@@ -293,7 +293,7 @@ base class Pattern {
           !discard.pathMatch(x.i0) &&
             pathMatch(special.name, pathToString(x.i0), true)
         })
-        .map(v -> special.pattern.pmatchHelper(v.i1).collect(Array));
+        .map(v -> special.pattern.pmatchHelper(v.i1).toArray());
       for (binding in bindings) {
         for (elt in static::matchStaticFields(
           List[binding],
@@ -344,7 +344,7 @@ base class Pattern {
         } else {
           subMatches = patFields[i].pattern
             .pmatchHelper(fields.values[j])
-            .collect(Array);
+            .toArray();
           if (subMatches.size() == 0 && patFields[i].optional) {
             !subMatches = Array[patFields[i].pattern.allNull()];
           };

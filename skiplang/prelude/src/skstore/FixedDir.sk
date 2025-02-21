@@ -270,7 +270,7 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
   }
 
   fun getArray(key: Key): Array<T> {
-    this.getAll(key).map(i ~> this.get(i).value).collect(Array)
+    this.getAll(key).map(i ~> this.get(i).value).toArray()
   }
 
   fun getIter(key: Key): mutable Iterator<(Tick, Path, T)> {
@@ -285,7 +285,7 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
   }
 
   fun getArraySourceKey(source: Path, key: Key): Array<T> {
-    this.getIterSourceKey(source, key).collect(Array)
+    this.getIterSourceKey(source, key).toArray()
   }
 
   protected static fun computeTags(array: mutable Vector<FixedRow<T>>): void {

@@ -329,7 +329,7 @@ fun buildResourcesGraph(
           context,
           dDirname.sub(resourceId),
           (_ctx, writer, key, it) ~> {
-            writer.setArray(key, it.collect(Array));
+            writer.setArray(key, it.toArray());
           },
         );
         writer.set(
@@ -459,10 +459,7 @@ fun closeService_(context: mutable SKStore.Context): Array<Float> {
   );
   handles = sessionHdl.maybeGet(context, SKStore.IID(0)) match {
   | Some(def) ->
-    def.service.remoteCollections
-      .values()
-      .map(es -> es.shutdown())
-      .collect(Array)
+    def.service.remoteCollections.values().map(es -> es.shutdown()).toArray()
   | _ -> Array[]
   };
   context.update();
@@ -559,10 +556,10 @@ fun jsonExtract(from: SKJSON.CJObject, pattern: String): Array<SKJSON.CJSON> {
   fieldsList = SKJSON.PatternParser::mcreate(pattern)
     .toplevelPattern()
     .pmatch(from)
-    .collect(Array);
+    .toArray();
   values = mutable Vector[];
   fieldsList.each(fields -> {
-    array = fields.collect(Array).map(field -> {
+    array = fields.toArray().map(field -> {
       cjfields = SKJSON.CJFields::create(Array[field], x -> x);
       SKJSON.CJObject(cjfields)
     });
@@ -641,7 +638,7 @@ fun useExternalCollection(
         (context, writer, key, _it) ~> {
           remote = collectionHdl.get(context, key).value;
           remote.items(context).each(kv -> {
-            writer.setArray(kv.i0, kv.i1.collect(Array))
+            writer.setArray(kv.i0, kv.i1.toArray())
           });
         },
       ),
@@ -755,7 +752,7 @@ class Collection(hdl: SKStore.EHandle<JSONID, JSONFile>) {
     mapper = (ctx, writer, key, values) ~> {
       mapperOpt match {
       | None() ->
-        writer.setArray(key, values.map(x -> inputConv(x.json)).collect(Array))
+        writer.setArray(key, values.map(x -> inputConv(x.json)).toArray())
       | Some(mapper) ->
         pushContext(ctx);
         try {
@@ -789,7 +786,7 @@ class Collection(hdl: SKStore.EHandle<JSONID, JSONFile>) {
           (_ctx, writer, key, values) ~> {
             writer.setArray(
               key,
-              values.map(x -> JSONFile(outputConv(x))).collect(Array),
+              values.map(x -> JSONFile(outputConv(x))).toArray(),
             )
           },
         ),
@@ -924,7 +921,7 @@ class Collection(hdl: SKStore.EHandle<JSONID, JSONFile>) {
       values.push(
         (
           JSONID::keyType(key).json,
-          files.collect(Array).map(x -> JSONFile::type(x).json),
+          files.toArray().map(x -> JSONFile::type(x).json),
         ),
       );
     };

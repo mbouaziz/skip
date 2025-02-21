@@ -809,7 +809,7 @@ fun param_bindings(
       };
       add_named_bindings(pos, fparams, pparams, body)
     | (Named(fparams), Named(pparams)) ->
-      (keyparams_names, valueparams) = pparams.items().collect(Array).unzip();
+      (keyparams_names, valueparams) = pparams.items().toArray().unzip();
       msg = "Could not resolve named field in pattern";
       keyparams = keyparams_names.map(pat_name ->
         fparams.getWithMsg(pat_name, pos, msg)

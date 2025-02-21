@@ -206,7 +206,7 @@ private fun decodeArray(lexer: mutable Lexer, nested: .Bool): TOML.Array {
   // Skip final ']'.
   lexer.advance(/* expectValue = */ nested);
 
-  TOML.Array(values.collect(.Array))
+  TOML.Array(values.toArray())
 }
 
 private fun decodeInlineTable(lexer: mutable Lexer): TOML.Table {
@@ -285,7 +285,7 @@ private mutable base class Result {
 
   readonly fun toTOML(): TOML.Value
   | RTable(map, _) -> TOML.Table(map.map((_, v) -> v.toTOML()))
-  | RArray(arr) -> TOML.Array(arr.collect(.Array).map(x -> x.toTOML()))
+  | RArray(arr) -> TOML.Array(arr.toArray().map(x -> x.toTOML()))
   | RValue(v) -> v
 
   mutable fun createOrGetTable(

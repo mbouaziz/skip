@@ -34,7 +34,7 @@ fun execRun(gctx: GlobalContext, args: Cli.ParseResults): void {
   | arr if (arr.size() == 0) ->
     bins = ws.package.manifest.targets
       .filter(target -> target.kind is BinTarget _)
-      .collect(Array);
+      .toArray();
     if (bins.size() != 1) {
       gctx.console.error(
         "`skargo run` could not determine which binary to run. Use the `--bin` option to specify a binary.",

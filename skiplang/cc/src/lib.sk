@@ -256,7 +256,7 @@ private fun objects_from_files(
       Object(file, Path.join(dst, `${hash}-${basename.splitLast(".").i0}.o`)),
     )
   };
-  Success(res.collect(Array))
+  Success(res.toArray())
 }
 
 module end;

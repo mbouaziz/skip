@@ -189,7 +189,7 @@ class Named<+T>(args: UMap<T>) extends Parameters<T> {
   }
 
   fun toArray(): Array<T> {
-    this.args.values().collect(Array)
+    this.args.toArray()
   }
 
   fun filter(p: T -> Bool): this {

@@ -157,8 +157,8 @@ private fun flattenParams<T>(
       required = mutable Vector<T>[];
       optional = mutable Vector<T>[];
 
-      funArgsVec = funArgs.collect(Array);
-      pArgsVec = pArgs.collect(Array);
+      funArgsVec = funArgs.toArray();
+      pArgsVec = pArgs.toArray();
       funArgsVec.eachWithIndex((i, t) -> {
         (if (isTdefault(t)) optional else required).push(pArgsVec[i])
       });
@@ -1377,7 +1377,7 @@ class Converter private (
         }
       }
     };
-    flat.values().collect(Array)
+    flat.values().toArray()
   }
 
   // Create a class somewhere in a closure class hierarchy.
@@ -2184,7 +2184,7 @@ class Converter private (
     context: mutable SKStore.Context,
     types: T,
   ): Array<GType> {
-    types.collect(Array).map(t -> this.convertType(context, t))
+    types.toArray().map(t -> this.convertType(context, t))
   }
 
   fun convertTypeParameter(in_: I.TypeParameter): GTparam {
@@ -2194,7 +2194,7 @@ class Converter private (
   fun convertTypeParameters<T: Sequence<I.TypeParameter>>(
     tparams: T,
   ): Array<GTparam> {
-    tparams.collect(Array).map(this.convertTypeParameter)
+    tparams.toArray().map(this.convertTypeParameter)
   }
 
   fun convertFields(
@@ -2218,7 +2218,7 @@ class Converter private (
     in_: I.ClassDef,
     parentMutability: Mutability,
   ): Array<GTapply> {
-    in_.extends_.items().collect(Array).map(kv -> {
+    in_.extends_.items().toArray().map(kv -> {
       ((_, name), parentInfo) = kv;
       GTapply(
         FrontEndLazyGClass(name),
@@ -2251,7 +2251,7 @@ class Converter private (
 
     // Convert the tparams.
     tparams = this.convertTypeParameters(in_.tparams);
-    variances = in_.tparams.map(p -> p.var).collect(Array);
+    variances = in_.tparams.map(p -> p.var).toArray();
 
     // We can only trust mutable_ on "final" classes. It just means
     // no fields known here are assignable, but subclasses could add more.
@@ -4109,7 +4109,7 @@ mutable class OuterIstEmitter{
       this.emitLambda{
         context,
         paramVars => flatParams,
-        captured => captured.values().map(p -> p.name).collect(Array),
+        captured => captured.values().map(p -> p.name).toArray(),
         body,
         closureClassNameHint => "Closure",
         callMethodType => this.converter.convertRawTfun(

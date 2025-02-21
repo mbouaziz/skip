@@ -172,7 +172,7 @@ fun type__inter(
       }
     })
     .filterNone()
-    .collect(Array)
+    .toArray()
 }
 
 fun type__params(

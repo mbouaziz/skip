@@ -505,7 +505,7 @@ fun computePredecessors(
     if (x.isEmpty()) {
       empty
     } else {
-      x.collect(Array)
+      x.toArray()
     }
   })
 }

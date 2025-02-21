@@ -456,7 +456,7 @@ fun getSubsDirs(
             tdir = context.unsafeGetEagerDir(dirName);
             ignoredSrc = SKStore.Path(dirDescr.dirName, SKStore.IID(inputSrc));
             (file: SKStore.Key) -> {
-              rows = tdir.getAllDataIter(context.mclone(), file).collect(Array);
+              rows = tdir.getAllDataIter(context.mclone(), file).toArray();
               !updateIsFromIgnoredSource(ignoredSrc, rows)
             }
           }
@@ -464,7 +464,7 @@ fun getSubsDirs(
 
         format = request.format match {
         | SKDB.OFK_CSV() ->
-          SKStore.OCSV(Range(0, dirDescr.schema.size()).collect(Array))
+          SKStore.OCSV(Range(0, dirDescr.schema.size()).toArray())
         | SKDB.OFK_JSON() -> SKStore.OJSON(getFieldNames(context, edir.dirName))
         | SKDB.OFK_SQL() -> SKStore.OSQL()
         | SKDB.OFK_JS() -> SKStore.OJS(getFieldNames(context, edir.dirName))
@@ -650,7 +650,7 @@ fun getTables(origContext: readonly SKStore.Context): Array<DirDescr> {
     .items(context)
     .flatMap(x -> x.i1)
     .filter(x -> x.isInput)
-    .collect(Array);
+    .toArray();
 }
 
 fun getTable(

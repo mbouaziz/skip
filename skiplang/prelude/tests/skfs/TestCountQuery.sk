@@ -16,7 +16,7 @@ fun sumDir<U: File>(
     dir.dirName,
     diffCountDirName,
     (context, writer, key, newValuesIter) ~> {
-      newValues = newValuesIter.collect(Array);
+      newValues = newValuesIter.toArray();
       preDiffOpt = EHandle(dir.keyType, dir.type, dir.dirName).pre(context);
       oldValues = preDiffOpt match {
       | None() -> Array[]
@@ -73,7 +73,7 @@ fun testCount(): void {
       SKStore.Key::unTyped,
       SKStore.StringFile::type,
       sinput,
-      inputFiles.items().collect(Array),
+      inputFiles.items().toArray(),
     );
 
     _countDir = SKStore.sumDir(
@@ -94,7 +94,7 @@ fun testCount(): void {
       SKStore.Key::unTyped,
       SKStore.StringFile::type,
       sumInput,
-      inputSumFiles.items().collect(Array),
+      inputSumFiles.items().toArray(),
     );
     _sumDir = SKStore.sumDir(
       context,

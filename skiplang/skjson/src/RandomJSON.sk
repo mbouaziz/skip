@@ -65,9 +65,7 @@ mutable class RandomJSON{rand: mutable Random} {
       fields![fieldName] = this.genValue();
     };
     CJObject(
-      CJFields::create(fields.items().collect(Array).sortedBy(x ~> x.i0), x ->
-        x
-      ),
+      CJFields::create(fields.items().toArray().sortedBy(x ~> x.i0), x -> x),
     )
   }
 

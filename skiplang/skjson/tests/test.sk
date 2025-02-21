@@ -250,8 +250,8 @@ fun genRows(n: Int): Array<(String, J.CJSON)> {
 @test
 fun testReconstruct(): void {
   rows = genRows(1000);
-  flattened = J.flatten(rows.iterator()).collect(Array);
-  reconstructed = J.reconstruct(flattened.iterator(), x -> x).collect(Array);
+  flattened = J.flatten(rows.iterator()).toArray();
+  reconstructed = J.reconstruct(flattened.iterator(), x -> x).toArray();
   for (i => row in rows.map(x -> (x.i0, x.i1))) {
     T.expectEq(row, reconstructed[i]);
   }
@@ -583,7 +583,7 @@ fun testPatterns(): void {
       SKJSON.PatternParser::mcreate(patternMatch.i0.i0)
         .toplevelPattern()
         .pmatch(SKJSON.decode(patternMatch.i0.i1, x -> x))
-        .collect(Array),
+        .toArray(),
       patternMatch.i1,
     )
   };
@@ -666,7 +666,7 @@ fun testOrder(): void {
 
   v = Vector::mcreateFromItems(expectedOrder);
   v.shuffle(rng);
-  T.expectEq(v.sorted().collect(Array), expectedOrder)
+  T.expectEq(v.sorted().toArray(), expectedOrder)
 }
 
 module end;

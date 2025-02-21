@@ -1341,7 +1341,7 @@ class EagerDir{
         parentNames = parents
           .items()
           .map(x -> (x.i0, x.i1.map(p -> p.i1)))
-          .collect(Array);
+          .toArray();
         print_string(
           `CREATED:  ${childName} (time: ${time}, parents: ${parentNames})`,
         );
@@ -1399,7 +1399,7 @@ class EagerDir{
   }
 
   fun getArrayRaw(key: Key): Array<File> {
-    this.getIterRaw(key).collect(Array);
+    this.getIterRaw(key).toArray();
   }
 
   fun unsafeGetAllDataIterAfter(
@@ -1677,7 +1677,7 @@ class EagerDir{
   }
 
   fun getArray(context: mutable Context, key: Key): Array<File> {
-    this.getIter(context, key).collect(Array);
+    this.getIter(context, key).toArray();
   }
 
   fun getIter(context: mutable Context, key: Key): mutable Iterator<File> {

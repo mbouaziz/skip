@@ -4,7 +4,7 @@ fun loopForever(): void {
 }
 
 fun main(): void {
-  if (Environ.args().collect(Array).size() == 9999999) {
+  if (Environ.args().toArray().size() == 9999999) {
     loopForever();
   };
   print_string("Pass")
