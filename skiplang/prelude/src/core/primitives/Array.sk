@@ -49,13 +49,35 @@ mutable native class .Array<+T>
   }
 
   static fun createFromIterator<I: mutable Iterator<T>>(items: I): this {
-    items.collect(Vector).toArray();
+    items.sizeHint() match {
+    | None() -> Vector::createFromIterator(items).toArray()
+    | Some(sizeHint) ->
+      unsafe_chill_trust_me(static::mcreateFromSizedIterator(items, sizeHint))
+    }
   }
 
   static fun mcreateFromIterator<I: mutable Iterator<T>>(
     items: I,
   ): mutable this {
-    static::mcreateFromItems(Vector::mcreateFromIterator(items));
+    items.sizeHint() match {
+    | None() -> static::mcreateFromItems(Vector::mcreateFromIterator(items))
+    | Some(sizeHint) -> static::mcreateFromSizedIterator(items, sizeHint)
+    }
+  }
+
+  private static fun mcreateFromSizedIterator<I: mutable Iterator<T>>(
+    items: I,
+    sizeHint: Int,
+  ): mutable this {
+    invariant(
+      sizeHint >= 0,
+      "Array::mcreateFromSizedIterator: Expected items sizeHint() to be nonnegative.",
+    );
+    result = Array::unsafe_make(sizeHint);
+    items.eachWithIndex((index, element) -> {
+      result.unsafe_set(index, element)
+    });
+    result
   }
 
   static fun fill(count: Int, filler: T): Array<T> {
