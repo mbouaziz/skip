@@ -19,7 +19,7 @@ class TomlLibrary{type: Array<LibraryType>} {
   static fun fromTOML(toml: TOML.Table): TomlLibrary {
     type = toml.maybeGetArray("type") match {
     | Some(arr) ->
-      arr.map(s -> LibraryType::fromString(s.expectString())).collect(Array)
+      arr.map(s -> LibraryType::fromString(s.expectString())).toArray()
     | None() -> Array[]
     };
 
@@ -211,19 +211,19 @@ class Manifest(
         Dependency::fromTomlDependency(toml_name, toml_dep, NormalDep())
       )
       .values()
-      .collect(Array);
+      .toArray();
     dev_dependencies = manifest.dev_dependencies
       .map((toml_name, toml_dep) ->
         Dependency::fromTomlDependency(toml_name, toml_dep, DevelopmentDep())
       )
       .values()
-      .collect(Array);
+      .toArray();
     build_dependencies = manifest.build_dependencies
       .map((toml_name, toml_dep) ->
         Dependency::fromTomlDependency(toml_name, toml_dep, BuildDep())
       )
       .values()
-      .collect(Array);
+      .toArray();
     targets = manifest_targets(manifest, package_root);
 
     Manifest(
@@ -342,7 +342,7 @@ private fun manifest_targets(
     res.push(Target(TestTarget(test_harness), "test", test_srcs))
   };
 
-  res.collect(Array)
+  res.toArray()
 }
 
 module end;

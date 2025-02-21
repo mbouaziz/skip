@@ -28,7 +28,7 @@ fun testChangesAfter(): void {
   invariant(!isReset);
   T.expectEq(
     Array<SKStore.Key>[SKStore.IID(0), SKStore.IID(1)],
-    changedKeys.collect(Array).sorted(),
+    changedKeys.toArray().sorted(),
     "Test getChangesAfter 0",
   );
   !tick = context.tick;
@@ -41,7 +41,7 @@ fun testChangesAfter(): void {
   invariant(!isReset);
   T.expectEq(
     Array<SKStore.Key>[SKStore.IID(1), SKStore.IID(2)],
-    changedKeys.collect(Array).sorted(),
+    changedKeys.toArray().sorted(),
     "Test getChangesAfter 1",
   );
 
@@ -76,8 +76,8 @@ fun testChangesAfter(): void {
     invariant(!isReset);
 
     T.expectEq(
-      changes.collect(Array).sorted(),
-      changedKeys.collect(Array).sorted(),
+      changes.toArray().sorted(),
+      changedKeys.toArray().sorted(),
       "Test getChangesAfter " + (2 + i),
     );
   }

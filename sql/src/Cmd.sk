@@ -32,7 +32,7 @@ fun listSubDirs(
       keyStr.take(prefixLen) == prefix
     })
     .map(kv -> (kv.i0.toString(), kv.i1))
-    .collect(Array);
+    .toArray();
 }
 
 fun listDirs(

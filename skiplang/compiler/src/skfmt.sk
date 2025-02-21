@@ -57,7 +57,7 @@ untracked fun main(): void {
       !file = "<stdin>";
       buf = mutable Vector[];
       IO.stdin().read_to_end(buf) match {
-      | Success _ -> String::fromUtf8(buf.collect(Array))
+      | Success _ -> String::fromUtf8(buf.toArray())
       | Failure(err) ->
         print_error(err.getMessage());
         skipExit(1)

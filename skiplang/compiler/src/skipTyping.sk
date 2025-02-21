@@ -1846,7 +1846,7 @@ fun call_(
     args1.each((name, _) ->
       if (!ty_map.containsKey(name)) SkipError.error(name.i0, "Undefined name")
     );
-    (acc, add_args.collect(Array))
+    (acc, add_args.toArray())
   | (Named _, Positional _) -> SkipError.error(pos, "Expected named arguments")
   | (Positional _, Named _) ->
     SkipError.error(pos, "Expected positional arguments")
@@ -4602,7 +4602,7 @@ fun expr_dot(
       .items()
       .map(x -> "  ." + x.i1)
       .collect(SortedSet)
-      .collect(Array);
+      .toArray();
     msg1 =
       `The field ${field_name.i1} is undefined${SkipDidYouMean.formatTypos(
         didYouMeanTypos,

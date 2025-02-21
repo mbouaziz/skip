@@ -513,7 +513,7 @@ mutable base class CodeMod {
               .collect(Vector)
               .sortedBy(comment ~> comment.range)
               .concat(firstToken.leadingComments)
-              .collect(Array),
+              .toArray(),
           };
           !transformedTree = ReplaceTokenCodeMod::doIt(
             firstToken,

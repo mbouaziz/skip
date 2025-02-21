@@ -1227,7 +1227,7 @@ fun populateClasses(
     classesDirName,
     (context, writer, _key, values) ~> {
       SkipError.catchErrors(2, context, () -> {
-        if (values.collect(Array).size() > 1) return void;
+        if (values.toArray().size() > 1) return void;
         values.first.value match {
         | GlobalEnv.EClass(def) ->
           inheritedClassArr = inhDir.getArray(
@@ -2084,7 +2084,7 @@ fun populateFuns(
     funsByAnnotationDirName,
     (context, writer, _key, values) ~> {
       SkipError.catchErrors(2, context, () -> {
-        if (values.collect(Array).size() > 1) return void;
+        if (values.toArray().size() > 1) return void;
 
         values.first.value match {
         | GlobalEnv.EFun(f) ->
@@ -2104,7 +2104,7 @@ fun populateFuns(
     funsDirName,
     (context, writer, _key, values) ~> {
       SkipError.catchErrors(2, context, () -> {
-        if (values.collect(Array).size() > 1) return void;
+        if (values.toArray().size() > 1) return void;
 
         values.first.value match {
         | GlobalEnv.EFun(f) ->
@@ -3883,7 +3883,7 @@ fun expr_(
         (i, value) = ordered;
         (i, key, value)
       })
-      .collect(Array);
+      .toArray();
     !kvalues = kvalues.sortedBy(
       p ~> {
         (i, _, _) = p;

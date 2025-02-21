@@ -342,9 +342,7 @@ fun trim_expression_to_effectful_statement(expr: O.Expr): O.Stmt {
 
   | O.With(obj, with_updates) ->
     trim_expressions_to_effectful_statement(
-      Array[obj].concat(
-        with_updates.values().map(wu ~> wu.expr).collect(Array),
-      ),
+      Array[obj].concat(with_updates.values().map(wu ~> wu.expr).toArray()),
     )
 
   | O.Object _

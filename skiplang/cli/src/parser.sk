@@ -140,7 +140,7 @@ class ParseResults{
 }
 
 fun parseArgs(cmd: Command): ParseResults {
-  parseArgsFrom(cmd, Environ.args().drop(1).collect(Array))
+  parseArgsFrom(cmd, Environ.args().drop(1).toArray())
 }
 
 fun parseArgsFrom(cmd: Command, argv: Sequence<String>): ParseResults {
@@ -257,7 +257,7 @@ private fun arg_maps(args: Array<Arg>): (Array<Arg>, Map<String, Arg>) {
     }
   };
 
-  (posArgs.collect(Array), options.chill())
+  (posArgs.toArray(), options.chill())
 }
 
 private fun parse(
@@ -438,7 +438,7 @@ mutable class Parser(
           | None() -> return Failure(InvalidArgumentError(str))
           }
         };
-        Success(res.collect(Array))
+        Success(res.toArray())
       | None() -> Failure(InvalidArgumentError(str))
       }
     }

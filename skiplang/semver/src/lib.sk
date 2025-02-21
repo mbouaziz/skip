@@ -75,7 +75,7 @@ class VersionReq(comparators: Array<Comparator>) uses Equality, Show {
     comparators = str
       .split(",")
       .map(cmp -> Comparator::fromString(cmp))
-      .collect(Array);
+      .toArray();
 
     VersionReq(comparators)
   }

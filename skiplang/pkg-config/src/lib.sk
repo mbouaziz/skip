@@ -61,10 +61,10 @@ class Library{
     };
 
     Library{
-      libs => libs.collect(Array),
-      link_paths => link_paths.collect(Array),
-      link_files => link_files.collect(Array),
-      include_paths => include_paths.collect(Array),
+      libs => libs.toArray(),
+      link_paths => link_paths.toArray(),
+      link_files => link_files.toArray(),
+      include_paths => include_paths.toArray(),
       defines => defines.chill(),
       version => modversion.trim(),
     }
@@ -142,7 +142,7 @@ class Config(
     | None() -> void
     };
 
-    res.collect(Array)
+    res.toArray()
   }
 }
 
@@ -165,14 +165,14 @@ private fun split_flags(output: String): Array<String> {
     | '\\' -> !escaped = true
     | '\t' | '\n' | '\r' | ' ' ->
       if (!word.isEmpty()) {
-        res.push(String::fromChars(word.collect(Array)));
+        res.push(String::fromChars(word.toArray()));
         word.clear()
       }
     | _ -> word.push(c)
     }
   };
 
-  res.collect(Array)
+  res.toArray()
 }
 
 module end;

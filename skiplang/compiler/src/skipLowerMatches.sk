@@ -648,7 +648,7 @@ mutable class MatchCompiler(
     // incoming type constructor
     | (PatType(_, _, params), PatAll()) ->
       wildcards = params.values().map(p -> makeWildcardPat(p.pat));
-      patterns = wildcards.concat(restPatsIter()).collect(Array);
+      patterns = wildcards.concat(restPatsIter()).toArray();
       Some(r with {patterns})
     | (PatType _, PatLiteral _) -> None()
     | (PatType(conTid, _, conParams), PatType(patTid, _, patParams)) ->
@@ -837,7 +837,7 @@ mutable class MatchCompiler(
       // specRows has replaced leftmost column with 0 or more new
       // columns for subpatterns. Same expansion here in specExprs
       occs = this.buildOccurrences(exprs[0], ctor);
-      specExprs = occs.concat(exprs.iterator().drop(1)).collect(Array);
+      specExprs = occs.concat(exprs.iterator().drop(1)).toArray();
       st = this.compileMatrix(ctor.pos, specExprs, specRows, default);
       /* Record the solution to the sub-problem. Note that since we push the
        * block id for the block that we generate onto @block_ids, we know that
@@ -1048,7 +1048,7 @@ mutable class MatchCompiler(
       O.LabeledStmt(actionId, b.action)
     });
     (
-      bindings.values().collect(Array),
+      bindings.values().toArray(),
       List::createFromItems(rows),
       List::createFromItems(actions),
     )

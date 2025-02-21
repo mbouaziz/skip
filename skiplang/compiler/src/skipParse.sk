@@ -101,8 +101,8 @@ fun pkgDelta(
   };
 
   (
-    modified_files.map(f -> (new_pkg.base_dir, f)).collect(Array),
-    removed_files.map(f -> (old_pkg.base_dir, f)).collect(Array),
+    modified_files.map(f -> (new_pkg.base_dir, f)).toArray(),
+    removed_files.map(f -> (old_pkg.base_dir, f)).toArray(),
   )
 }
 
@@ -151,7 +151,7 @@ fun writeFiles(
       getcwd(),
       file_names
         .map(fn -> (fn, FileSystem.getLastModificationTime(fn)))
-        .collect(Array),
+        .toArray(),
     );
     updatePackageFiles(context, lib_name_opt, pkg, src ~> {
       FileSystem.readTextFile(src)
@@ -170,7 +170,7 @@ fun writeFiles(
     (_, dep_meta) = dep;
     pkg = InputPackageFiles(
       dep_meta.pkg_dir,
-      dep_meta.sources.map(s -> (s.i0, s.i1)).collect(Array),
+      dep_meta.sources.map(s -> (s.i0, s.i1)).toArray(),
     );
     updatePackageFiles(context, Some(dep_name), pkg, src ~> {
       dep_meta.sources.find(f -> f.i0 == src).fromSome().i2

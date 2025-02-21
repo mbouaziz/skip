@@ -285,7 +285,7 @@ mutable class Parser(tokens: mutable Tokenizer) {
     | None() ->
       this.errorUnexpectedToken(
         "expected " +
-          handlers.keys().map(t -> t.toString()).collect(Array).join(" or "),
+          handlers.keys().map(t -> t.toString()).toArray().join(" or "),
       )
     }
   }

@@ -44,11 +44,11 @@ class BuildScriptOutput{
     };
 
     BuildScriptOutput{
-      libraries => libraries.collect(Array),
-      link_args => link_args.collect(Array),
-      preambles => preambles.collect(Array),
-      extra_sources => extra_sources.collect(Array),
-      rerun_if_changed => rerun_if_changed.collect(Array),
+      libraries => libraries.toArray(),
+      link_args => link_args.toArray(),
+      preambles => preambles.toArray(),
+      extra_sources => extra_sources.toArray(),
+      rerun_if_changed => rerun_if_changed.toArray(),
     }
   }
 }
@@ -106,7 +106,7 @@ mutable class BuildRunner(
       this.dfs(root, res)
     };
 
-    res.collect(Array)
+    res.toArray()
   }
 
   private mutable fun unit_is_dirty(unit: Unit): Bool {
@@ -131,7 +131,7 @@ mutable class BuildRunner(
               FileSystem.getLastModificationTime(Path.join(unit.pkg.root(), f)),
             )
           )
-          .collect(Array),
+          .toArray(),
         this.bctx.unit_graph[unit].map(dep -> this.fingerprint_for(dep)),
         this.bctx.build_config,
         if (
@@ -152,7 +152,7 @@ mutable class BuildRunner(
                   ),
                 )
               )
-              .collect(Array)
+              .toArray()
           } else {
             Array[]
           }
@@ -424,7 +424,7 @@ mutable class BuildRunner(
   ): System.CompletedProcess {
     this.bctx.gctx.console.verbose(() -> {
       env = if (this.bctx.gctx.console.verbosity >= VerbosityProlix()) {
-        cmd.get_env().items().map(kv -> `${kv.i0}=${kv.i1}`).collect(Array)
+        cmd.get_env().items().map(kv -> `${kv.i0}=${kv.i1}`).toArray()
       } else {
         Array[]
       };
@@ -509,7 +509,7 @@ mutable class BuildRunner(
       }
     };
 
-    res.collect(Array)
+    res.toArray()
   }
 
   private readonly fun lib_file_for(unit: Unit): String {
@@ -582,7 +582,7 @@ private fun hash_of(
       dep_hashes.push(hash_of(dep, bctx, out))
     };
 
-    out.set(unit, compute_hash(unit, dep_hashes.collect(Array), bctx))
+    out.set(unit, compute_hash(unit, dep_hashes.toArray(), bctx))
   };
 
   out[unit]

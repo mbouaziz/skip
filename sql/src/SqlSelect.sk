@@ -159,7 +159,7 @@ fun noop(
   key: SKStore.Key,
   valueIter: mutable Iterator<SKStore.File>,
 ): void {
-  writer.setArray(key, valueIter.collect(Array))
+  writer.setArray(key, valueIter.toArray())
 }
 
 /*****************************************************************************/
@@ -710,7 +710,7 @@ class SelectEvaluator{
                     (context, writer, key, values) ~> {
                       dataDir = context.unsafeGetEagerDir(dataName);
                       if (dataDir.isEmpty(context)) {
-                        writer.setArray(key, values.collect(Array))
+                        writer.setArray(key, values.toArray())
                       }
                     },
                     None(),
@@ -723,7 +723,7 @@ class SelectEvaluator{
                 Array[
                   (
                     (_context, writer, key, values) ~> {
-                      arr = values.collect(Array);
+                      arr = values.toArray();
                       writer.setArray(key, arr)
                     },
                     None(),
@@ -1145,7 +1145,7 @@ class SelectEvaluator{
     evaluator = ExprEvaluator(
       entries match {
       | List.Nil() -> Array[inputRow]
-      | l -> List.Cons(inputRow, l).reversed().collect(Array)
+      | l -> List.Cons(inputRow, l).reversed().toArray()
       },
       this.select.from,
       this.up,
@@ -1277,7 +1277,7 @@ class SelectEvaluator{
       List.Cons(subTask.inputRow, subTask.entries),
     );
     context.unsafeGetEagerDir(result.dirName).unsafeGetFileIter().map(x ->
-      KVFile((x.i0, x.i1.collect(Array)))
+      KVFile((x.i0, x.i1.toArray()))
     )
   }
 
@@ -1499,7 +1499,7 @@ fun reducerUpdate(
 /*****************************************************************************/
 
 fun initUnion(rowIter: mutable Iterator<Row>): Array<Row> {
-  unsortedRows = rowIter.collect(Array);
+  unsortedRows = rowIter.toArray();
 
   indexes = unsortedRows
     .mapWithIndex((idx, x) ->

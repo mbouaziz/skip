@@ -93,7 +93,7 @@ fun buildCSVSchemaTransform(
 ): SKStore.OutputFormat {
   source = dirDescr.schema;
   target = tailSpec.columns match {
-  | None() -> return SKStore.OCSV(Range(0, source.size()).collect(Array))
+  | None() -> return SKStore.OCSV(Range(0, source.size()).toArray())
   | Some(targetSchema) -> targetSchema
   };
 

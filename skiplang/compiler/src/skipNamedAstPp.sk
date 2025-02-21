@@ -782,7 +782,7 @@ fun lambda_params(
 ): void {
   x match {
   | Positional(l) -> lambda_param_array("(", ")", o, l)
-  | Named(m) -> lambda_param_array("{", "}", o, m.values().collect(Array))
+  | Named(m) -> lambda_param_array("{", "}", o, m.values().toArray())
   }
 }
 

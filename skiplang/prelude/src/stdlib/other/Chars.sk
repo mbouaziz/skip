@@ -144,7 +144,7 @@ fun intToOctDigits(n: Int): String {
   if (digits.isEmpty()) {
     "0"
   } else {
-    String::fromChars(digits.collect(Array))
+    String::fromChars(digits.toArray())
   }
 }
 

@@ -66,7 +66,7 @@ fun testKsuid(): void {
   // check that the bijection between sextets and chars is as expected
   sextet_chars = "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz"
     .getIter()
-    .collect(Array);
+    .toArray();
   for (sextet1 in Range(0, 64)) {
     char = Ksuid::sextet_to_char(sextet1);
     T.expectEq(char, sextet_chars[sextet1]);

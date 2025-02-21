@@ -4726,9 +4726,9 @@ mutable class SkipParser{
     arguments = ParseTree.ParseTreeList{
       range => Parser.createRangeOfTrees(startDelimiter, endDelimiter),
       startDelimiter => startDelimiter,
-      elements => elements.collect(Array),
+      elements => elements.toArray(),
       separatorKind => Some(TokenKind.COMMA()),
-      separators => separators.collect(Array),
+      separators => separators.toArray(),
       endDelimiter => endDelimiter,
     };
     params = ParseTree.PositionalArgumentsTree{

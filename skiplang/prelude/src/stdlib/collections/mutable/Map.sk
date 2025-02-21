@@ -590,7 +590,7 @@ mutable class .Map<+K: Hashable & Equality, +V>(
             "",
             this.table.items()
               .map(item ~> (item.i0.toString(), inspect(item.i1)))
-              .collect(Array),
+              .toArray(),
           ),
         ),
         // format the table as a map of index => entry
@@ -600,7 +600,7 @@ mutable class .Map<+K: Hashable & Equality, +V>(
             "",
             this.slots.items()
               .map(item ~> (item.i0.toString(), inspect(item.i1)))
-              .collect(Array),
+              .toArray(),
           ),
         ),
         ("sz", inspect(this.sz)),

@@ -47,14 +47,14 @@ fun link(
   exports: Array<String> = Array[],
 ): void {
   linker_args = config.link_args.concat(
-    config.dependencies.values().collect(Array).flatMap(x -> x.i1.links),
+    config.dependencies.values().toArray().flatMap(x -> x.i1.links),
   );
   static_libs = config.static_libraries.concat(
     config.dependencies
       .values()
       .filter(d -> d.i1.has_object_code)
       .map(x -> x.i0)
-      .collect(Array),
+      .toArray(),
   );
   if (config.isWasm()) {
     output = config.output;

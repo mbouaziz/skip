@@ -447,7 +447,7 @@ fun params(
     o.out(")")
   | Named(param_map) ->
     o.out("{");
-    values = param_map.values().collect(Array);
+    values = param_map.toArray();
     array(fun_parameter, o, values);
     o.out("}")
   }
@@ -975,7 +975,7 @@ fun lambda_params(
   x match {
   | Positional(l) -> lambda_param_array("(", ")", o, l)
   | Named(m) ->
-    l = m.values().collect(Array);
+    l = m.toArray();
     lambda_param_array("{", "}", o, l)
   }
 }
@@ -1016,7 +1016,7 @@ fun let_obj_fields(
     o.out(")")
   | Named(map) ->
     o.out("{");
-    array(pattern_fields, o, map.items().collect(Array));
+    array(pattern_fields, o, map.items().toArray());
     o.out("}")
   }
 }

@@ -770,9 +770,7 @@ mutable class ParentBuilder{
     Parent{
       effective_source => this.effective_source,
       inherited_source => this.inherited_source,
-      conditions => this.conditions.values()
-        .map(wck -> wck.clauses)
-        .collect(.Array),
+      conditions => this.conditions.values().map(wck -> wck.clauses).toArray(),
     }
   }
 }

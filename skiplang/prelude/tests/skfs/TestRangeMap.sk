@@ -36,14 +36,14 @@ fun testRangeMap(): void {
       for (elt in set) {
         if (rset.contains(elt)) continue;
         debug(
-          rmap.values().filter(x -> x.i0.i0 <= 8 && 8 <= x.i0.i1).collect(Array),
+          rmap.values().filter(x -> x.i0.i0 <= 8 && 8 <= x.i0.i1).toArray(),
         );
         invariant_violation("ERROR: " + elt + " missing1 " + i);
       };
       for (elt in rset) {
         if (set.contains(elt)) continue;
         debug(
-          rmap.values().filter(x -> x.i0.i0 <= i && i <= x.i0.i1).collect(Array),
+          rmap.values().filter(x -> x.i0.i0 <= i && i <= x.i0.i1).toArray(),
         );
         invariant_violation("ERROR: " + elt + " missing2 " + i);
       };

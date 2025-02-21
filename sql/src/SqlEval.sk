@@ -594,7 +594,7 @@ class Evaluator{options: Options, user: ?UserFile} {
         content = context
           .unsafeGetEagerDir(selectDir.dirName)
           .getIterator(context)
-          .map(kv -> (kv.i0, kv.i1.collect(Array)));
+          .map(kv -> (kv.i0, kv.i1.toArray()));
 
         context.removeDir(selectDir.dirName);
 
@@ -705,7 +705,7 @@ class Evaluator{options: Options, user: ?UserFile} {
                 | _ -> invariant_violation("Invalid row kind")
                 }
               })
-              .collect(Array);
+              .toArray();
             entries = Vector[(key, (src, src, rows))];
             inputDir = context.unsafeGetEagerDir(dir.dirName);
             inputDir.writeArraySourceMany(context, entries.iterator());
@@ -1304,7 +1304,7 @@ class Evaluator{options: Options, user: ?UserFile} {
         sinkDirName,
         (context, _writer, key, valueIter) ~> {
           src = SKStore.Path(deleteDir, key);
-          entries = Vector[(key, (src, src, valueIter.collect(Array)))];
+          entries = Vector[(key, (src, src, valueIter.toArray()))];
           inputDir = context.unsafeGetEagerDir(dir.dirName);
           inputDir.writeArraySourceMany(context, entries.iterator());
         },
@@ -2001,7 +2001,7 @@ fun slurpStmts(_options: Options): Array<P.Stmt> {
     }
   };
 
-  stmts.collect(Array)
+  stmts.toArray()
 }
 
 fun runSql(

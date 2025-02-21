@@ -134,7 +134,7 @@ private fun generate_root_units(
   | CompileFilterDefault() ->
     package.manifest.targets
       .filter(t -> t.is_lib() || t.is_bin() || t.is_test())
-      .collect(Array)
+      .toArray()
   | CompileFilterOnly{lib, bins, tests} ->
     if (lib is LibRuleTrue _) {
       for (target in package.manifest.targets.filter(t -> t.is_lib())) {
@@ -157,7 +157,7 @@ private fun generate_root_units(
         "test",
       ),
     );
-    res.collect(Array)
+    res.toArray()
   };
   targets
     .map(target -> {
@@ -175,7 +175,7 @@ private fun generate_root_units(
         },
       )
     })
-    .collect(Array)
+    .toArray()
 }
 
 private fun list_rule_targets(
@@ -324,7 +324,7 @@ private fun compute_deps(
     )
   };
 
-  unit_deps.collect(Array)
+  unit_deps.toArray()
 }
 
 module end;

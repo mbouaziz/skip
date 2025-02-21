@@ -275,7 +275,7 @@ private mutable class Lexer private {
     this.iter.advance();
     this.iter.advance();
 
-    .String::fromChars(chars.collect(.Array))
+    .String::fromChars(chars.toArray())
   }
 
   mutable fun eatMultilineString(): .String {
@@ -360,7 +360,7 @@ private mutable class Lexer private {
     this.iter.advance();
     this.iter.advance();
 
-    .String::fromChars(chars.collect(.Array))
+    .String::fromChars(chars.toArray())
   }
 
   mutable fun eatLiteralString(): .String {

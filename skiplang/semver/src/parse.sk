@@ -166,7 +166,7 @@ private fun identifier_segment(pos: mutable Lexer.LexingPosition): String {
     invariant_violation("empty identifier segment")
   };
 
-  String::fromChars(res.collect(Array))
+  String::fromChars(res.toArray())
 }
 
 private fun identifier(pos: mutable Lexer.LexingPosition): String {

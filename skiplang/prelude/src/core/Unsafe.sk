@@ -61,8 +61,8 @@ mutable value class Ptr<T>(inner: Runtime.NonGCPointer) uses Show {
     if (digits.isEmpty()) {
       "0x0"
     } else {
-      // TODO: Get rid of `.collect(Array)`.
-      "0x" + String::fromChars(digits.reversed().collect(Array))
+      // TODO: Get rid of `.toArray()`.
+      "0x" + String::fromChars(digits.reversed().toArray())
     }
   }
 }

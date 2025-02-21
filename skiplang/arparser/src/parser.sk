@@ -103,7 +103,7 @@ private class Header{
     };
 
     // TODO: Explicit ASCII check.
-    identifier = String::fromUtf8(identifier_raw.collect(Array));
+    identifier = String::fromUtf8(identifier_raw.toArray());
 
     size = parse_number(
       buf.slice(kENTRY_SIZE_OFFSET, kENTRY_SIZE_OFFSET + kENTRY_SIZE_LEN),
@@ -150,7 +150,7 @@ private class Header{
       kENTRY_HEADER_TERMINATOR_OFFSET,
       kENTRY_HEADER_TERMINATOR_OFFSET + kENTRY_HEADER_TERMINATOR_LEN,
     );
-    if (terminator != kENTRY_HEADER_TERMINATOR.bytes().collect(Array)) {
+    if (terminator != kENTRY_HEADER_TERMINATOR.bytes().toArray()) {
       return Failure(
         ParseError(
           `Unexpected entry header terminator tag ${terminator.bytes()}, expected ${kENTRY_HEADER_TERMINATOR.bytes()}`,
@@ -345,7 +345,7 @@ mutable class Archive<R: mutable IO.Read & mutable IO.Seek> private (
     header: Header,
   ): Result<String, Error> {
     start = parse_number(
-      header.identifier.bytes().slice(1, kENTRY_IDENTIFIER_LEN).collect(Array),
+      header.identifier.bytes().slice(1, kENTRY_IDENTIFIER_LEN).toArray(),
       10,
     ) match {
     | Failure(err) -> return Failure(err)
@@ -360,9 +360,7 @@ mutable class Archive<R: mutable IO.Read & mutable IO.Seek> private (
     };
 
     // TODO: Explicit ASCII check.
-    identifier = String::fromUtf8(
-      this.name_table.slice(start, end).collect(Array),
-    );
+    identifier = String::fromUtf8(this.name_table.slice(start, end).toArray());
 
     Success(identifier)
   }
@@ -371,7 +369,7 @@ mutable class Archive<R: mutable IO.Read & mutable IO.Seek> private (
     header: Header,
   ): Result<(String, Int), Error> {
     id_len = parse_number(
-      header.identifier.bytes().slice(3, kENTRY_IDENTIFIER_LEN).collect(Array),
+      header.identifier.bytes().slice(3, kENTRY_IDENTIFIER_LEN).toArray(),
       10,
     ) match {
     | Failure(err) -> return Failure(err)
@@ -393,7 +391,7 @@ mutable class Archive<R: mutable IO.Read & mutable IO.Seek> private (
     | Success _ -> void
     };
     // TODO: Explicit ASCII check.
-    identifier = String::fromUtf8(id_buf.collect(Array));
+    identifier = String::fromUtf8(id_buf.toArray());
 
     Success((identifier, id_len))
   }
@@ -422,7 +420,7 @@ mutable class Archive<R: mutable IO.Read & mutable IO.Seek> private (
     | Failure(err) -> return Failure(IOError(err))
     | Success _ -> void
     };
-    if (buf != tag.bytes().collect(Array)) {
+    if (buf != tag.bytes().toArray()) {
       Failure(ParseError(`Invalid tag ${buf.bytes()}, expected ${tag.bytes()}`))
     } else {
       Success(void)

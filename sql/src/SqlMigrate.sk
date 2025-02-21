@@ -154,7 +154,7 @@ fun dumpAdjustedInserts(
               row,
               dirDescr.cols,
               colChanges,
-            ).collect(Array);
+            ).toArray();
             valuesStr = "(" + serialisedValues.join(", ") + ")";
             insert = `INSERT INTO ${
               dirDescr.name

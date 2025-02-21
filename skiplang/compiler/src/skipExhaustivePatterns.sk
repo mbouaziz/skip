@@ -424,7 +424,7 @@ fun add_params<Ta>(
     } else {
       m.values()
     };
-    values.concat(acc.values()).collect(Array)
+    values.concat(acc.values()).toArray()
   | Positional(a) -> a.concat(acc)
   }
 }

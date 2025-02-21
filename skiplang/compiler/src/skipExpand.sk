@@ -243,7 +243,7 @@ fun populateCache(
         for (defModuleName => defSet in defMap) {
           writer.setArray(
             SKStore.SID(defModuleName),
-            defSet.collect(Array).map(x -> SKStore.StringFile(x)),
+            defSet.toArray().map(x -> SKStore.StringFile(x)),
           );
         }
       })
@@ -259,7 +259,7 @@ fun populateCache(
         writer.set(
           key,
           SKStore.ArrayStringFile(
-            iter.map(x -> x.value).collect(SortedSet).collect(Array),
+            iter.map(x -> x.value).collect(SortedSet).toArray(),
           ),
         );
       })
@@ -351,7 +351,7 @@ fun populateDefinitions(
           };
 
           if (roots.size() == 0) {
-            writer.setArray(key, defFiles.collect(Array));
+            writer.setArray(key, defFiles.toArray());
             SkipError.error(
               exts[0].name.i0,
               "Undefined class " + exts[0].name.i1,
@@ -382,7 +382,7 @@ fun populateDefinitions(
           };
           writer.set(key, ExpandedDefFile(EClass(root)))
         } else {
-          writer.setArray(key, defFiles.collect(Array))
+          writer.setArray(key, defFiles.toArray())
         }
       })
     },

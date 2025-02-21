@@ -80,7 +80,7 @@ fun contentFromLines(tr: TextRange, lines: Vector<String>): String {
 
       yield lines[tr.end.line()].take(tr.end.column());
     };
-    gen().collect(Array).join(Chars.lineFeed.toString())
+    gen().toArray().join(Chars.lineFeed.toString())
   }
 }
 

@@ -217,7 +217,7 @@ fun type_list(o: mutable BufferedPrinter.Out, l: List<O.Type>): void {
 }
 
 fun named_type_map(o: mutable BufferedPrinter.Out, m: UMap<O.Parent>): void {
-  a = m.items().map(p -> (O.className(p.i0), p.i1.targs)).collect(Array);
+  a = m.items().map(p -> (O.className(p.i0), p.i1.targs)).toArray();
   array(named_type, o, a)
 }
 
@@ -664,7 +664,7 @@ fun lambda_params(
   x match {
   | Positional(l) -> lambda_param_array("(", ")", o, l)
   | Named(m) ->
-    l = m.values().collect(Array);
+    l = m.toArray();
     lambda_param_array("{", "}", o, l)
   }
 }
@@ -803,7 +803,7 @@ fun match_pattern_(o: mutable BufferedPrinter.Out, x: O.Pattern_): void {
         array(param_pattern, o, l);
         o.out(")")
       | Named(map) ->
-        values = map.items().map(nv -> (nv.i0.i1, nv.i1)).collect(Array);
+        values = map.items().map(nv -> (nv.i0.i1, nv.i1)).toArray();
         o.out("{");
         array(pattern_fields, o, values);
         o.out("}")

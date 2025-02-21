@@ -2231,7 +2231,7 @@ fun debugWriteFunction(
   out.print("; %s" / name);
 
   if (!f.annotations.isEmpty()) {
-    ann = f.annotations.collect(Array).sorted();
+    ann = f.annotations.toArray().sorted();
     out.print(": annotations: [" + ann.join(", ") + "]")
   };
 

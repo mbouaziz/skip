@@ -256,7 +256,7 @@ private class Seq{parts: Array<TypeBase>} extends TypeBase {
   static fun createFromItems<I: readonly Sequence<TypeBase>>(
     items: I,
   ): TypeBase {
-    Seq{parts => items.collect(Array)}
+    Seq{parts => items.toArray()}
   }
 
   fun toString(cache: mutable Cache): String {

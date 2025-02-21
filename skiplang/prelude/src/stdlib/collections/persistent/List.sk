@@ -525,7 +525,7 @@ mutable base class .List<+T>
   }
 
   readonly fun join[T: readonly Show](separator: String): String {
-    this.collect(Array).join(separator)
+    this.toArray().join(separator)
   }
 
   async fun genReverse<U: frozen>[T: ^U](): ^List<U> {

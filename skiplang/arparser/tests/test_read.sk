@@ -53,7 +53,7 @@ fun expectMemberEq<U: mutable IO.Read & mutable IO.Seek>(
     T.expectEq(mode, mode);
     ar.get(identifier) match {
     | Success(Some(bytes)) ->
-      T.expectEq(String::fromUtf8(bytes.collect(Array)), data)
+      T.expectEq(String::fromUtf8(bytes.toArray()), data)
     | Success(None()) -> T.fail(`Missing member data for \`${identifier}\``)
     | Failure(err) ->
       T.fail(`Error fetching data for member \`${identifier}\`: ${err}`)
@@ -141,7 +141,7 @@ fun read_gnu_archive(): void {
   };
   T.expectEq(ar.variant, ARParser.VariantGNU());
 
-  debug(ar.values().collect(Array));
+  debug(ar.values().toArray());
   expectMemberEq(ar, "foo", "foo", 123, 0, 0, 0o755);
   expectMemberEq(ar, "foobarfoobarfoobar", "foobar", 12345, 1000, 1337, 0o644);
   expectMemberEq(
@@ -190,7 +190,7 @@ fun read_bsd_archive(): void {
   };
   T.expectEq(ar.variant, ARParser.VariantBSD());
 
-  debug(ar.values().collect(Array));
+  debug(ar.values().toArray());
   expectMemberEq(ar, "foo", "foo", 123, 0, 0, 0o755);
   expectMemberEq(ar, "foobarfoobarfoobar", "foobar", 12345, 1000, 1337, 0o644);
   expectMemberEq(

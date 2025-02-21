@@ -3441,7 +3441,7 @@ fun rebindPatternExistentials(
     context,
     env,
     acc,
-    rebound.values().collect(Array),
+    rebound.values().toArray(),
   );
   (acc, newTy)
 }

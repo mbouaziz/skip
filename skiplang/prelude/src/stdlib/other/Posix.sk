@@ -276,7 +276,7 @@ mutable class Popen(
       e.extend(env);
       e.chill()
     };
-    new_env = env.items().map(e -> `${e.i0}=${e.i1}`).collect(Array);
+    new_env = env.items().map(e -> `${e.i0}=${e.i1}`).toArray();
 
     // NOTE: Since `posix_spawn()` does not provide a way for changing the
     // working directory of the child process, we rely on GNU env.

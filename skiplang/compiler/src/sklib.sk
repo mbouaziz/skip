@@ -59,9 +59,7 @@ class Metadata{
 
   static fun read(bytes: readonly Bytes): Metadata {
     // TODO: Proper reporting of parsing error.
-    json = JSON.decode(
-      String::fromUtf8(bytes.values().collect(Array)),
-    ).expectObject();
+    json = JSON.decode(String::fromUtf8(bytes.toArray())).expectObject();
     Metadata{
       name => json["name"].expectString(),
       target => json["target"].expectString(),
@@ -77,22 +75,22 @@ class Metadata{
             src["contents"].expectString(),
           )
         })
-        .collect(Array),
+        .toArray(),
       dependencies => json["dependencies"]
         .expectArray()
         .value.map(o -> {
           dep = o.expectObject();
           (dep["name"].expectString(), dep["hash"].expectString())
         })
-        .collect(Array),
+        .toArray(),
       links => json["link"]
         .expectArray()
         .value.map(s -> s.expectString())
-        .collect(Array),
+        .toArray(),
       preambles => json["preambles"]
         .expectArray()
         .value.map(s -> s.expectString())
-        .collect(Array),
+        .toArray(),
       has_object_code => json["has_object_code"].expectBool(),
     };
   }
@@ -175,12 +173,12 @@ mutable class .SklibBuilder(
     (
       this.name,
       this.target,
-      this.sources.sortedBy(s ~> s.i0).collect(Array),
+      this.sources.sortedBy(s ~> s.i0).toArray(),
       // FIXME: Bytes should implement Hashable. For now, we convert to String.
       this.files.sortedBy(f ~> Path.basename(f.i0)).map(f ->
         (f.i0, f.i1.toString())
       ),
-      this.dependencies.sorted().collect(Array),
+      this.dependencies.sorted().toArray(),
     ).hash()
   }
 
@@ -189,7 +187,7 @@ mutable class .SklibBuilder(
     // variant: ARParser.Variant = ARParser.VariantGNU(),
   ): Result<void, ARParser.Error> {
     file_names = Array[kMetadataFile].concat(
-      this.files.map(fn -> fn.i0).collect(Array),
+      this.files.map(fn -> fn.i0).toArray(),
     );
     ar = ARParser.Builder::createGNU(file, file_names);
     ar.append_id(
@@ -199,10 +197,10 @@ mutable class .SklibBuilder(
         target => this.target,
         hash => this.hash().toString(),
         pkg_dir => this.pkg_dir,
-        sources => this.sources.collect(Array),
-        dependencies => this.dependencies.collect(Array),
-        links => this.links.collect(Array),
-        preambles => this.preambles.collect(Array),
+        sources => this.sources.toArray(),
+        dependencies => this.dependencies.toArray(),
+        links => this.links.toArray(),
+        preambles => this.preambles.toArray(),
         has_object_code => file_names.any(fn -> fn.endsWith(".o")),
       }.serialize(),
     ) match {
