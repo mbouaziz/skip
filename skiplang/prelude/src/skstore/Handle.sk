@@ -68,19 +68,20 @@ mutable class NonEmptyIterator<+T>(
   // Materialize `iter` into an array to support multiple/repeat iterations
   // This operation is deferred until necessary, to avoid materialization in
   // cases where only the `first` element is accessed
-  private mutable fun materializeIter(): void {
+  private mutable fun materializeIter(): Array<T> {
     this.materializedIter match {
     | None() ->
       array = this.iter.toArray();
       this.!materializedIter = Some(array);
-      this.!iter = (array.iterator() : mutable Iterator<T>)
-    | Some(_) -> void
+      this.!iter = (array.iterator() : mutable Iterator<T>);
+      array
+    | Some(array) -> array
     };
   }
 
   mutable fun next(): ?T {
     if (this.isPastFirstValue) {
-      this.materializeIter();
+      _ = this.materializeIter();
       this.iter.next()
     } else {
       this.!isPastFirstValue = true;
@@ -111,23 +112,22 @@ mutable class NonEmptyIterator<+T>(
     }
   }
   mutable fun clone(): mutable NonEmptyIterator<T> {
-    this.materializeIter();
+    materializedIter = this.materializeIter();
     mutable NonEmptyIterator(
       this.first,
-      this.materializedIter.fromSome().iterator(),
+      materializedIter.iterator(),
       false,
       this.materializedIter,
     )
   }
 
   mutable fun map<V>(conv: T -> V): mutable NonEmptyIterator<V> {
-    this.materializeIter();
-    materializedIter = this.materializedIter.map(v -> v.map(conv));
+    materializedIter = this.materializeIter().map(conv);
     mutable NonEmptyIterator(
       conv(this.first),
-      materializedIter.fromSome().iterator(),
+      materializedIter.iterator(),
       false,
-      materializedIter,
+      Some(materializedIter),
     )
   }
 }
