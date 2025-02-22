@@ -122,14 +122,19 @@ mutable class NonEmptyIterator<+T>(
     )
   }
 
-  mutable fun convert<V>(conv: T ~> V): mutable NonEmptyIterator<V> {
-    materializedIter = this.materializeIter().map(conv);
-    mutable NonEmptyIterator(
-      conv(this.firstValue),
-      materializedIter.iterator(),
-      false,
-      Some(materializedIter),
-    )
+  mutable fun convert<V>(conv: T -> V): mutable NonEmptyIterator<V> {
+    first = conv(this.firstValue);
+    this.materializedIter match {
+    | None() -> mutable NonEmptyIterator(first, this.iter.map(conv))
+    | Some(materialized) ->
+      materializedIter = materialized.map(conv);
+      mutable NonEmptyIterator(
+        first,
+        materializedIter.iterator(),
+        false,
+        Some(materializedIter),
+      )
+    }
   }
 }
 
