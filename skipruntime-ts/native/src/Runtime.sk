@@ -724,7 +724,10 @@ class Collection(hdl: SKStore.EHandle<JSONID, JSONFile>) {
         (ctx, writer, key, values) ~> {
           pushContext(ctx);
           try {
-            for (entry in mapper.mapEntry(key.json, values.map(x -> x.json))) {
+            for (entry in mapper.mapEntry(
+              key.json,
+              values.convert(x ~> x.json),
+            )) {
               writer.append(JSONID(entry.i0), JSONFile(entry.i1))
             };
             popContext();
@@ -758,11 +761,17 @@ class Collection(hdl: SKStore.EHandle<JSONID, JSONFile>) {
     mapper = (ctx, writer, key, values) ~> {
       mapperOpt match {
       | None() ->
-        writer.setArray(key, values.map(x -> inputConv(x.json)).collect(Array))
+        writer.setArray(
+          key,
+          values.convert(x ~> inputConv(x.json)).collect(Array),
+        )
       | Some(mapper) ->
         pushContext(ctx);
         try {
-          for (entry in mapper.mapEntry(key.json, values.map(x -> x.json))) {
+          for (entry in mapper.mapEntry(
+            key.json,
+            values.convert(x ~> x.json),
+          )) {
             writer.append(JSONID(entry.i0), inputConv(entry.i1))
           };
           popContext();
@@ -999,7 +1008,10 @@ class Collection(hdl: SKStore.EHandle<JSONID, JSONFile>) {
         (ctx, writer, key, values) ~> {
           pushContext(ctx);
           try {
-            for (entry in mapper.mapEntry(key.json, values.map(x -> x.json))) {
+            for (entry in mapper.mapEntry(
+              key.json,
+              values.convert(x ~> x.json),
+            )) {
               writer.append(JSONID(entry.i0), JSONFile(entry.i1))
             };
             popContext();
