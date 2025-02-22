@@ -208,7 +208,7 @@ fun populateCache(
         moduleName = key match {
         | SKStore.SID(x) -> x
         };
-        SkipExpand.checkConflicts(values.first.value);
+        SkipExpand.checkConflicts(values.first().value);
         defMap = mutable Map[];
         pushDef = (prefix, moduleName, defName) -> {
           if (defName.startsWith(".")) {
@@ -221,7 +221,7 @@ fun populateCache(
           };
           defMap![moduleName] = defMap[moduleName].set(defName);
         };
-        (_, defs) = values.first.value;
+        (_, defs) = values.first().value;
 
         for (cd in defs.class_defs) {
           (_fileRange, defName) = cd.name;

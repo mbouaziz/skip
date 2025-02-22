@@ -19,7 +19,7 @@ fun type_program(
     context,
     SkipParse.astDirName,
     (context, writer, key, sources) ~> {
-      source = sources.first;
+      source = sources.first();
       SkipError.catchErrors(0, context, () -> {
         writer.set(key, SkipParse.parseFile(key, source.value))
       })

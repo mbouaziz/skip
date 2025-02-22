@@ -31,7 +31,7 @@ fun testPre(): void {
       context,
       SKStore.DirName::create("/input/"),
       (_context, writer, key, values) ~>
-        writer.set(key, SKStore.IntFile(values.first.value.toInt()))
+        writer.set(key, SKStore.IntFile(values.first().value.toInt()))
       ,
     );
     _dir = dirInput.map(
@@ -40,7 +40,7 @@ fun testPre(): void {
       context,
       SKStore.DirName::create("/diff/"),
       (context, writer, key, values) ~> {
-        valueFile = values.first;
+        valueFile = values.first();
         preOpt = dirInput.pre(context);
         preOpt match {
         | None() -> writer.set(key, SKStore.IntFile(0))

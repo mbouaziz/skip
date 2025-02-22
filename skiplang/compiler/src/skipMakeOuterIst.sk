@@ -65,7 +65,7 @@ fun program_phase(
     context,
     SKStore.DirName::create("/outerDefs/"),
     (_context, writer, _key, defFiles) ~> {
-      defFile = defFiles.first;
+      defFile = defFiles.first();
       defFile.value match {
       | SkipTypedAst.DConst(x) ->
         cst = const_def(x);

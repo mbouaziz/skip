@@ -2338,7 +2338,7 @@ fun getReactiveQueryHandle(
         context.!globals = SortedMap[];
         queryID = key.value;
         queryID32 = Int32::truncate(queryID);
-        iterator.first.value match {
+        iterator.first().value match {
         | Some(queryInfo) ->
           selectAst = P.Parser::create(queryInfo.query).parseSelect();
           skOptions = SKDB.Options{

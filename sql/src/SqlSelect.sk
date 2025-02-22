@@ -359,7 +359,7 @@ class SelectEvaluator{
         context,
         childName,
         (context, writer, _key, fileIter) ~> {
-          entry = fileIter.first;
+          entry = fileIter.first();
           repeat = 0;
           for (file in fileIter) {
             !repeat = repeat + file.repeat;

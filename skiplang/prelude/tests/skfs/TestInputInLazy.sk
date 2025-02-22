@@ -43,7 +43,7 @@ fun testInputInLazy(): void {
           writer.set(
             key,
             SKStore.IntFile(
-              files.first.value + dir1.getArray(context, key)[0].value,
+              files.first().value + dir1.getArray(context, key)[0].value,
             ),
           );
         },

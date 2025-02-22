@@ -240,7 +240,7 @@ fun buildResourcesGraph(
     context,
     dirname.sub("idbyresource"),
     (_c, writer, key, it) ~> {
-      writer.set(it.first, SKStore.StringFile(key.value));
+      writer.set(it.first(), SKStore.StringFile(key.value));
     },
   );
   availablesHdl = idbyresourceHdl.map(
@@ -286,7 +286,10 @@ fun buildResourcesGraph(
             context,
             statusRef.sub("statuses"),
             (_ctx, writer, key, it) ~> {
-              writer.set(SKStore.IID(0), ResourceStatus(key, it.first.status));
+              writer.set(
+                SKStore.IID(0),
+                ResourceStatus(key, it.first().status),
+              );
             },
           );
         _sRequestsHdl = context
@@ -303,7 +306,7 @@ fun buildResourcesGraph(
             context,
             statusRef.sub("all"),
             (ctx, writer, key, it) ~> {
-              rf = it.first;
+              rf = it.first();
               timestamp = rf.timestamp;
               statuses = statusHdl
                 .getArray(ctx, SKStore.IID(0))
@@ -370,7 +373,7 @@ fun initService(service: Service): Result<void, .Exception> {
         context,
         kGraphDir,
         (ctx, writer, _key, it) ~> {
-          serviceDef = it.first;
+          serviceDef = it.first();
           pushContext(ctx);
           mInputs = mutable Map<String, Collection>[];
           serviceDef.service.initialData.each(input -> {
@@ -417,7 +420,7 @@ fun initService(service: Service): Result<void, .Exception> {
           context,
           kSessionDir.sub("statuses"),
           (_ctx, writer, key, it) ~> {
-            writer.set(SKStore.IID(0), ResourceStatus(key, it.first.status));
+            writer.set(SKStore.IID(0), ResourceStatus(key, it.first().status));
           },
         );
       buildResourcesGraph(context, sessionHdl, statusHdl, servicesHdl)
@@ -611,7 +614,7 @@ fun useExternalCollection(
       dirName,
       (context, writer, key, it) ~> {
         instance = Ksuid::create().toString();
-        storeDir = dirName.sub(base64(it.first.toString()));
+        storeDir = dirName.sub(base64(it.first().toString()));
         store = context.mkdir(
           JSONID::keyType,
           JSONFile::type,
@@ -624,7 +627,7 @@ fun useExternalCollection(
               instance,
               CollectionWriter(storeDir),
               resource,
-              it.first.json,
+              it.first().json,
             ),
           ),
           Some(CloseResource(externalSupplier, instance)),

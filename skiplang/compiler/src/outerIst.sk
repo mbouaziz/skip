@@ -89,7 +89,7 @@ class Program private (program: SKStore.EHandle<SKStore.SID, DefFile>) {
       context,
       SKStore.DirName::create("/funsDefsProj/"),
       (_context, writer, _, files) ~> {
-        result = files.first.value match {
+        result = files.first().value match {
         | OuterIst.DFun(funDef) -> Array[FunDefFile(funDef)]
         | _ -> Array[]
         };
@@ -108,7 +108,7 @@ class Program private (program: SKStore.EHandle<SKStore.SID, DefFile>) {
       SKStore.DirName::create("/constsDefsProj/"),
       (_context, writer, _, files) ~> {
         result = mutable Vector[];
-        files.first.value match {
+        files.first().value match {
         | OuterIst.DConst(constDef) -> result.push(ConstDefFile(constDef))
         | OuterIst.DClass(classDef) ->
           if (!(classDef.kind is KTrait _)) {

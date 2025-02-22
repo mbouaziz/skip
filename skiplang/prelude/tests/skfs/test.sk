@@ -546,7 +546,7 @@ fun testOldLazy(): mutable SKStore.Context {
       context,
       SKStore.DirName::create("/defs/"),
       (_context, writer, key, values) ~>
-        writer.set(key, Def::fromStringFile(values.first))
+        writer.set(key, Def::fromStringFile(values.first()))
       ,
     );
     _defDiff = defDir.map(
@@ -555,7 +555,7 @@ fun testOldLazy(): mutable SKStore.Context {
       context,
       SKStore.DirName::create("/defDiffs/"),
       (context, writer, key, values) ~> {
-        value = values.first;
+        value = values.first();
         prevDir = defDir.pre(context);
         prevDir match {
         | None() -> writer.set(key, SKStore.IntFile(0))
@@ -585,7 +585,7 @@ fun testOldLazy(): mutable SKStore.Context {
       context,
       SKStore.DirName::create("/trees/"),
       (context, writer, key, values) ~> {
-        writer.set(key, treeDir.get(context, SKStore.IID(values.first.v)))
+        writer.set(key, treeDir.get(context, SKStore.IID(values.first().v)))
       },
     );
   })
@@ -610,7 +610,7 @@ fun testOld(): mutable SKStore.Context {
       context,
       SKStore.DirName::create("/defs/"),
       (_, writer, key, values) ~>
-        writer.set(key, Def::fromStringFile(values.first))
+        writer.set(key, Def::fromStringFile(values.first()))
       ,
     );
     context.update();
@@ -645,7 +645,7 @@ fun testSearch(): void {
       context,
       SKStore.DirName::create("/index/"),
       (_context, writer, _key, values) ~> {
-        value = values.first;
+        value = values.first();
         for (token in value.text.split(" ")) {
           writer.set(SKStore.IID(token.hash()), SKStore.IntFile(value.id))
         }
@@ -657,7 +657,7 @@ fun testSearch(): void {
       context,
       SKStore.DirName::create("/results/"),
       (context, writer, key, values) ~> {
-        query = values.first;
+        query = values.first();
         first = true;
         results = mutable Set[];
         for (token in query.value.split(" ")) {

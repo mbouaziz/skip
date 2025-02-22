@@ -103,7 +103,7 @@ fun createIndex(
       context,
       SKStore.DirName::create(indexName.lower),
       (_ctx, writer, _key, rows) ~> {
-        row = rows.first;
+        row = rows.first();
         values = mutable Vector[];
         for (kind in kinds) {
           values.push(row.getValue(kind.i0));

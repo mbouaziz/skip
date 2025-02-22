@@ -27,7 +27,7 @@ fun testMap(): mutable SKStore.Context {
       SKStore.IntFile::type,
       context,
       SKStore.DirName::create("/dir2/"),
-      (_context, writer, _, v) ~> writer.set(SKStore.IID(0), v.first),
+      (_context, writer, _, v) ~> writer.set(SKStore.IID(0), v.first()),
     );
     _dir3 = dir2.map(
       SKStore.IID::keyType,
@@ -35,7 +35,7 @@ fun testMap(): mutable SKStore.Context {
       context,
       SKStore.DirName::create("/dir3/"),
       (_context, writer, _key, values) ~> {
-        writer.set(SKStore.IID(1), values.first)
+        writer.set(SKStore.IID(1), values.first())
       },
     );
   });
@@ -69,7 +69,7 @@ fun testMap2(): mutable SKStore.Context {
       context,
       SKStore.DirName::create("/dir1/"),
       ((_context, writer, key, values) ~>
-        writer.set(key, SKStore.IntFile(values.first.value.toInt()))),
+        writer.set(key, SKStore.IntFile(values.first().value.toInt()))),
     );
     dir2 = dirStr2.map(
       SKStore.IID::keyType,
@@ -77,7 +77,7 @@ fun testMap2(): mutable SKStore.Context {
       context,
       SKStore.DirName::create("/dir2/"),
       ((_, writer, key, values) ~>
-        writer.set(key, SKStore.IntFile(values.first.value.toInt()))),
+        writer.set(key, SKStore.IntFile(values.first().value.toInt()))),
     );
     _dir3 = dir1.map(
       SKStore.IID::keyType,
@@ -95,7 +95,7 @@ fun testMap2(): mutable SKStore.Context {
             writer.setArray(key, values.collect(Array))
           ,
         );
-        writer.set(key, values.first);
+        writer.set(key, values.first());
       },
     );
   });
@@ -136,7 +136,7 @@ fun testMultiMap(): void {
             (_ctx, writer, key, values) ~>
               writer.set(
                 key,
-                SKStore.StringFile("0" + values.first.value.toString()),
+                SKStore.StringFile("0" + values.first().value.toString()),
               ),
             None(),
           ),
@@ -147,7 +147,7 @@ fun testMultiMap(): void {
             (_ctx, writer, key, values) ~>
               writer.set(
                 key,
-                SKStore.StringFile("1" + values.first.value.toString()),
+                SKStore.StringFile("1" + values.first().value.toString()),
               ),
             None(),
           ),
@@ -222,7 +222,7 @@ fun testMultiMapSameParent(): void {
             (_ctx, writer, key, values) ~> {
               writer.set(
                 key,
-                SKStore.StringFile("0" + values.first.value.toString()),
+                SKStore.StringFile("0" + values.first().value.toString()),
               )
             },
             None(),
@@ -234,7 +234,7 @@ fun testMultiMapSameParent(): void {
             (_ctx, writer, key, values) ~> {
               writer.set(
                 key,
-                SKStore.StringFile("1" + values.first.value.toString()),
+                SKStore.StringFile("1" + values.first().value.toString()),
               )
             },
             None(),

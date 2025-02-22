@@ -124,7 +124,7 @@ fun dumpAdjustedInserts(
     context,
     sinkName,
     (context, _writer, _key, values) ~> {
-      dirDescr = values.first;
+      dirDescr = values.first();
       if (!dirDescr.isInput) return void;
 
       changes.maybeGet(dirDescr.name) match {

@@ -24,7 +24,7 @@ fun testEagerInLazy(): void {
             context,
             SKStore.DirName::create("/eager/"),
             (_, writer, key, files) ~> {
-              writer.set(key, files.first);
+              writer.set(key, files.first());
             },
           );
           Array[
@@ -46,7 +46,7 @@ fun testEagerInLazy(): void {
           writer.set(
             key,
             SKStore.IntFile(
-              files.first.value + dir1.getArray(context, key)[0].value,
+              files.first().value + dir1.getArray(context, key)[0].value,
             ),
           );
         },

@@ -27,7 +27,7 @@ fun testSubDir(): void {
       context,
       SKStore.DirName::create("/dir1/"),
       ((_context, writer, key, values) ~>
-        writer.set(key, SKStore.IntFile(values.first.value.toInt()))),
+        writer.set(key, SKStore.IntFile(values.first().value.toInt()))),
     );
     _dir2 = dir1.map(
       SKStore.IID::keyType,
@@ -35,14 +35,14 @@ fun testSubDir(): void {
       context,
       SKStore.DirName::create("/dir2/"),
       (context, _writer, _key, values) ~> {
-        v = values.first;
+        v = values.first();
         dirName = SKStore.DirName::create("/dir2/" + v.value + "/");
         _ = dir1.map(
           SKStore.IID::keyType,
           SKStore.IntFile::type,
           context,
           dirName,
-          (_context, writer, key, values) ~> writer.set(key, values.first),
+          (_context, writer, key, values) ~> writer.set(key, values.first()),
         );
       },
     );
@@ -62,7 +62,7 @@ fun testSubDir(): void {
       context,
       SKStore.DirName::create("/dir4/"),
       (context, _writer, _, values) ~> {
-        value = values.first;
+        value = values.first();
         v = dir3.get(context, SKStore.IID(value.value));
         dirName = SKStore.DirName::create("/dir4/" + v.value + "/");
         toAdd = dirSingle.get(context, SKStore.IID(0)).value;
@@ -72,7 +72,10 @@ fun testSubDir(): void {
           context,
           dirName,
           (_context, writer, key, values) ~>
-            writer.set(key, SKStore.IntFile(values.first.value + toAdd.toInt()))
+            writer.set(
+              key,
+              SKStore.IntFile(values.first().value + toAdd.toInt()),
+            )
           ,
         );
       },
@@ -142,7 +145,7 @@ fun testSubSubDirUnit(): void {
       SKStore.IntFile::type,
       context,
       SKStore.DirName::create("/subDir2/"),
-      (_context, writer, key, values) ~> writer.set(key, values.first + 1),
+      (_context, writer, key, values) ~> writer.set(key, values.first() + 1),
     );
     _ = dir1.map(
       SKStore.IID::keyType,
@@ -150,7 +153,7 @@ fun testSubSubDirUnit(): void {
       context,
       SKStore.DirName::create("/subDir1/"),
       (context, writer, key, values) ~> {
-        x = values.first;
+        x = values.first();
         !x.value = x.value + subDir2.get(context, SKStore.IID(0)).value;
         writer.set(key, x)
       },

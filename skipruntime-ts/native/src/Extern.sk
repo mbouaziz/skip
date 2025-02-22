@@ -24,7 +24,7 @@ fun firstOfNonEmptyIterator(
       "`first` can't be called after `next` on a NonEmptyIterator",
     )
   };
-  values.first
+  values.first()
 }
 
 @export("SkipRuntime_NonEmptyIterator__uniqueValue")

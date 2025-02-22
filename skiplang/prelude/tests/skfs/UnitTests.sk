@@ -200,13 +200,13 @@ fun testSubDirUnit(): void {
       context,
       SKStore.DirName::create("/dir1/dir2/"),
       (context, writer, key, values) ~> {
-        x = values.first;
+        x = values.first();
         _ = dir1.map(
           SKStore.IID::keyType,
           SKStore.StringFile::type,
           context,
           SKStore.DirName::create("/dir1/dir2/" + x.value + "/"),
-          (_context, writer, key, values) ~> writer.set(key, values.first),
+          (_context, writer, key, values) ~> writer.set(key, values.first()),
         );
         writer.set(key, x)
       },

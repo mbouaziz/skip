@@ -410,7 +410,7 @@ fun getSubsDirs(
     context,
     subsOutput,
     (context, writer, key, values) ~> {
-      request = SubRequestFile::type(values.first);
+      request = SubRequestFile::type(values.first());
       tableDir = getTableDir(context);
       dirSubs = request.viewNames.map(viewName -> {
         (edir, dirDescr) = tableDir.maybeGet(
@@ -568,7 +568,7 @@ fun getIndexOutputDir(
       context,
       indexOutput,
       (context, writer, key, values) ~> {
-        index = values.first;
+        index = values.first();
         writer.set(
           key,
           createUserIndex(
@@ -601,7 +601,7 @@ fun getIndexByColNbr(
       context,
       indexByCol,
       (_context, writer, _key, values) ~> {
-        indexDescr = values.first;
+        indexDescr = values.first();
         for (field in indexDescr.fields) {
           fieldNbr = field.i0;
           indexEntry = makeIndexEntry(indexDescr.tableName, fieldNbr);
@@ -623,7 +623,7 @@ fun getIndexByName(
       context,
       indexByName,
       (_context, writer, _key, values) ~> {
-        indexDescr = values.first;
+        indexDescr = values.first();
         writer.set(SKStore.SID(indexDescr.tableName.lower), indexDescr)
       },
     )
@@ -828,7 +828,7 @@ fun dumpTables(origContext: readonly SKStore.Context, suffix: ?String): void {
     context,
     sinkName,
     (context, _writer, _key, values) ~> {
-      dirDescr = values.first;
+      dirDescr = values.first();
       if (!dirDescr.isInput) return void;
       printDirDescr(dirDescr, suffix);
       tableName = dirDescr.name.lower;
@@ -858,7 +858,7 @@ fun dumpInserts(origContext: readonly SKStore.Context): void {
     context,
     sinkName,
     (context, _writer, _key, values) ~> {
-      dirDescr = values.first;
+      dirDescr = values.first();
       if (!dirDescr.isInput) return void;
       fileIter = context
         .unsafeGetEagerDir(dirDescr.dirName)

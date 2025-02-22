@@ -48,7 +48,7 @@ fun testWikipedia(path: String): mutable SKStore.Context {
       context,
       SKStore.DirName::create("/index/"),
       (_context, writer, id, values) ~> {
-        value = values.first;
+        value = values.first();
         tokens = mutable Set[];
         for (token in value.content.split(" ")) {
           tokens.insert(token.hash());
@@ -64,7 +64,7 @@ fun testWikipedia(path: String): mutable SKStore.Context {
       context,
       SKStore.DirName::create("/results/"),
       (context, writer, key, values) ~> {
-        query = values.first;
+        query = values.first();
         first = true;
         results = mutable Set[];
         for (token in query.value.split(" ")) {

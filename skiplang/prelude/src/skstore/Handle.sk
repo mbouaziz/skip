@@ -54,14 +54,14 @@ mutable class EmptyIterator<T>() extends FileIterator<T> {
 }
 
 mutable class NonEmptyIterator<+T>(
-  first: T,
+  firstValue: T,
   mutable iter: mutable Iterator<T>,
   mutable isPastFirstValue: Bool = false,
   mutable materializedIter: ?Array<T> = None(),
 ) extends FileIterator<T> {
   // Materialize `iter` into an array to support multiple/repeat iterations
   // This operation is deferred until necessary, to avoid materialization in
-  // cases where only the `first` element is accessed
+  // cases where only the `firstValue` element is accessed
   private mutable fun materializeIter(): Array<T> {
     this.materializedIter match {
     | None() ->
@@ -73,18 +73,22 @@ mutable class NonEmptyIterator<+T>(
     };
   }
 
+  readonly fun first(): T {
+    this.firstValue
+  }
+
   mutable fun next(): ?T {
     if (this.isPastFirstValue) {
       _ = this.materializeIter();
       this.iter.next()
     } else {
       this.!isPastFirstValue = true;
-      Some(this.first)
+      Some(this.firstValue)
     }
   }
 
   mutable fun nonEmptyMap<U>(f: T -> U): mutable NonEmptyIterator<U> {
-    mutable NonEmptyIterator(f(this.first), this.iter.map(f))
+    mutable NonEmptyIterator(f(this.firstValue), this.iter.map(f))
   }
 
   mutable fun getUnique(): ?T {
@@ -94,7 +98,7 @@ mutable class NonEmptyIterator<+T>(
       )
     };
     this.iter.next() match {
-    | None() -> Some(this.first)
+    | None() -> Some(this.firstValue)
     | Some(_) -> None()
     }
   }
@@ -111,7 +115,7 @@ mutable class NonEmptyIterator<+T>(
   mutable fun clone(): mutable NonEmptyIterator<T> {
     materializedIter = this.materializeIter();
     mutable NonEmptyIterator(
-      this.first,
+      this.firstValue,
       materializedIter.iterator(),
       false,
       this.materializedIter,
@@ -121,7 +125,7 @@ mutable class NonEmptyIterator<+T>(
   mutable fun map<V>(conv: T -> V): mutable NonEmptyIterator<V> {
     materializedIter = this.materializeIter().map(conv);
     mutable NonEmptyIterator(
-      conv(this.first),
+      conv(this.firstValue),
       materializedIter.iterator(),
       false,
       Some(materializedIter),
