@@ -47,11 +47,7 @@ mutable base class FileIterator<+T> {
   }
 }
 
-mutable class EmptyIterator<T>() extends FileIterator<T> {
-  mutable fun next(): ?T {
-    None()
-  }
-}
+mutable class EmptyIterator<T>() extends FileIterator<T> {}
 
 mutable class NonEmptyIterator<+T>(
   first: T,
