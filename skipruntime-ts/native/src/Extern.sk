@@ -19,12 +19,7 @@ native fun getContext(): ?mutable SKStore.Context;
 fun firstOfNonEmptyIterator(
   values: mutable SKStore.NonEmptyIterator<SKJSON.CJSON>,
 ): SKJSON.CJSON {
-  if (values.isPastFirstValue) {
-    throw SKStore.Error(
-      "`first` can't be called after `next` on a NonEmptyIterator",
-    )
-  };
-  values.first
+  values.getFirst()
 }
 
 @export("SkipRuntime_NonEmptyIterator__uniqueValue")

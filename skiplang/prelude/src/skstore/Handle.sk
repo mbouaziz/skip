@@ -72,6 +72,15 @@ mutable class NonEmptyIterator<+T>(
     };
   }
 
+  readonly fun getFirst(): T {
+    if (this.isPastFirstValue) {
+      throw SKStore.Error(
+        "`first` can't be called after `next` on a NonEmptyIterator",
+      )
+    };
+    this.first
+  }
+
   mutable fun next(): ?T {
     if (this.isPastFirstValue) {
       this.materializeIter();
