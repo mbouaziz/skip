@@ -26,8 +26,7 @@ fun firstOfNonEmptyIterator(
 fun uniqueValueOfNonEmptyIterator(
   values: mutable SKStore.NonEmptyIterator<SKJSON.CJSON>,
 ): ?SKJSON.CJSON {
-  value = values.next();
-  if (values.next().isSome()) None() else value
+  values.getUnique()
 }
 
 @export("SkipRuntime_NonEmptyIterator__next")
