@@ -229,7 +229,7 @@ fun buildLibrary(
     };
     FileSystem.readFilesRecursive(
       sd,
-      f ~> f.endsWith(".cpp") || f.endsWith(".c"),
+      f ~> f.endsWith(".cpp") || f.endsWith(".cc") || f.endsWith(".c"),
       _f ~> false,
     )
   });
