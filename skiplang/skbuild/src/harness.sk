@@ -181,7 +181,7 @@ fun build_harness(
     if (FileSystem.exists(id)) {
       !includeChecker = includeChecker.add(
         id,
-        f ~> f.endsWith(".hpp") || f.endsWith(".h"),
+        f ~> f.endsWith(".hpp") || f.endsWith(".hh") || f.endsWith(".h"),
         _f ~> false,
       )
     };
