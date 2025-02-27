@@ -65,16 +65,16 @@ private class Config{
   preambles: Array<String>,
 } {
   static fun make(results: Cli.ParseResults): this {
-    optConfig = Optimize.Config::make(
-      results.getBool("dce"),
-      results.getBool("peephole"),
-      results.getBool("control"),
-      results.getBool("regpromote"),
-      results.getBool("inline"),
-      results.getBool("ipa"),
-      results.getBool("goto"),
-      results.getBool("verify"),
-    );
+    optConfig = Optimize.Config::make{
+      dce => results.getBool("dce"),
+      peephole => results.getBool("peephole"),
+      control => results.getBool("control"),
+      regpromote => results.getBool("regpromote"),
+      inline => results.getBool("inline"),
+      ipa => results.getBool("ipa"),
+      goto => results.getBool("goto"),
+      verify => results.getBool("verify"),
+    };
     release = results.getBool("release");
     debug_info = results.getBool("debug");
     verbose = debug_info || results.getBool("verbose");

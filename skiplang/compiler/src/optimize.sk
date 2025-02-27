@@ -52,7 +52,7 @@ mutable class Config private {
     }
   }
 
-  static fun make(
+  static fun make{
     dce: Bool,
     peephole: Bool,
     control: Bool,
@@ -61,7 +61,7 @@ mutable class Config private {
     ipa: Bool,
     goto: Bool,
     verify: Bool,
-  ): this {
+  }: this {
     Config{
       dce => if (dce) static::kOptDCE else 0,
       peephole => if (peephole) static::kOptPeephole else 0,
