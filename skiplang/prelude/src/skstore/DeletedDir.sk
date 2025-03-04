@@ -6,7 +6,7 @@ module SKStore;
 class DeletedDir{
   time: Time,
   timeStack: TimeStack,
-  dirName: DirName,
+  private dirName: DirName,
 } extends Dir {
   fun incrRefCount(_context: mutable Context): void {
     void
