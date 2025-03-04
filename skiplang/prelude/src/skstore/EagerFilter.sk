@@ -106,7 +106,7 @@ class EagerFilter private {
       totalSize => 0,
       creator,
     };
-    context.setDir(dir);
+    context.setDir(dirName, dir);
     dirName
   }
 
@@ -231,8 +231,8 @@ class EagerFilter private {
       fullFiles,
     );
 
-    context.setDir(fullDir);
-    context.setDir(childDir)
+    context.setDir(fullDir.dirName, fullDir);
+    context.setDir(childDir.dirName, childDir)
   }
 
   static fun create(
