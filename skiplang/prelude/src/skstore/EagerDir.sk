@@ -634,7 +634,7 @@ mutable class FixedDataMapIterator<T> private {
 class EagerDir{
   time: Time,
   timeStack: TimeStack,
-  dirName: DirName,
+  private dirName: DirName,
   input: Bool,
   fixedData: FixedDataMap,
   totalSize: Int,

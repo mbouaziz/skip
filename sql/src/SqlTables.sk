@@ -287,7 +287,7 @@ fun dirDescrCopy(
     totalSize => oldDir.totalSize,
     creator => context.currentArrow(),
   };
-  context.setDir(dir.dirName, dir);
+  context.setDir(nextName, dir);
   limit = context.tick;
   _ = SKStore.EagerDir::apply(
     context,
@@ -415,10 +415,7 @@ fun getSubsDirs(
       request = SubRequestFile::type(values.first);
       tableDir = getTableDir(context);
       dirSubs = request.viewNames.map(viewName -> {
-        (edir, dirDescr) = tableDir.maybeGet(
-          context,
-          SKStore.SID(viewName),
-        ) match {
+        dirDescr = tableDir.maybeGet(context, SKStore.SID(viewName)) match {
         | None() ->
           views = SKDB.getViewsDir(context);
           viewsDir = context.unsafeGetEagerDir(views.dirName);
@@ -435,7 +432,6 @@ fun getSubsDirs(
           };
           cselect = selectFile.cselect;
           selectDir = SKDB.evalSelect(context, cselect, None());
-          edir = context.unsafeGetEagerDir(selectDir.dirName);
           dirDescr = Compiler::getDirDescr(
             context,
             selectFile.sparams,
@@ -444,10 +440,8 @@ fun getSubsDirs(
             P.Name::create(selectDir.dirName.toString()),
             selectDir.dirName,
           );
-          (edir, dirDescr)
-        | Some(dirDescr) ->
-          edir = context.unsafeGetEagerDir(dirDescr.dirName);
-          (edir, dirDescr)
+          dirDescr
+        | Some(dirDescr) -> dirDescr
         };
         alwaysTrue = (_baseName ~> true);
         filter = request.destinationSource match {
@@ -467,15 +461,16 @@ fun getSubsDirs(
         format = request.format match {
         | SKDB.OFK_CSV() ->
           SKStore.OCSV(Range(0, dirDescr.schema.size()).collect(Array))
-        | SKDB.OFK_JSON() -> SKStore.OJSON(getFieldNames(context, edir.dirName))
+        | SKDB.OFK_JSON() ->
+          SKStore.OJSON(getFieldNames(context, dirDescr.dirName))
         | SKDB.OFK_SQL() -> SKStore.OSQL()
-        | SKDB.OFK_JS() -> SKStore.OJS(getFieldNames(context, edir.dirName))
+        | SKDB.OFK_JS() -> SKStore.OJS(getFieldNames(context, dirDescr.dirName))
         | SKDB.OFK_Table() ->
-          SKStore.OTable(getFieldNames(context, edir.dirName))
+          SKStore.OTable(getFieldNames(context, dirDescr.dirName))
         };
 
         SKStore.DirSub(
-          edir.dirName,
+          dirDescr.dirName,
           viewName,
           format,
           (context) ~>

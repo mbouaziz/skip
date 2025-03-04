@@ -659,10 +659,10 @@ mutable class Context{
           dir.unsafeIterKeys((key, _time) -> {
             values = dir.getArrayRaw(key).collect(Array);
             !withChange = true;
-            source = Path::create(preDir.dirName, key);
+            source = Path::create(preDirName, key);
             !preDir = preDir.writeEntry(this, source, source, key, values);
           });
-          this.setDir(preDir.dirName, preDir);
+          this.setDir(preDirName, preDir);
           updateDirtyReaders(this, Path::create(preDirName.tag(), DirTag()));
           this.setDir(preDirName, preDir)
         | Some(preDir) ->
@@ -670,14 +670,14 @@ mutable class Context{
           for (key in changes) {
             values = dir.getArrayRaw(key).collect(Array);
             !withChange = true;
-            source = Path::create(preDir.dirName, key);
+            source = Path::create(preDirName, key);
             !preDir = preDir.writeEntry(this, source, source, key, values);
           };
           if (isReset) {
-            writerPath = Path(preDir.dirName, IID(genSym(0)));
+            writerPath = Path(preDirName, IID(genSym(0)));
             !preDir = preDir.reset(this, writerPath, changes);
           };
-          this.setDir(preDir.dirName, preDir)
+          this.setDir(preDirName, preDir)
         }
       })
     });
@@ -1148,7 +1148,7 @@ mutable class Context{
         | None() -> continue
         | Some(parent) ->
           !parent.childDirs = parent.childDirs.remove(dirName);
-          this.setDir(parent.dirName, parent)
+          this.setDir(parentName, parent)
         }
       };
       dir.removeSubDirs(this);
@@ -1280,10 +1280,10 @@ fun import(
             entries.push((key, (source, writer, values)));
           }
         };
-        targetCtx.unsafeMaybeGetEagerDir(dir.dirName) match {
+        targetCtx.unsafeMaybeGetEagerDir(dirName) match {
         | None() ->
           if (dir.creator is None()) {
-            targetCtx.setDir(dir.dirName, dir);
+            targetCtx.setDir(dirName, dir);
           }
         | Some(inputDir) ->
           !inputDir = inputDir.writeArraySourceManyReturnDir(
@@ -1291,13 +1291,10 @@ fun import(
             entries.iterator(),
           );
           if (isReset) {
-            writerPath = SKStore.Path(
-              dir.dirName,
-              SKStore.IID(SKStore.genSym(0)),
-            );
+            writerPath = SKStore.Path(dirName, SKStore.IID(SKStore.genSym(0)));
             !inputDir = inputDir.reset(targetCtx, writerPath, changedKeys);
           };
-          targetCtx.setDir(inputDir.dirName, inputDir)
+          targetCtx.setDir(dirName, inputDir)
         }
       | Some(_) -> invariant_violation("Error import: incompatible dir types")
       }

@@ -221,18 +221,18 @@ class EagerFilter private {
       Array[]
     };
 
-    source = Path(childDir.dirName, SKStore.IID(0));
+    source = Path(this.childName, SKStore.IID(0));
     fullDir = context.unsafeGetEagerDir(this.fullName);
     !fullDir = fullDir.writeEntry(
       context,
       source,
       source,
-      childDir.dirName,
+      this.childName,
       fullFiles,
     );
 
-    context.setDir(fullDir.dirName, fullDir);
-    context.setDir(childDir.dirName, childDir)
+    context.setDir(this.fullName, fullDir);
+    context.setDir(this.childName, childDir)
   }
 
   static fun create(

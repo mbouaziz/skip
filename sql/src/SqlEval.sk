@@ -1388,19 +1388,17 @@ class Evaluator{options: Options, user: ?UserFile} {
       sets,
     );
     selectHandle = evalSelect(context, select, None());
-    selectDir = context.unsafeGetEagerDir(selectHandle.dirName);
     updateTableMap(context);
     table = getTable(context, pos, name);
-    inputDir = getDir(table);
     SKStore.EagerDir::apply(
       context,
-      selectDir.dirName,
+      selectHandle.dirName,
       sinkDirName,
       (context, writer, key, rowIter) ~> {
         entries = mutable Vector[];
-        dir = context.unsafeGetEagerDir(inputDir.dirName);
+        dir = context.unsafeGetEagerDir(table.dirName);
         writerPath = SKStore.Path(
-          selectDir.dirName,
+          selectHandle.dirName,
           SKStore.IID(SKStore.genSym(0)),
         );
         for ((_, source, _) in dir.getDataIterWithoutTombs(context, key)) {
@@ -1453,7 +1451,7 @@ class Evaluator{options: Options, user: ?UserFile} {
     sinkDir = context.unsafeGetEagerDir(sinkDirName);
     !sinkDir.time.value = Int::max - sinkDir.time.value;
     !sinkDir.timeStack = sinkDir.timeStack.maxMinus();
-    context.setDir(sinkDir.dirName, sinkDir);
+    context.setDir(sinkDirName, sinkDir);
     updateTableMap(context);
     sinkDirName
   }
@@ -1589,15 +1587,14 @@ class Evaluator{options: Options, user: ?UserFile} {
     table: DirDescr,
     rows: Array<RowValues>,
   ): void {
-    dir = getDir(table);
-    newDir = context.unsafeGetEagerDir(dir.dirName);
+    newDir = context.unsafeGetEagerDir(table.dirName);
     kinds = table.kinds;
     for (row in rows) {
       key = RowKey::create(row, kinds);
-      source = SKStore.Path(dir.dirName, SKStore.IID(SKStore.genSym(0)));
+      source = SKStore.Path(table.dirName, SKStore.IID(SKStore.genSym(0)));
       !newDir = newDir.writeEntry(context, source, source, key, Array[row]);
     };
-    context.setDir(newDir.dirName, newDir);
+    context.setDir(table.dirName, newDir);
   }
 
   fun createTable(
@@ -2095,7 +2092,7 @@ fun importNext(
             totalSize => 0,
             creator => None(),
           };
-          targetCtx.setDir(targetDir.dirName, targetDir)
+          targetCtx.setDir(targetDirName, targetDir)
         | Some(_) -> void
         };
         entries = mutable Vector[];
@@ -2105,13 +2102,19 @@ fun importNext(
             entries.push((key, (source, writer, values)));
           }
         };
-        updates![targetDirName] = (isReset, changedKeys, dir, version, entries)
+        updates![targetDirName] = (
+          isReset,
+          changedKeys,
+          dirName,
+          version,
+          entries,
+        )
       }
     | _ -> void
     }
   };
   for (targetDirName => src in updates) {
-    (isReset, changedKeys, dir, _, entries) = src;
+    (isReset, changedKeys, dirName, _, entries) = src;
     targetCtx.unsafeMaybeGetEagerDir(targetDirName) match {
     | None() -> invariant_violation("Directory should have been created")
     | Some(inputDir) ->
@@ -2120,10 +2123,10 @@ fun importNext(
         entries.iterator(),
       );
       if (isReset) {
-        writerPath = SKStore.Path(dir.dirName, SKStore.IID(SKStore.genSym(0)));
+        writerPath = SKStore.Path(dirName, SKStore.IID(SKStore.genSym(0)));
         !inputDir = inputDir.reset(targetCtx, writerPath, changedKeys);
       };
-      targetCtx.setDir(inputDir.dirName, inputDir)
+      targetCtx.setDir(targetDirName, inputDir)
     }
   };
   hasMultipleVersions

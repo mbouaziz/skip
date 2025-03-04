@@ -409,7 +409,7 @@ class SelectEvaluator{
       shardsDirName = projName.sub("shards");
       shards = context.unsafeMaybeGetEagerDir(shardsDirName) match {
       | None() -> context.mkdir(x ~> x, ShardStats::type, shardsDirName)
-      | Some(x) -> SKStore.EHandle(x ~> x, ShardStats::type, x.dirName)
+      | Some(_) -> SKStore.EHandle(x ~> x, ShardStats::type, shardsDirName)
       };
 
       projLeftName = projName.sub("left");
