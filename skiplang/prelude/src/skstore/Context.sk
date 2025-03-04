@@ -408,7 +408,7 @@ mutable class Context{
   mutable dirsWithSharedSubDirs: SortedSet<DirName> = SortedSet[],
   mutable sharedSubDirsRefCount: SortedMap<DirName, Int> = SortedMap[],
   mutable writeChecker: ?(mutable WriteChecker) = None(),
-  mutable purgeFrom: (mutable Context, Dir) ~> Tick = (ctx, _) ~>
+  mutable purgeFrom: (mutable Context, DirName) ~> Tick = (ctx, _) ~>
     Tick(ctx.tick.value - 1000),
   mutable sourceOverride: ?Path = None(),
 } {
@@ -1380,7 +1380,7 @@ fun resolveContext(
     context.unsafeMaybeGetEagerDir(dirName) match {
     | None() -> void
     | Some(dir) ->
-      !dir = dir.purge(context, context.purgeFrom(context, dir));
+      !dir = dir.purge(context, context.purgeFrom(context, dirName));
       context.setDir(dirName, dir)
     }
   };

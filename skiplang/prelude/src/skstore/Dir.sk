@@ -29,11 +29,6 @@ base class Dir extends File {
   fun keys(): SortedSet<Key>;
 
   /**
-   * Returns the directory name
-   */
-  fun getDirName(): DirName;
-
-  /**
    * Returns the creation time of that directory.
    */
   fun getTime(): Time;

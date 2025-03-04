@@ -1748,9 +1748,9 @@ fun evalWithContext(
 
 fun sqlPurgeFrom(
   replicationId: Int,
-): (mutable SKStore.Context, SKStore.Dir) ~> SKStore.Tick {
-  (ctx, dir) ~> {
-    table = getSqlTableName(dir.getDirName());
+): (mutable SKStore.Context, SKStore.DirName) ~> SKStore.Tick {
+  (ctx, dirName) ~> {
+    table = getSqlTableName(dirName);
     ackTable = feedbackTable(table);
     watermark = getWatermark(ctx, ackTable, Some(replicationId));
     default = SKStore.Tick(ctx.tick.value - 1000);
@@ -2391,12 +2391,12 @@ fun getReactiveQueryHandle(
       },
     );
     (handle, selectDirs)
-  | Some(dir) ->
+  | Some(_dir) ->
     (
       SKStore.EHandle(
         SKStore.IID::keyType,
         QueryInfoFile::type,
-        dir.getDirName(),
+        reactiveQueriesDirName,
       ),
       SKStore.EHandle(
         SKStore.IID::keyType,

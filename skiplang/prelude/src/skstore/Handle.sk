@@ -370,7 +370,7 @@ class LHandle<K: Key, +V: File> extends Handle<K, V> {
     f: (mutable Context, LHandle<K, V>, K) ~> Array<V>,
     collect: Bool = true,
   ): LHandle<K, V> {
-    dir = LazyDir::create(
+    _dir = LazyDir::create(
       context,
       dirName,
       (context, dirName, key) ~> {
@@ -378,7 +378,7 @@ class LHandle<K: Key, +V: File> extends Handle<K, V> {
       },
       collect,
     );
-    LHandle(keyType, type, dir.getDirName())
+    LHandle(keyType, type, dirName)
   }
 
   fun getArrayWithOptions(
@@ -605,9 +605,10 @@ class EHandle<K: Key, V: File> extends Handle<K, V> {
     if (!context.hasPre.contains(this.dirName)) {
       context.!hasPre = context.hasPre.add(this.dirName);
     };
-    context.maybeGetDir(this.dirName.pre()) match {
+    preDirName = this.dirName.pre();
+    context.maybeGetDir(preDirName) match {
     | None() -> None()
-    | Some(dir) -> Some(EHandle(this.keyType, this.type, dir.getDirName()))
+    | Some(_dir) -> Some(EHandle(this.keyType, this.type, preDirName))
     }
   }
 

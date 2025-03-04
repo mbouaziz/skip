@@ -1874,7 +1874,7 @@ class EagerDir{
     context.postpone(
       copy match {
       | Some(c) -> c
-      | _ -> CopyTo(this.getDirName(), target)
+      | _ -> CopyTo(this.dirName, target)
       },
     );
     context.setDir(this.dirName, this with {optCopy => Some((target, writer))});
@@ -2032,10 +2032,6 @@ class EagerDir{
       !current = current + 1;
     };
     keys
-  }
-
-  fun getDirName(): DirName {
-    this.dirName
   }
 
   fun removeSubDirs(context: mutable Context): void {

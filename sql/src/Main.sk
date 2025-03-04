@@ -653,11 +653,11 @@ fun execReplicationId(args: Cli.ParseResults, options: SKDB.Options): void {
     clientsDir = context.maybeGetDir(clientsDirname) match {
     | None() ->
       context.mkdir(SKStore.SID::keyType, SKStore.IntFile::type, clientsDirname)
-    | Some(d) ->
+    | Some(_d) ->
       SKStore.EHandle(
         SKStore.SID::keyType,
         SKStore.IntFile::type,
-        d.getDirName(),
+        clientsDirname,
       )
     };
     key = SKStore.SID::create(clientUuid);

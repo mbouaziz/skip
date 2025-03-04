@@ -118,10 +118,6 @@ class LazyDir private {
     keys
   }
 
-  fun getDirName(): DirName {
-    this.dirName
-  }
-
   fun isDeleted(): Bool {
     false
   }
