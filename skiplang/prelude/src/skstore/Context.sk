@@ -831,6 +831,7 @@ mutable class Context{
             dirtyReaders,
             parentName,
             parentMaps,
+            childName,
             child,
           )
         }

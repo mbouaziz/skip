@@ -922,6 +922,7 @@ class EagerDir{
   private static fun fixedMapData(
     context: mutable Context,
     oldVec: mutable Vector<(Path, MInfo)>,
+    parentName: DirName,
     parent: EagerDir,
     childName: DirName,
     timeStack: TimeStack,
@@ -941,7 +942,7 @@ class EagerDir{
         context,
         acc,
         oldVec,
-        parent.dirName,
+        parentName,
         childName,
         timeStack,
         key,
@@ -970,7 +971,7 @@ class EagerDir{
       context,
       acc,
       oldVec,
-      parent.dirName,
+      parentName,
       childName,
       timeStack,
       key,
@@ -982,6 +983,7 @@ class EagerDir{
   private static fun subMapData(
     obstack: Obstack,
     context: mutable Context,
+    parentName: DirName,
     parent: EagerDir,
     childName: DirName,
     timeStack: TimeStack,
@@ -1014,6 +1016,7 @@ class EagerDir{
         static::fixedMapData(
           context,
           oldVec,
+          parentName,
           parent,
           childName,
           timeStack,
@@ -1037,7 +1040,7 @@ class EagerDir{
         context,
         acc,
         oldVec,
-        parent.dirName,
+        parentName,
         childName,
         timeStack,
         key,
@@ -1055,6 +1058,7 @@ class EagerDir{
       static::fixedMapData(
         context,
         oldVec,
+        parentName,
         parent,
         childName,
         timeStack,
@@ -1073,6 +1077,7 @@ class EagerDir{
   private static fun mapData(
     context: mutable Context,
     oldVec: mutable Vector<(Path, MInfo)>,
+    parentName: DirName,
     parent: EagerDir,
     childName: DirName,
     timeStack: TimeStack,
@@ -1109,6 +1114,7 @@ class EagerDir{
           static::subMapData(
             obstack,
             context,
+            parentName,
             parent,
             childName,
             timeStack,
@@ -1189,8 +1195,9 @@ class EagerDir{
     context.leave(arrow);
   }
 
-  static fun isReusable(
+  private static fun isReusable(
     context: mutable Context,
+    childName: String,
     child: EagerDir,
     parents: FixedSingle<
       DirName,
@@ -1205,11 +1212,11 @@ class EagerDir{
   ): Bool {
     context.canReuse match {
     | CRAlways(except) ->
-      if (except.contains(child.dirName)) {
-        context.!canReuse = CRAlways(except.remove(child.dirName));
-        if (context.newDirs.contains(child.dirName)) {
-          context.!newDirs = context.newDirs.remove(child.dirName);
-          context.removeDir(child.dirName)
+      if (except.contains(childName)) {
+        context.!canReuse = CRAlways(except.remove(childName));
+        if (context.newDirs.contains(childName)) {
+          context.!newDirs = context.newDirs.remove(childName);
+          context.removeDir(childName)
         };
         false
       } else {
@@ -1221,7 +1228,7 @@ class EagerDir{
       if (same && child.creator != context.currentArrow()) {
         invariant_violation(
           "Duplicate subdirectory: " +
-            child.dirName.toString() +
+            childName.toString() +
             "\nFirst created: " +
             inspect(child.creator).toString() +
             "\nThen: " +
@@ -1280,7 +1287,7 @@ class EagerDir{
   ): void {
     context.unsafeMaybeGetEagerDir(childName) match {
     | Some(child) ->
-      if (static::isReusable(context, child, parents)) {
+      if (static::isReusable(context, childName, child, parents)) {
         static::reuseDir(context, childName);
         return void
       }
@@ -1329,6 +1336,7 @@ class EagerDir{
               static::mapData(
                 context,
                 oldVec,
+                parentName,
                 parent,
                 childName,
                 timeStack,
@@ -1341,6 +1349,7 @@ class EagerDir{
                 static::mapData(
                   context,
                   oldVec,
+                  parentName,
                   parent,
                   childName,
                   timeStack,
@@ -1419,7 +1428,7 @@ class EagerDir{
         purgeCount => 0,
       };
     };
-    context.setDir(parent.dirName, parent);
+    context.setDir(parentName, parent);
   }
 
   fun getArrayRaw(key: Key): Array<File> {
@@ -1558,16 +1567,16 @@ class EagerDir{
     parentMaps: Array<
       (MapFun, ?Array<KeyRange>, ?((mutable Context, SortedSet<Key>) ~> void)),
     >,
+    childName: DirName,
     childRef: EagerDir,
   ): void {
     parent = context.unsafeGetEagerDir(parentName);
-    childName = childRef.dirName;
     timeStack = childRef.timeStack;
 
     dirty = SortedSet[];
-    if (contextDirtyReaders.containsKey(parent.dirName)) {
-      if (contextDirtyReaders[parent.dirName].containsKey(childName)) {
-        keys = contextDirtyReaders[parent.dirName][childName].values();
+    if (contextDirtyReaders.containsKey(parentName)) {
+      if (contextDirtyReaders[parentName].containsKey(childName)) {
+        keys = contextDirtyReaders[parentName][childName].values();
         !dirty = withRegionFold(None(), keys, dirty, (_, key, dirtyInRegion) ~> {
           for (p in parentMaps) {
             (_, rangeOpt, _) = p;
@@ -1585,8 +1594,8 @@ class EagerDir{
         })
       }
     };
-    if (contextDirty.containsKey(parent.dirName)) {
-      keys = contextDirty[parent.dirName].values();
+    if (contextDirty.containsKey(parentName)) {
+      keys = contextDirty[parentName].values();
       !dirty = withRegionFold(None(), keys, dirty, (_, key, dirtyInRegion) ~> {
         for (p in parentMaps) {
           (_, rangeOpt, _) = p;
@@ -1649,13 +1658,13 @@ class EagerDir{
         !child = child.updateNewDirs(ctx, path, newDirs);
 
         for (read in reads) {
-          arrowKey = ArrowKey(parentName, child.dirName, key);
+          arrowKey = ArrowKey(parentName, childName, key);
           ctx.!deps = ctx.deps.set(read, arrowKey);
         };
 
         for (oldRead in oldInfo.getReads()) {
           if (reads.contains(oldRead)) continue;
-          arrowKey = ArrowKey(parentName, child.dirName, key);
+          arrowKey = ArrowKey(parentName, childName, key);
           ctx.!deps = ctx.deps.remove(oldRead, arrowKey);
         };
 
@@ -1683,7 +1692,7 @@ class EagerDir{
       },
     );
 
-    context.setDir(childRef.dirName, childRef);
+    context.setDir(childName, childRef);
 
     for (p in parentMaps) {
       (_, _, onUpdate) = p;
@@ -1908,7 +1917,7 @@ class EagerDir{
             | None() -> continue
             | Some(ranges) ->
               for (range in ranges) {
-                !slices = slices.add(range.start, range.end, childDir.dirName)
+                !slices = slices.add(range.start, range.end, child)
               }
             }
           }
