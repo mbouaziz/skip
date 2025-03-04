@@ -20,7 +20,7 @@ base class LazyResult {
 class LazyDir private {
   time: Time,
   timeStack: TimeStack,
-  dirName: DirName,
+  private dirName: DirName,
   data: SortedMap<Key, LazyResult> = SortedMap[],
   private lazyFun: ((mutable Context, Key) ~> LazyResult),
   collect: Bool,

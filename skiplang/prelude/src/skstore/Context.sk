@@ -818,7 +818,7 @@ mutable class Context{
         | Some(DeletedDir _) ->
           void
         | Some(child @ LazyDir _) ->
-          child.update(this, dirtyReaders.maybeGet(child.dirName))
+          child.update(this, dirtyReaders.maybeGet(childName))
         | Some(child @ EagerDir _) ->
           this.!toReset = this.toReset.set(parentName);
           parentMaps = child.parents.maybeGet(parentName) match {
