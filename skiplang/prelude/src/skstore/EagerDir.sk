@@ -1303,14 +1303,14 @@ class EagerDir{
       }
     });
 
-    globalName = "PRE_COMPUTED_" + childName;
+    // globalName = "PRE_COMPUTED_" + childName;
 
-    dir = context.getGlobal(globalName) match {
-    | Some(x @ EagerDir _) ->
-      invariant(x.creator == context.currentArrow());
-      context.removeGlobal(globalName);
-      x
-    | _ ->
+    dir = { // context.getGlobal(globalName) match
+      // | Some(x @ EagerDir _) ->
+      //   invariant(x.creator == context.currentArrow());
+      //   context.removeGlobal(globalName);
+      //   x
+      // | _ ->
       context.!newDirs = context.newDirs.add(childName);
 
       acc = mutable Vector[];
