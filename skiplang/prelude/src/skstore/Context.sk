@@ -959,8 +959,8 @@ mutable class Context{
   }
 
   mutable fun mkdir<K: Key, V: File>(
-    convKey: Key ~> K,
-    convValue: File ~> V,
+    keyClass: Concrete<K>,
+    valueClass: Concrete<V>,
     dirName: DirName,
     content: Array<(K, V)> = Array[],
     ignoreIfExists: Bool = false,
@@ -977,7 +977,7 @@ mutable class Context{
       optOnCreate,
       optOnDelete,
     );
-    EHandle(convKey, convValue, dirName)
+    EHandle(keyClass, valueClass, dirName)
   }
 
   mutable fun mkdirMulti(
