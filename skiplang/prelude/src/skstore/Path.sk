@@ -155,7 +155,7 @@ base class Key uses Orderable, Show {
     x
   }
 
-  deferred macro overridable static fun keyType(obj: Key): this {
+  macro overridable static fun keyType(obj: Key): this {
     obj match {
     | x @ #ThisClass _ -> x
     }
