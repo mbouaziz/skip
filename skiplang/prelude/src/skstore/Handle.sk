@@ -315,7 +315,7 @@ fun maxReducer(): EReducer<IntFile, IntFile> {
 /* The preferred way of accessing the file-system. */
 /*****************************************************************************/
 
-base class Handle<K: Key, +V: File>(
+base class Handle<K: Key & KeyConvertable, +V: File>(
   keyType: Key ~> K,
   type: File ~> V,
   dirName: DirName,
@@ -370,7 +370,18 @@ base class Handle<K: Key, +V: File>(
  */
 /*****************************************************************************/
 
-class LHandle<K: Key, +V: File> extends Handle<K, V> {
+class LHandle<K: Key & KeyConvertable, +V: File> extends Handle<K, V> {
+  static fun create0(
+    keyClass: Concrete<K>,
+    type: File ~> V,
+    context: mutable Context,
+    dirName: DirName,
+    f: (mutable Context, LHandle<K, V>, K) ~> Array<V>,
+    collect: Bool = true,
+  ): LHandle<K, V> {
+    static::create(keyClass::ofKey, type, context, dirName, f, collect)
+  }
+
   static fun create(
     keyType: Key ~> K,
     type: File ~> V,
@@ -414,8 +425,8 @@ type TMapFun<K, V, K2, V2> = (
   mutable NonEmptyIterator<V>,
 ) ~> void;
 
-class EHandle<K: Key, V: File> extends Handle<K, V> {
-  static fun multiMap<K2: Key, V2: File>(
+class EHandle<K: Key & KeyConvertable, V: File> extends Handle<K, V> {
+  static fun multiMap<K2: Key & KeyConvertable, V2: File>(
     typeOutputKey: Key ~> K2,
     typeOutput: File ~> V2,
     context: mutable Context,
@@ -459,7 +470,7 @@ class EHandle<K: Key, V: File> extends Handle<K, V> {
     EHandle(typeOutputKey, typeOutput, dirName)
   }
 
-  static fun multiMapReduce<K2: Key, V2: File, V3: File>(
+  static fun multiMapReduce<K2: Key & KeyConvertable, V2: File, V3: File>(
     typeOutputKey: Key ~> K2,
     typeOutput: File ~> V2,
     context: mutable Context,
@@ -519,7 +530,7 @@ class EHandle<K: Key, V: File> extends Handle<K, V> {
     EHandle(typeOutputKey, reducer.type, dirName)
   }
 
-  fun map<K2: Key, V2: File>(
+  fun map<K2: Key & KeyConvertable, V2: File>(
     typeKey: Key ~> K2,
     type: File ~> V2,
     context: mutable Context,
@@ -536,7 +547,7 @@ class EHandle<K: Key, V: File> extends Handle<K, V> {
     )
   }
 
-  fun mapReduce<K2: Key, V2: File, V3: File>(
+  fun mapReduce<K2: Key & KeyConvertable, V2: File, V3: File>(
     typeKey: Key ~> K2,
     type: File ~> V2,
     context: mutable Context,

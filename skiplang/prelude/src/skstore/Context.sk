@@ -958,7 +958,7 @@ mutable class Context{
     this.time
   }
 
-  mutable fun mkdir<K: Key, V: File>(
+  mutable fun mkdir<K: Key & KeyConvertable, V: File>(
     convKey: Key ~> K,
     convValue: File ~> V,
     dirName: DirName,

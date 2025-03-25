@@ -68,7 +68,7 @@ class DirName private (
   private dirName: String,
   private hashTag1: Int,
   private hashTag2: Int,
-) extends Key uses Hashable, Show {
+) extends Key uses Hashable, Show, KeyConvertable {
   private static fun create_no_validate(dirName: String): this {
     dirNameHash1 = hash(dirName);
     dirNameHash2 = hash((1, dirName));
@@ -150,6 +150,15 @@ class DirName private (
   }
 }
 
+trait KeyConvertable {
+  macro overridable static fun ofKey(obj: Key): inst {
+    obj match {
+    | x @ #ThisClass _ -> x
+    | _ -> invariant_violation(`Expected a {#ThisClassName}`)
+    }
+  }
+}
+
 base class Key uses Orderable, Show {
   static fun unTyped(x: Key): Key {
     x
@@ -179,31 +188,31 @@ base class Key uses Orderable, Show {
   }
 }
 
-class DirTag() extends Key {
+class DirTag() extends Key uses KeyConvertable {
   fun toString(): String {
     "DirTag()"
   }
 }
 
-class SizeTag() extends Key {
+class SizeTag() extends Key uses KeyConvertable {
   fun toString(): String {
     "SizeTag()"
   }
 }
 
-class FilesTag() extends Key {
+class FilesTag() extends Key uses KeyConvertable {
   fun toString(): String {
     "FilesTag()"
   }
 }
 
-class IsEmptyTag() extends Key {
+class IsEmptyTag() extends Key uses KeyConvertable {
   fun toString(): String {
     "IsEmptyTag()"
   }
 }
 
-class IID(value: Int) extends Key {
+class IID(value: Int) extends Key uses KeyConvertable {
   static fun create(key: String): IID {
     chars = Vector::mcreateFromItems(key.chars());
     chars.reverse();
@@ -224,7 +233,7 @@ class IID(value: Int) extends Key {
     this.value.toString()
   }
 }
-class SID(value: String) extends Key {
+class SID(value: String) extends Key uses KeyConvertable {
   static fun create(value: String): this {
     SID(value)
   }
