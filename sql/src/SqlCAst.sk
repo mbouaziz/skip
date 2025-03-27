@@ -65,7 +65,9 @@ class CJSON(value: SKJSON.CJSON) extends SKDB.CValue {
 /* Path interning for JSON. */
 /*****************************************************************************/
 
-class CStringFile(value: ?CString) extends SKStore.Key, SKStore.File
+class CStringFile(
+  value: ?CString,
+) extends SKStore.Key, SKStore.File uses SKStore.FileConvertable
 
 const internedCStringsDirName: SKStore.DirName = SKStore.DirName::create(
   "/json/interned_paths/",
@@ -82,11 +84,7 @@ const internedCStringsDir: SKStore.EHandle<
 fun initInternCStrings(context: mutable SKStore.Context): void {
   context.unsafeMaybeGetEagerDir(internedCStringsDirName) match {
   | None() ->
-    _ = context.mkdir(
-      SKStore.IID::keyType,
-      CStringFile::type,
-      internedCStringsDirName,
-    )
+    _ = context.mkdir(SKStore.IID, CStringFile, internedCStringsDirName)
   | Some(_) -> void
   }
 }
@@ -106,7 +104,9 @@ fun internCString(context: mutable SKStore.Context, string: String): ?CString {
 /* FieldNames interning for JSON. */
 /*****************************************************************************/
 
-class FieldNamesFile(value: Array<String>) extends SKStore.File
+class FieldNamesFile(
+  value: Array<String>,
+) extends SKStore.File uses SKStore.FileConvertable
 
 const internedFieldsDirName: SKStore.DirName = SKStore.DirName::create(
   "/json/interned/",
@@ -123,11 +123,7 @@ const internedFieldsDir: SKStore.EHandle<
 fun initInternFieldNames(context: mutable SKStore.Context): void {
   context.unsafeMaybeGetEagerDir(internedFieldsDirName) match {
   | None() ->
-    _ = context.mkdir(
-      SKStore.IID::keyType,
-      FieldNamesFile::type,
-      internedFieldsDirName,
-    )
+    _ = context.mkdir(SKStore.IID, FieldNamesFile, internedFieldsDirName)
   | Some(_) -> void
   }
 }

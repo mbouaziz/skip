@@ -21,7 +21,7 @@ class InputSource(
   /// actual file system (and sometimes maps to no file at all, as in
   /// the case of using the bootstrap `libstd.sklib`).
   path: String,
-) extends SKStore.Key uses Hashable, Show {
+) extends SKStore.Key uses Hashable, Show, SKStore.KeyConvertable {
   fun toString(): String {
     this.path
   }
@@ -37,7 +37,9 @@ const fileDir: SKStore.EHandle<
   fileDirName,
 );
 
-class InputPackageName(name: ?String) extends SKStore.Key uses Hashable
+class InputPackageName(
+  name: ?String,
+) extends SKStore.Key uses Hashable, SKStore.KeyConvertable
 
 class InputPackageFiles(
   /// Absolute path to the base directory of the package source. This
@@ -49,7 +51,7 @@ class InputPackageFiles(
   /// Relative (to `base_dir`) path and mtime for each source file of
   /// this package.
   srcs: Array<(String, Int)>,
-) extends SKStore.File
+) extends SKStore.File uses SKStore.FileConvertable
 
 // Contains all the packages the analysis of which has been kept so
 // far.

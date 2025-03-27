@@ -280,7 +280,7 @@ value class Tick(value: Int) uses Orderable, Show {
   }
 }
 
-class TickFile(value: Tick) extends File uses Orderable
+class TickFile(value: Tick) extends File uses Orderable, FileConvertable
 
 value class Time(value: Int) uses Orderable, Show {
   fun next(): this {
@@ -958,9 +958,9 @@ mutable class Context{
     this.time
   }
 
-  mutable fun mkdir<K: Key, V: File>(
-    convKey: Key ~> K,
-    convValue: File ~> V,
+  mutable fun mkdir<K: Key & KeyConvertable, V: File & FileConvertable>(
+    keyClass: Concrete<K>,
+    valueClass: Concrete<V>,
     dirName: DirName,
     content: Array<(K, V)> = Array[],
     ignoreIfExists: Bool = false,
@@ -977,7 +977,7 @@ mutable class Context{
       optOnCreate,
       optOnDelete,
     );
-    EHandle(convKey, convValue, dirName)
+    EHandle(keyClass::ofKey, valueClass::ofFile, dirName)
   }
 
   mutable fun mkdirMulti(

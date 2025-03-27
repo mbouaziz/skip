@@ -22,14 +22,18 @@ const kResourceInstance2SubIdDir: SKStore.DirName = SKStore.DirName::create(
   "/sk_prv/resources/instance2subid/",
 );
 
-class JSONID(json: SKJSON.CJSON) extends SKStore.Key {
+class JSONID(
+  json: SKJSON.CJSON,
+) extends SKStore.Key uses SKStore.KeyConvertable {
   //
   fun toString(): String {
     this.json.prettyPrint()
   }
 }
 
-class JSONFile(json: SKJSON.CJSON) extends SKStore.File
+class JSONFile(
+  json: SKJSON.CJSON,
+) extends SKStore.File uses SKStore.FileConvertable
 
 fun accReducer<V1: SKStore.File, V2: SKStore.File>(
   reducer: Reducer<V1, V2>,

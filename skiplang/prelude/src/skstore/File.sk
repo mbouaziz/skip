@@ -157,7 +157,7 @@ extension base class .Inspect {
 
 class VoidFile() extends File
 
-class IntFile(value: Int) extends File uses Orderable, Show {
+class IntFile(value: Int) extends File uses Orderable, Show, FileConvertable {
   fun +<T: Integral>(x: T): IntFile {
     !this.value = this.value + x;
     this
@@ -177,7 +177,7 @@ class BoolFile(value: Bool) extends File uses Orderable, Show {
   }
 }
 
-class StringFile(value: .String) extends File {
+class StringFile(value: .String) extends File uses FileConvertable {
   fun toKVString(_format: OutputFormat, key: Key): String {
     "" + escape(key.toString()) + "\t\"" + escape(this.value) + "\"\n"
   }
@@ -216,6 +216,14 @@ base class OutputFormat uses Orderable {
     invariant_violation(
       "Internal error: JS direct mode should never be printed",
     )
+}
+
+trait FileConvertable {
+  macro overridable static fun ofFile(obj: File): inst {
+    obj match {
+    | x @ #ThisClass _ -> x
+    }
+  }
 }
 
 base class File {

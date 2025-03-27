@@ -495,7 +495,7 @@ class SelectFile(
   cselect: CSelect,
   select: P.Select,
   queryParams: Map<String, P.Value>,
-) extends SKStore.File
+) extends SKStore.File uses SKStore.FileConvertable
 
 class Evaluator{options: Options, user: ?UserFile} {
   fun write(
@@ -1609,7 +1609,7 @@ class Evaluator{options: Options, user: ?UserFile} {
       return void;
     };
 
-    _ = context.mkdir(RowKey::keyType, RowValues::type, dirName);
+    _ = context.mkdir(RowKey, RowValues, dirName);
 
     context.writeChecker match {
     | None() -> void
@@ -2296,7 +2296,9 @@ class ReactiveQuery(
   fieldNames: Array<String>,
 ) extends SKStore.File
 
-class QueryInfoFile(value: ?QueryInfo) extends SKStore.File
+class QueryInfoFile(
+  value: ?QueryInfo,
+) extends SKStore.File uses SKStore.FileConvertable
 
 const reactiveQueriesDirName: SKStore.DirName = SKStore.DirName::create(
   "/queries/reactive/",
@@ -2314,11 +2316,7 @@ fun getReactiveQueryHandle(
 ) {
   context.maybeGetDir(reactiveQueriesDirName) match {
   | None() ->
-    handle = context.mkdir(
-      SKStore.IID::keyType,
-      QueryInfoFile::type,
-      reactiveQueriesDirName,
-    );
+    handle = context.mkdir(SKStore.IID, QueryInfoFile, reactiveQueriesDirName);
     selectDirs = handle.map(
       SKStore.IID::keyType,
       ReactiveQuery::type,

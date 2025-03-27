@@ -139,7 +139,7 @@ fun escapeString(o: String -> void, s: String): void {
   o("'")
 }
 
-base class Row extends SKStore.File {
+base class Row extends SKStore.File uses SKStore.FileConvertable {
   fun size(): Int;
   fun getInt(n: Int): ?Int;
   fun getFloat(n: Int): ?Float;

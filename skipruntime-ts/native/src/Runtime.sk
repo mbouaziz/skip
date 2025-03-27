@@ -22,7 +22,9 @@ class UseExternalResourceException() extends Exception {
   }
 }
 
-class Params(json: SKJSON.CJSON) extends SKStore.File uses Orderable {
+class Params(
+  json: SKJSON.CJSON,
+) extends SKStore.File uses Orderable, SKStore.FileConvertable {
   fun compare(other: Params): Order {
     this.json.compare(other.json)
   }
@@ -35,7 +37,10 @@ class ResourceCollections(
   value: SKStore.EHandle<SKStore.SID, ResourceInfo>,
 ) extends SKStore.File
 
-class ServiceDefinition(runId: String, service: Service) extends SKStore.File
+class ServiceDefinition(
+  runId: String,
+  service: Service,
+) extends SKStore.File uses SKStore.FileConvertable
 
 class Handle(value: SKStore.EHandle<JSONID, JSONFile>) extends SKStore.File
 
@@ -60,7 +65,7 @@ class ResourceCollection(value: Collection) extends SKStore.File
 class ResourceDef(
   name: String,
   params: SKJSON.CJSON,
-) extends SKStore.File, SKStore.Key {
+) extends SKStore.File, SKStore.Key uses SKStore.FileConvertable {
   //
   fun toString(): String {
     `${this.name}:${this.params.prettyPrint()}`
@@ -70,12 +75,12 @@ class ResourceDef(
 class ResourceStatus(
   loadable: SKStore.DirName,
   status: Status,
-) extends SKStore.File {}
+) extends SKStore.File uses SKStore.FileConvertable {}
 
 class ServiceFile(
   value: Map<String, Collection>,
   inputs: Map<String, Collection>,
-) extends SKStore.File
+) extends SKStore.File uses SKStore.FileConvertable
 
 base class Status(created: Int, modified: Int) uses Show {
   children =
@@ -104,13 +109,15 @@ base class Status(created: Int, modified: Int) uses Show {
   | Ok(created, modified) -> `Ok{created: ${created}, modified: ${modified}}`
 }
 
-class StatusFile(status: Status) extends SKStore.File
+class StatusFile(
+  status: Status,
+) extends SKStore.File uses SKStore.FileConvertable
 
 class RequestFile(
   timestamp: Int,
   resource: ResourceInfo,
   checker: ?Checker,
-) extends SKStore.File
+) extends SKStore.File uses SKStore.FileConvertable
 
 class RequestStatuses(statuses: Array<ResourceStatus>) extends SKStore.File {
   //
@@ -222,18 +229,8 @@ fun buildResourcesGraph(
 ): void {
   dirname = kResourceSessionDir;
   dDirname = dirname.sub("data");
-  resourcesHdl = context.mkdir(
-    SKStore.SID::keyType,
-    ResourceDef::type,
-    dirname,
-    Array[],
-  );
-  _ = context.mkdir(
-    SKStore.SID::keyType,
-    SKStore.IntFile::type,
-    kResourceGarbageDir,
-    Array[],
-  );
+  resourcesHdl = context.mkdir(SKStore.SID, ResourceDef, dirname, Array[]);
+  _ = context.mkdir(SKStore.SID, SKStore.IntFile, kResourceGarbageDir, Array[]);
   idbyresourceHdl = resourcesHdl.map(
     ResourceDef::keyType,
     SKStore.StringFile::type,
@@ -274,8 +271,8 @@ fun buildResourcesGraph(
         // Status graph
         sStatusHdl = context
           .mkdir(
-            SKStore.DirName::keyType,
-            StatusFile::type,
+            SKStore.DirName,
+            StatusFile,
             statusRef.sub("status"),
             Array[],
             true,
@@ -291,8 +288,8 @@ fun buildResourcesGraph(
           );
         _sRequestsHdl = context
           .mkdir(
-            SKStore.SID::keyType,
-            RequestFile::type,
+            SKStore.SID,
+            RequestFile,
             statusRef.sub("requests"),
             Array[],
             true,
@@ -359,8 +356,8 @@ fun initService(service: Service): Result<void, .Exception> {
   SKStore.runWithResult(context ~> {
     if (context.unsafeMaybeGetEagerDir(kSessionDir) is None()) {
       sessionHdl = context.mkdir(
-        SKStore.IID::keyType,
-        ServiceDefinition::type,
+        SKStore.IID,
+        ServiceDefinition,
         kSessionDir,
         Array[(SKStore.IID(0), ServiceDefinition(runId, service))],
       );
@@ -405,12 +402,7 @@ fun initService(service: Service): Result<void, .Exception> {
       );
       // Service status
       statusHdl = context
-        .mkdir(
-          SKStore.DirName::keyType,
-          StatusFile::type,
-          kSessionDir.sub("status"),
-          Array[],
-        )
+        .mkdir(SKStore.DirName, StatusFile, kSessionDir.sub("status"), Array[])
         .map(
           SKStore.IID::keyType,
           ResourceStatus::type,
@@ -599,8 +591,8 @@ fun useExternalCollection(
     paramsDir = dirName.sub("params");
     dataDir = dirName.sub("data");
     hdl = context.mkdir(
-      SKStore.IID::keyType,
-      Params::type,
+      SKStore.IID,
+      Params,
       paramsDir,
       Array[(SKStore.IID(0), Params(params))],
     );
@@ -613,8 +605,8 @@ fun useExternalCollection(
         instance = Ksuid::create().toString();
         storeDir = dirName.sub(base64(it.first.toString()));
         store = context.mkdir(
-          JSONID::keyType,
-          JSONFile::type,
+          JSONID,
+          JSONFile,
           storeDir,
           Array[],
           true,

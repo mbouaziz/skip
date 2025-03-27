@@ -44,8 +44,7 @@ fun setWatermark(
   checkpointTick: SKStore.Tick,
 ): void {
   watermarkDir = context.maybeGetDir(watermarks) match {
-  | None() ->
-    context.mkdir(SKStore.SID::keyType, SKStore.TickFile::type, watermarks)
+  | None() -> context.mkdir(SKStore.SID, SKStore.TickFile, watermarks)
   | Some(d) ->
     SKStore.EHandle(
       SKStore.SID::keyType,
@@ -66,8 +65,7 @@ fun resetWatermark(
   replicationSource: Int,
 ): void {
   watermarkDir = context.maybeGetDir(watermarks) match {
-  | None() ->
-    context.mkdir(SKStore.SID::keyType, SKStore.TickFile::type, watermarks)
+  | None() -> context.mkdir(SKStore.SID, SKStore.TickFile, watermarks)
   | Some(d) ->
     SKStore.EHandle(
       SKStore.SID::keyType,
@@ -87,7 +85,9 @@ base class ReplicationState {
   // to determine if this is a new-to-this-server client.
   | RSEstablished()
 }
-class ReplicationStateFile(state: ReplicationState) extends SKStore.File
+class ReplicationStateFile(
+  state: ReplicationState,
+) extends SKStore.File uses SKStore.FileConvertable
 
 fun getReplicationState(
   context: readonly SKStore.Context,
@@ -116,8 +116,8 @@ fun setReplicationState(
   state: ReplicationState,
 ): void {
   replicationDir = makeInputDir(
-    SKStore.IID::keyType,
-    ReplicationStateFile::type,
+    SKStore.IID,
+    ReplicationStateFile,
     context,
     replication,
   );
@@ -172,7 +172,7 @@ class DirDescr{
   alias: ?P.Name,
   isInput: Bool,
   view: Bool,
-} extends SKStore.File, Descr uses Orderable {
+} extends SKStore.File, Descr uses Orderable, SKStore.FileConvertable {
   fun compare(y: DirDescr): Order {
     this.name.compare(y.name)
   }
@@ -212,15 +212,21 @@ fun getDir(dirDescr: DirDescr): SKStore.EHandle<SKStore.Key, Row> {
   SKStore.EHandle(x ~> x, Row::type, dirDescr.dirName)
 }
 
-fun makeInputDir<K: SKStore.Key, T: SKStore.File>(
-  fromKey: SKStore.Key ~> K,
-  fromFile: SKStore.File ~> T,
+fun makeInputDir<
+  K: SKStore.Key & SKStore.KeyConvertable,
+  T: SKStore.File & SKStore.FileConvertable,
+>(
+  keyClass: Concrete<K>,
+  fileClass: Concrete<T>,
   context: mutable SKStore.Context,
   dirName: SKStore.DirName,
 ): SKStore.EHandle<K, T> {
   context.maybeGetDir(dirName) match {
-  | None() -> context.mkdir(fromKey, fromFile, dirName)
-  | Some(dir) -> SKStore.EHandle(fromKey, fromFile, dir.getDirName())
+  | None() -> context.mkdir(keyClass, fileClass, dirName)
+  | Some(dir) ->
+    fromKey = keyClass::ofKey;
+    fromFile = fileClass::ofFile;
+    SKStore.EHandle(fromKey, fromFile, dir.getDirName())
   };
 }
 
@@ -246,7 +252,7 @@ fun makeMapDir<
 fun getTableDir(
   context: mutable SKStore.Context,
 ): SKStore.EHandle<SKStore.SID, DirDescr> {
-  makeInputDir(SKStore.SID::keyType, DirDescr::type, context, tableInfo)
+  makeInputDir(SKStore.SID, DirDescr, context, tableInfo)
 }
 
 /*****************************************************************************/
@@ -385,7 +391,7 @@ class ShardStats(
   tick: SKStore.Tick,
   left: Int,
   right: Int,
-) extends SKStore.File
+) extends SKStore.File uses SKStore.FileConvertable
 
 /*****************************************************************************/
 /* Views. */
@@ -394,7 +400,7 @@ class ShardStats(
 fun getViewsDir(
   context: mutable SKStore.Context,
 ): SKStore.EHandle<SKStore.SID, SelectFile> {
-  makeInputDir(SKStore.SID::keyType, SelectFile::type, context, views)
+  makeInputDir(SKStore.SID, SelectFile, context, views)
 }
 
 /*****************************************************************************/
@@ -408,7 +414,7 @@ class SubRequestFile(
   cmd: SKStore.CmdKind,
   sessionID: Int,
   destinationSource: ?Int,
-) extends SKStore.File
+) extends SKStore.File uses SKStore.FileConvertable
 
 fun getSubsDirs(
   context: mutable SKStore.Context,
@@ -429,10 +435,10 @@ fun getSubsDirs(
     );
     return (input, output)
   };
-  input = context.mkdir(SKStore.SID::keyType, SubRequestFile::type, subsInput);
+  input = context.mkdir(SKStore.SID, SubRequestFile, subsInput);
   output = input.map(
-    SKStore.SID::keyType,
-    SKStore.IntFile::type,
+    SKStore.SID,
+    SKStore.IntFile,
     context,
     subsOutput,
     (context, writer, key, values) ~> {
@@ -554,7 +560,7 @@ module end;
 /*****************************************************************************/
 
 module SQLParser;
-extension class CreateIndex extends SKStore.File
+extension class CreateIndex extends SKStore.File uses SKStore.FileConvertable
 module end;
 
 module SKDB;
@@ -578,7 +584,7 @@ class IndexDescr{
 fun getIndexInputDir(
   context: mutable SKStore.Context,
 ): SKStore.EHandle<SKStore.SID, P.CreateIndex> {
-  makeInputDir(SKStore.SID::keyType, P.CreateIndex::type, context, indexInput)
+  makeInputDir(SKStore.SID, P.CreateIndex, context, indexInput)
 }
 
 fun getIndexOutputDir(

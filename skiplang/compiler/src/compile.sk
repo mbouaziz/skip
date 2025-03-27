@@ -187,7 +187,9 @@ fun ensureCompatibleLLVMVersion(): void {
   }
 }
 
-class TickConfigFile(value: (Int, Config.Config)) extends SKStore.File
+class TickConfigFile(
+  value: (Int, Config.Config),
+) extends SKStore.File uses SKStore.FileConvertable
 
 fun getOrInitializeBackend(
   context: mutable SKStore.Context,
@@ -200,20 +202,16 @@ fun getOrInitializeBackend(
   };
 
   _ = context.mkdir(
-    FileCache.InputSource::keyType,
-    SKStore.StringFile::type,
+    FileCache.InputSource,
+    SKStore.StringFile,
     FileCache.fileDirName,
   );
   _ = context.mkdir(
-    FileCache.InputPackageName::keyType,
-    FileCache.InputPackageFiles::type,
+    FileCache.InputPackageName,
+    FileCache.InputPackageFiles,
     FileCache.packageDirName,
   );
-  backendDir = context.mkdir(
-    SKStore.IID::keyType,
-    TickConfigFile::type,
-    backendDirName,
-  );
+  backendDir = context.mkdir(SKStore.IID, TickConfigFile, backendDirName);
 
   outerIst = OuterIstToIR.makeOuterIst(context);
 

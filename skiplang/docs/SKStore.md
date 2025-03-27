@@ -21,10 +21,8 @@ To create one, you must use the primitive `mkdir` and specify a type for both ke
 
 ```
 myInputDirectory =
-  context.mkdir(Type1::keyType, Type2::type, "/myInput/Name/")
+  context.mkdir(Type1, Type2, "/myInput/Name/")
 ```
-
-Note that the fields "keyType" and "type" are inherited when one extends `SKStore.Key` and `SKStore.File` respectively.
 
 Once a directory is created, one can modify it (add/remove):
 

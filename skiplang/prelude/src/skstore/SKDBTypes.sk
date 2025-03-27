@@ -35,12 +35,12 @@ base class CValue uses Orderable {
 class RowKey(
   row: RowValues,
   kinds: Array<(Int, SQLParser.IKind, SQLParser.Type)>,
-) extends SKStore.Key
+) extends SKStore.Key uses SKStore.KeyConvertable
 
 class RowValues(
   values: Array<?CValue>,
   repeat: Int,
-) uses Orderable extends SKStore.File
+) extends SKStore.File uses Orderable, SKStore.FileConvertable
 
 class IndexProjKey(
   row: RowValues,
