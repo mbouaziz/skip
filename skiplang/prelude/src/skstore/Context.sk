@@ -1011,7 +1011,7 @@ mutable class Context{
       }
     });
 
-    vector: mutable Vector<FixedRow<Array<File>>> = mutable Vector[];
+    vector: mutable Vector<FixedRow<Key, Array<File>>> = mutable Vector[];
     time = this.timeStamp();
 
     n = content.size();

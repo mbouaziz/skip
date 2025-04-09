@@ -20,8 +20,8 @@
 /*****************************************************************************/
 module SKStore;
 
-value class FixedRow<T>(
-  key: Key,
+value class FixedRow<K: Key, T>(
+  key: K,
   value: T,
   source: Path,
   tag: TickRange,
@@ -31,14 +31,14 @@ value class FixedRow<T>(
     this
   }
 
-  fun compare(other: FixedRow<T>): Order {
+  fun compare(other: FixedRow<K, T>): Order {
     (this.key, this.source).compare((other.key, other.source))
   }
 }
 
 base class FixedData<T> {
   fun size(): Int;
-  fun get(idx: Int): FixedRow<T>;
+  fun get(idx: Int): FixedRow<Key, T>;
   fun getPos(key: Key): Int;
   fun getArray(key: Key): Array<T>;
   fun getIter(key: Key): mutable Iterator<(Tick, Path, T)>;
@@ -46,7 +46,7 @@ base class FixedData<T> {
   fun getArraySourceKey(source: Path, key: Key): Array<T>;
   fun getIterSourceKey(source: Path, key: Key): mutable Iterator<T>;
   fun getChangesAfter(tick: Tick): SortedSet<Key>;
-  fun iterator(): mutable Iterator<FixedRow<T>>;
+  fun iterator(): mutable Iterator<FixedRow<Key, T>>;
 }
 
 // Assuming delta is monotone, that is, i <= j implies delta(i) <= delta(j),
@@ -117,9 +117,9 @@ fun assertUnique<T, U: Orderable>(
   };
 }
 
-class FixedDir<T: frozen> extends IFixedDir<T, FixedRow<T>> {
+class FixedDir<T: frozen> extends IFixedDir<T, FixedRow<Key, T>> {
   static fun create(
-    data: mutable Vector<FixedRow<T>> = mutable Vector[],
+    data: mutable Vector<FixedRow<Key, T>> = mutable Vector[],
   ): this {
     if (!data.isSorted()) {
       data.sort();
@@ -128,7 +128,7 @@ class FixedDir<T: frozen> extends IFixedDir<T, FixedRow<T>> {
     static{data => data.toArray()}
   }
 
-  protected fun decode(row: FixedRow<T>): FixedRow<T> {
+  protected fun decode(row: FixedRow<Key, T>): FixedRow<Key, T> {
     row
   }
 }
@@ -152,7 +152,7 @@ class CompactFixedDir protected {
   metadata: FixedDirMetadata,
 } extends IFixedDir<Array<File>, CompactRow<?SKDB.CValue>> {
   static fun create(
-    data: mutable Vector<FixedRow<Array<File>>>,
+    data: mutable Vector<FixedRow<Key, Array<File>>>,
     metadata: FixedDirMetadata,
   ): this {
     if (!data.isSorted()) {
@@ -165,7 +165,7 @@ class CompactFixedDir protected {
     }
   }
   protected static fun stripMetadata(
-    row: FixedRow<Array<File>>,
+    row: FixedRow<Key, Array<File>>,
   ): CompactRow<?SKDB.CValue> {
     invariant(row.value.size() == 1);
     sourceKey = if (row.source.baseName != row.key) {
@@ -182,15 +182,16 @@ class CompactFixedDir protected {
   }
   protected fun decode(
     compactRow: CompactRow<?SKDB.CValue>,
-  ): FixedRow<Array<File>> {
+  ): FixedRow<Key, Array<File>> {
     rowValues = SKDB.RowValues(compactRow.values, compactRow.repeat);
     rowKey = SKDB.RowKey(rowValues, this.metadata.kinds);
     sourceKey = compactRow.sourceKey match {
     | None() -> rowKey
     | Some(otherKey) -> otherKey
     };
+    fixedRowKey: Key = rowKey;
     FixedRow(
-      rowKey,
+      fixedRowKey,
       Array[(rowValues : File)],
       Path(this.metadata.sourceDir, sourceKey),
       compactRow.tag,
@@ -199,14 +200,14 @@ class CompactFixedDir protected {
 }
 
 //Defines the public interface of a FixedDir, allowing for some alternative
-// internal RowRepresentation of conceptually-FixedRow<T> rows.
+// internal RowRepresentation of conceptually-FixedRow<Key, T> rows.
 base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
   data: Array<RowRepresentation> = Array[],
 } extends FixedData<T> {
-  protected fun decode(repr: RowRepresentation): FixedRow<T>;
+  protected fun decode(repr: RowRepresentation): FixedRow<Key, T>;
 
   static fun createFixedData(
-    vec: mutable Vector<FixedRow<Array<File>>>,
+    vec: mutable Vector<FixedRow<Key, Array<File>>>,
   ): FixedData<Array<File>> {
     static::getMetadata(vec) match {
     | None() -> FixedDir::create(vec)
@@ -214,14 +215,14 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     }
   }
 
-  fun iterator(): mutable Iterator<FixedRow<T>> {
+  fun iterator(): mutable Iterator<FixedRow<Key, T>> {
     for (elt in this.data.iterator()) {
       yield this.decode(elt)
     }
   }
 
   private static fun getMetadata(
-    data: readonly Vector<FixedRow<Array<File>>>,
+    data: readonly Vector<FixedRow<Key, Array<File>>>,
   ): ?FixedDirMetadata {
     if (data.isEmpty()) return None();
     sourceDir: ?DirName = None();
@@ -256,7 +257,7 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     this.data.size()
   }
 
-  fun get(idx: Int): FixedRow<T> {
+  fun get(idx: Int): FixedRow<Key, T> {
     this.decode(this.data.unsafe_get(idx))
   }
 
@@ -297,12 +298,14 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     this.getIterSourceKey(source, key).collect(Array)
   }
 
-  protected static fun computeTags(array: mutable Vector<FixedRow<T>>): void {
+  protected static fun computeTags(
+    array: mutable Vector<FixedRow<Key, T>>,
+  ): void {
     _: TickRange = static::computeTags_(array, 0, array.size() - 1);
   }
 
   private static fun computeTags_(
-    array: mutable Vector<FixedRow<T>>,
+    array: mutable Vector<FixedRow<Key, T>>,
     i: Int,
     j: Int,
   ): TickRange {
