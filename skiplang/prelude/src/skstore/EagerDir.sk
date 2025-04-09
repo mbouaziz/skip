@@ -2064,6 +2064,10 @@ class EagerDir{
     this
   }
 
+  fun reverseTime(): this {
+    this with {time => SKStore.Time(-this.time.value)}
+  }
+
   fun updateNewDirs(
     context: mutable Context,
     source: Path,
