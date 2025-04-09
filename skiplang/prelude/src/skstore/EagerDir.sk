@@ -490,7 +490,10 @@ class DataMap{
   }
 }
 
-class FixedDataMap{data: FixedData<Key, Array<File>>, tombs: FixedDir<Path>} {
+class FixedDataMap{
+  data: FixedData<Key, Array<File>>,
+  tombs: FixedDir<Key, Path>,
+} {
   static fun create(
     vec: mutable Vector<FixedRow<Key, Array<File>>> = mutable Vector[],
     tombs: mutable Vector<FixedRow<Key, Path>> = mutable Vector[],
