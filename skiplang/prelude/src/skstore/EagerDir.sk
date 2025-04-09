@@ -130,7 +130,7 @@ class Reducer{
   }
 
   static fun makeCompactKeyIterator(
-    fixedData: FixedData<Array<File>>,
+    fixedData: FixedData<Key, Array<File>>,
     key: Key,
     current: mutable IntRef,
   ): Array<File> {
@@ -495,7 +495,7 @@ class DataMap{
   }
 }
 
-class FixedDataMap{data: FixedData<Array<File>>, tombs: FixedDir<Path>} {
+class FixedDataMap{data: FixedData<Key, Array<File>>, tombs: FixedDir<Path>} {
   static fun create(
     vec: mutable Vector<FixedRow<Key, Array<File>>> = mutable Vector[],
     tombs: mutable Vector<FixedRow<Key, Path>> = mutable Vector[],
