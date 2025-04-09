@@ -504,8 +504,8 @@ class FixedDataMap{
     tombs: mutable Vector<FixedRow<Key, Path>> = mutable Vector[],
   ): this {
     data = IFixedDir::getMetadata(vec) match {
-    | None() -> FixedDir::create(vec)
-    | Some(metadata) -> CompactFixedDir::create(vec, metadata)
+    | NoFixedDirMetadata() -> FixedDir::create(vec)
+    | metadata @ SQLFixedDirMetadata _ -> CompactFixedDir::create(vec, metadata)
     };
     static{data, tombs => FixedDir::create(tombs)}
   }
