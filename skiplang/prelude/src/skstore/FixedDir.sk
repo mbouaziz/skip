@@ -205,13 +205,22 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
 } extends FixedData<T> {
   protected fun decode(repr: RowRepresentation): FixedRow<T>;
 
+  static fun createFixedData(
+    vec: mutable Vector<FixedRow<Array<File>>>,
+  ): FixedData<Array<File>> {
+    static::getMetadata(vec) match {
+    | None() -> FixedDir::create(vec)
+    | Some(metadata) -> CompactFixedDir::create(vec, metadata)
+    }
+  }
+
   fun iterator(): mutable Iterator<FixedRow<T>> {
     for (elt in this.data.iterator()) {
       yield this.decode(elt)
     }
   }
 
-  static fun getMetadata(
+  private static fun getMetadata(
     data: readonly Vector<FixedRow<Array<File>>>,
   ): ?FixedDirMetadata {
     if (data.isEmpty()) return None();
