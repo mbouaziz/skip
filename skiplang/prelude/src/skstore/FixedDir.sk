@@ -150,9 +150,11 @@ class FixedDirMetadata{
 // out of the rows themselves.
 class CompactFixedDir protected {
   metadata: FixedDirMetadata,
-} extends IFixedDir<Key, Array<File>, CompactRow<?SKDB.CValue>> {
+} extends
+  IFixedDir<SKDB.RowKey, Array<SKDB.RowValues>, CompactRow<?SKDB.CValue>>,
+{
   static fun create(
-    data: mutable Vector<FixedRow<Key, Array<File>>>,
+    data: mutable Vector<FixedRow<SKDB.RowKey, Array<SKDB.RowValues>>>,
     metadata: FixedDirMetadata,
   ): this {
     if (!data.isSorted()) {
@@ -164,8 +166,9 @@ class CompactFixedDir protected {
       metadata => metadata,
     }
   }
+
   protected static fun stripMetadata(
-    row: FixedRow<Key, Array<File>>,
+    row: FixedRow<SKDB.RowKey, Array<SKDB.RowValues>>,
   ): CompactRow<?SKDB.CValue> {
     invariant(row.value.size() == 1);
     sourceKey = if (row.source.baseName != row.key) {
@@ -177,22 +180,21 @@ class CompactFixedDir protected {
     row.value[0] match {
     | SKDB.RowValues(values, repeat) ->
       CompactRow(values, repeat, row.tag, sourceKey)
-    | _ -> invariant_violation("Unexpected type")
     };
   }
+
   protected fun decode(
     compactRow: CompactRow<?SKDB.CValue>,
-  ): FixedRow<Key, Array<File>> {
+  ): FixedRow<SKDB.RowKey, Array<SKDB.RowValues>> {
     rowValues = SKDB.RowValues(compactRow.values, compactRow.repeat);
     rowKey = SKDB.RowKey(rowValues, this.metadata.kinds);
     sourceKey = compactRow.sourceKey match {
     | None() -> rowKey
     | Some(otherKey) -> otherKey
     };
-    fixedRowKey: Key = rowKey;
     FixedRow(
-      fixedRowKey,
-      Array[(rowValues : File)],
+      rowKey,
+      Array[rowValues],
       Path(this.metadata.sourceDir, sourceKey),
       compactRow.tag,
     )
@@ -217,14 +219,14 @@ base class IFixedDir<
   }
 
   static fun getMetadata(
-    data: readonly Vector<FixedRow<Key, Array<File>>>,
+    data: readonly Vector<FixedRow<SKDB.RowKey, Array<SKDB.RowValues>>>,
   ): ?FixedDirMetadata {
     possibleResult: ?FixedDirMetadata = None();
 
     for (elt in data) {
       if (elt.value.size() != 1) return None();
-      (elt.key, elt.value[0]) match {
-      | (SKDB.RowKey(row1, k), row2 @ SKDB.RowValues _) ->
+      elt.key match {
+      | SKDB.RowKey(row, k) ->
         possibleResult match {
         | None() ->
           !possibleResult = Some(
@@ -235,8 +237,7 @@ base class IFixedDir<
             return None()
           }
         };
-        if (row1 != row2) return None()
-      | _ -> return None()
+        if (row != elt.value[0]) return None()
       }
     };
     possibleResult
