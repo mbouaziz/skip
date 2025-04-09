@@ -48,7 +48,16 @@ base class FixedData<T> {
   fun getChangesAfter(tick: Tick): SortedSet<Key>;
   fun iterator(): mutable Iterator<FixedRow<T>>;
 
-  static fun getMetadata(
+  static fun createFixedData(
+    vec: mutable Vector<FixedRow<Array<File>>>,
+  ): FixedData<Array<File>> {
+    static::getMetadata(vec) match {
+    | None() -> FixedDir::create(vec)
+    | Some(metadata) -> CompactFixedDir::create(vec, metadata)
+    }
+  }
+
+  private static fun getMetadata(
     data: readonly Vector<FixedRow<Array<File>>>,
   ): ?FixedDirMetadata {
     if (data.isEmpty()) return None();
