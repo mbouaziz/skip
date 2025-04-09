@@ -513,15 +513,22 @@ class FixedDataMap{
   data: FixedData<Key, Array<File>>,
   tombs: FixedDir<Key, Path>,
 } {
+  // static fun createPossiblyCompact(
+  //   vec: mutable Vector<FixedRow<SKDB.RowKey, Array<SKDB.RowValues>>> = mutable Vector[],
+  //   tombs: mutable Vector<FixedRow<SKDB.RowKey, Path>> = mutable Vector[],
+  // ): this {
+  //   data = IFixedDir::getMetadata(vec) match {
+  //   | None() -> FixedDir::create(vec)
+  //   | Some(metadata) -> CompactFixedDir::create(vec, metadata)
+  //   };
+  //   static{data, tombs => FixedDir::create(tombs)}
+  // }
+
   static fun create(
-    vec: mutable Vector<FixedRow<Key, Array<File>>> = mutable Vector[],
+    data: mutable Vector<FixedRow<Key, Array<File>>> = mutable Vector[],
     tombs: mutable Vector<FixedRow<Key, Path>> = mutable Vector[],
   ): this {
-    data = IFixedDir::getMetadata(vec) match {
-    | None() -> FixedDir::create(vec)
-    | Some(metadata) -> CompactFixedDir::create(vec, metadata)
-    };
-    static{data, tombs => FixedDir::create(tombs)}
+    static{data => FixedDir::create(data), tombs => FixedDir::create(tombs)}
   }
 
   fun size(): Int {
