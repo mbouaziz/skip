@@ -20,19 +20,19 @@
 /*****************************************************************************/
 module SKStore;
 
-value class FixedRow<K: Orderable, T>(
+value class FixedRow<+K: Orderable, T>(
   key: K,
   value: T,
   source: Path,
   tag: TickRange,
-) uses Orderable {
+) {
   fun changeSource(source: Path): this {
     !this.source = source;
     this
   }
 
-  fun compare(other: FixedRow<K, T>): Order {
-    (this.key, this.source).compare((other.key, other.source))
+  fun orderKey(): (K, Path) {
+    (this.key, this.source)
   }
 }
 
@@ -162,8 +162,8 @@ class FixedDir<T: frozen> extends IFixedDir<T, FixedRow<Key, T>> {
   static fun create(
     data: mutable Vector<FixedRow<Key, T>> = mutable Vector[],
   ): this {
-    if (!data.isSorted()) {
-      data.sort();
+    if (!data.isSortedBy(row ~> row.orderKey())) {
+      data.sortBy(row ~> row.orderKey());
     };
     static::computeTags(data);
     static{data => data.toArray()}
@@ -196,8 +196,8 @@ class CompactFixedDir protected {
     data: mutable Vector<FixedRow<Key, Array<File>>>,
     metadata: FixedDirMetadata,
   ): this {
-    if (!data.isSorted()) {
-      data.sort();
+    if (!data.isSortedBy(row ~> row.orderKey())) {
+      data.sortBy(row ~> row.orderKey());
     };
     static::computeTags(data);
     static{
