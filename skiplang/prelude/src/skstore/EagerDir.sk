@@ -511,8 +511,8 @@ class DataMap{
 
 class FixedDataMap{data: FixedData<Array<File>>, tombs: FixedDir<Path>} {
   static fun create(
-    vec: mutable Vector<FixedRow<Array<File>>> = mutable Vector[],
-    tombs: mutable Vector<FixedRow<Path>> = mutable Vector[],
+    vec: mutable Vector<FixedRow<Key, Array<File>>> = mutable Vector[],
+    tombs: mutable Vector<FixedRow<Key, Path>> = mutable Vector[],
   ): this {
     data = IFixedDir::getMetadata(vec) match {
     | None() -> FixedDir::create(vec)
@@ -968,7 +968,7 @@ class EagerDir private {
     childName: DirName,
     timeStack: TimeStack,
     f: MapFun,
-    acc: mutable Vector<FixedRow<Array<File>>>,
+    acc: mutable Vector<FixedRow<Key, Array<File>>>,
     current: mutable IntRef,
   ): void {
     key = parent.fixedData.data[current.value].key;
@@ -1033,7 +1033,7 @@ class EagerDir private {
     start: ?Boundary<Key>,
     end: ?Key,
   ): (
-    readonly Vector<FixedRow<Array<File>>>,
+    readonly Vector<FixedRow<Key, Array<File>>>,
     readonly Vector<(Path, MInfo)>,
     ?Key,
     Int,
@@ -1119,7 +1119,7 @@ class EagerDir private {
     childName: DirName,
     timeStack: TimeStack,
     f: MapFun,
-    acc: mutable Vector<FixedRow<Array<File>>>,
+    acc: mutable Vector<FixedRow<Key, Array<File>>>,
     rangeOpt: ?KeyRange<Key>,
   ): void {
     last: ?Boundary<Key> = rangeOpt.map(range -> Inclusive(range.start));
@@ -1175,7 +1175,7 @@ class EagerDir private {
 
   private static fun mapRow(
     context: mutable Context,
-    acc: mutable Vector<FixedRow<Array<File>>>,
+    acc: mutable Vector<FixedRow<Key, Array<File>>>,
     oldVec: mutable Vector<(Path, MInfo)>,
     parentName: DirName,
     childName: DirName,
