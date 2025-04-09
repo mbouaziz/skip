@@ -158,7 +158,7 @@ fun assertUnique<T, U: Orderable>(
   };
 }
 
-class FixedDir<T: frozen> extends IFixedDir<T, FixedRow<Key, T>> {
+class FixedDir<T: frozen> extends IFixedDir<Key, T, FixedRow<Key, T>> {
   static fun create(
     data: mutable Vector<FixedRow<Key, T>> = mutable Vector[],
   ): this {
@@ -191,7 +191,7 @@ class FixedDirMetadata{
 // out of the rows themselves.
 class CompactFixedDir protected {
   metadata: FixedDirMetadata,
-} extends IFixedDir<Array<File>, CompactRow<?SKDB.CValue>> {
+} extends IFixedDir<Key, Array<File>, CompactRow<?SKDB.CValue>> {
   static fun create(
     data: mutable Vector<FixedRow<Key, Array<File>>>,
     metadata: FixedDirMetadata,
@@ -241,13 +241,13 @@ class CompactFixedDir protected {
 }
 
 //Defines the public interface of a FixedDir, allowing for some alternative
-// internal RowRepresentation of conceptually-FixedRow<Key, T> rows.
-base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
+// internal RowRepresentation of conceptually-FixedRow<K, T> rows.
+base class IFixedDir<K: Key, T: frozen, RowRepresentation: frozen> protected {
   data: Array<RowRepresentation> = Array[],
-} extends FixedData<Key, T> {
-  protected fun decode(repr: RowRepresentation): FixedRow<Key, T>;
+} extends FixedData<K, T> {
+  protected fun decode(repr: RowRepresentation): FixedRow<K, T>;
 
-  fun iterator(): mutable Iterator<FixedRow<Key, T>> {
+  fun iterator(): mutable Iterator<FixedRow<K, T>> {
     for (elt in this.data.iterator()) {
       yield this.decode(elt)
     }
@@ -257,19 +257,19 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     this.data.size()
   }
 
-  fun get(idx: Int): FixedRow<Key, T> {
+  fun get(idx: Int): FixedRow<K, T> {
     this.decode(this.data.unsafe_get(idx))
   }
 
-  fun getPos(key: Key): Int {
+  fun getPos(key: K): Int {
     binSearch(i ~> this.get(i).key, key, 0, this.size() - 1)
   }
 
-  fun getAll(key: Key): mutable Iterator<Int> {
+  fun getAll(key: K): mutable Iterator<Int> {
     findAll(i ~> this.get(i).key, key, 0, this.size() - 1)
   }
 
-  fun getAllSourceKey(source: Path, key: Key): mutable Iterator<Int> {
+  fun getAllSourceKey(source: Path, key: K): mutable Iterator<Int> {
     delta = i ~> {
       entry = this.get(i);
       c = key.compare(entry.key);
@@ -279,33 +279,33 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     findAllBy(delta, 0, this.size() - 1)
   }
 
-  fun getArray(key: Key): Array<T> {
+  fun getArray(key: K): Array<T> {
     this.getAll(key).map(i ~> this.get(i).value).collect(Array)
   }
 
-  fun getIter(key: Key): mutable Iterator<(Tick, Path, T)> {
+  fun getIter(key: K): mutable Iterator<(Tick, Path, T)> {
     this.getAll(key).map(i -> {
       elt = this.get(i);
       (elt.tag.current, elt.source, elt.value)
     })
   }
 
-  fun getIterSourceKey(source: Path, key: Key): mutable Iterator<T> {
+  fun getIterSourceKey(source: Path, key: K): mutable Iterator<T> {
     this.getAllSourceKey(source, key).map(i -> this.get(i).value)
   }
 
-  fun getArraySourceKey(source: Path, key: Key): Array<T> {
+  fun getArraySourceKey(source: Path, key: K): Array<T> {
     this.getIterSourceKey(source, key).collect(Array)
   }
 
   protected static fun computeTags(
-    array: mutable Vector<FixedRow<Key, T>>,
+    array: mutable Vector<FixedRow<K, T>>,
   ): void {
     _: TickRange = static::computeTags_(array, 0, array.size() - 1);
   }
 
   private static fun computeTags_(
-    array: mutable Vector<FixedRow<Key, T>>,
+    array: mutable Vector<FixedRow<K, T>>,
     i: Int,
     j: Int,
   ): TickRange {
@@ -324,7 +324,7 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
 
   private fun getChangesAcc(
     after: Tick,
-    acc: mutable Vector<Key>,
+    acc: mutable Vector<K>,
     i: Int,
     j: Int,
   ): void {
@@ -342,7 +342,7 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     this.getChangesAcc(after, acc, pivot + 1, j);
   }
 
-  fun getChangesAfter(tick: Tick): SortedSet<Key> {
+  fun getChangesAfter(tick: Tick): SortedSet<K> {
     acc = mutable Vector[];
     this.getChangesAcc(tick, acc, 0, this.data.size() - 1);
     result = SortedSet[];
@@ -354,7 +354,7 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
 
   private fun getKeyChangesAfter(
     after: Tick,
-    key: Key,
+    key: K,
     i: Int,
     j: Int,
     acc: mutable Vector<(Tick, Path, T)>,
@@ -379,7 +379,7 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     }
   }
 
-  fun getIterAfter(limit: Tick, key: Key): mutable Iterator<(Tick, Path, T)> {
+  fun getIterAfter(limit: Tick, key: K): mutable Iterator<(Tick, Path, T)> {
     acc = mutable Vector[];
     this.getKeyChangesAfter(limit, key, 0, this.data.size() - 1, acc);
     acc.iterator()
