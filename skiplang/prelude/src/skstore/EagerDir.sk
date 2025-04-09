@@ -391,16 +391,16 @@ class DataMapValue{
   }
 }
 
-class DataMap{
-  data: DMap<Key, DMap<Path, (Path, Array<File>)>> = Nil(),
-  tombs: DMap<Key, DMap<Path, Path>> = Nil(),
+class DataMap<K: Orderable>{
+  data: DMap<K, DMap<Path, (Path, Array<File>)>> = Nil(),
+  tombs: DMap<K, DMap<Path, Path>> = Nil(),
   nbrEntries: Int = 0,
 } {
   static fun empty(): this {
-    DataMap{}
+    static{}
   }
 
-  fun set(tick: Tick, key: Key, value: DataMapValue): this {
+  fun set(tick: Tick, key: K, value: DataMapValue): this {
     if (value.map.isEmpty()) {
       if (this.data.containsKey(key)) {
         !this.data = this.data.remove(key)
@@ -424,7 +424,7 @@ class DataMap{
     this
   }
 
-  fun maybeGet(k: Key): ?DataMapValue {
+  fun maybeGet(k: K): ?DataMapValue {
     (this.data.maybeGet(k), this.tombs.maybeGet(k)) match {
     | (None(), None()) -> None()
     | (Some(map), None()) -> Some(DataMapValue{map, tombs => DMap::empty()})
@@ -433,7 +433,7 @@ class DataMap{
     }
   }
 
-  fun eachWithTick(f: (Key, Tick) -> void): void {
+  fun eachWithTick(f: (K, Tick) -> void): void {
     dataIter = this.data.itemsWithTick();
     tombsIter = this.tombs.itemsWithTick();
     left = dataIter.next();
@@ -462,11 +462,11 @@ class DataMap{
     }
   }
 
-  fun getChangesAfter(tick: Tick): SortedSet<Key> {
+  fun getChangesAfter(tick: Tick): SortedSet<K> {
     this.data.getChangesAfter(tick).union(this.tombs.getChangesAfter(tick))
   }
 
-  fun items(): mutable Iterator<(Key, DataMapValue)> {
+  fun items(): mutable Iterator<(K, DataMapValue)> {
     dataIter = this.data.itemsWithTick();
     tombsIter = this.tombs.itemsWithTick();
     left = dataIter.next();
@@ -494,7 +494,7 @@ class DataMap{
     }
   }
 
-  fun keysAfter(lastSkippedOpt: ?Boundary<Key>): mutable Iterator<Key> {
+  fun keysAfter(lastSkippedOpt: ?Boundary<K>): mutable Iterator<K> {
     this.data.keysAfter(lastSkippedOpt)
   }
 
@@ -502,7 +502,7 @@ class DataMap{
     this.data.getHeight()
   }
 
-  fun remove(k: Key): this {
+  fun remove(k: K): this {
     !this.data = this.data.remove(k);
     !this.tombs = this.tombs.remove(k);
     this
@@ -657,7 +657,7 @@ class EagerDir private {
   totalSize: Int,
   creator: ?ArrowKey,
   fixedOld: FixedSourceMap = FixedSourceMap::empty(),
-  data: DataMap,
+  data: DataMap<Key>,
   old: SortedMap<Path, MInfo> = SortedMap[],
   parents: FixedSingle<
     DirName,
@@ -688,7 +688,7 @@ class EagerDir private {
     fixedData: FixedDataMap = FixedDataMap::create(),
     totalSize: Int,
     creator: ?ArrowKey,
-    data: DataMap = DataMap::empty(),
+    data: DataMap<Key> = DataMap::empty(),
     optOnDelete: ?Postponable = None(),
   }: this {
     static{
