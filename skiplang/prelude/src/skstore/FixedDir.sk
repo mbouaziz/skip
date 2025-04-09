@@ -49,11 +49,21 @@ base class FixedData<K: Key, T> {
   fun iterator(): mutable Iterator<FixedRow<K, T>>;
 
   static fun createFixedData(
-    vec: mutable Vector<FixedRow<Key, Array<File>>>,
-  ): FixedData<Key, Array<File>> {
+    vec: mutable Vector<FixedRow<K, Array<File>>>,
+  ): FixedData<K, Array<File>> {
     static::getMetadata(vec) match {
     | None() -> FixedDir::create(vec)
-    | Some(metadata) -> CompactFixedDir::create(vec, metadata)
+    | Some(metadata) ->
+      // This is to avoid a copy of the data in getMetadata even when almost
+      // all values are compact-able
+      skdbRowKeyVec = Unsafe.unsafeCast<
+        mutable Vector<FixedRow<K, Array<File>>>,
+        mutable Vector<FixedRow<SKDB.RowKey, Array<File>>>,
+      >(vec);
+      dir = CompactFixedDir::create(skdbRowKeyVec, metadata);
+      // This is to fill a hole in the type system, where we can't
+      // express that in this branch K = SKDB.RowKey
+      Unsafe.unsafeCast<CompactFixedDir, FixedData<K, Array<File>>>(dir)
     }
   }
 
@@ -191,9 +201,9 @@ class FixedDirMetadata{
 // out of the rows themselves.
 class CompactFixedDir protected {
   metadata: FixedDirMetadata,
-} extends IFixedDir<Key, Array<File>, CompactRow<?SKDB.CValue>> {
+} extends IFixedDir<SKDB.RowKey, Array<File>, CompactRow<?SKDB.CValue>> {
   static fun create(
-    data: mutable Vector<FixedRow<Key, Array<File>>>,
+    data: mutable Vector<FixedRow<SKDB.RowKey, Array<File>>>,
     metadata: FixedDirMetadata,
   ): this {
     if (!data.isSortedBy(row ~> row.orderKey())) {
@@ -223,16 +233,15 @@ class CompactFixedDir protected {
   }
   protected fun decode(
     compactRow: CompactRow<?SKDB.CValue>,
-  ): FixedRow<Key, Array<File>> {
+  ): FixedRow<SKDB.RowKey, Array<File>> {
     rowValues = SKDB.RowValues(compactRow.values, compactRow.repeat);
     rowKey = SKDB.RowKey(rowValues, this.metadata.kinds);
     sourceKey = compactRow.sourceKey match {
     | None() -> rowKey
     | Some(otherKey) -> otherKey
     };
-    fixedRowKey: Key = rowKey;
     FixedRow(
-      fixedRowKey,
+      rowKey,
       Array[(rowValues : File)],
       Path(this.metadata.sourceDir, sourceKey),
       compactRow.tag,
