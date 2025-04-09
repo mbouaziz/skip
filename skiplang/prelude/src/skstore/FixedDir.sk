@@ -47,6 +47,38 @@ base class FixedData<T> {
   fun getIterSourceKey(source: Path, key: Key): mutable Iterator<T>;
   fun getChangesAfter(tick: Tick): SortedSet<Key>;
   fun iterator(): mutable Iterator<FixedRow<T>>;
+
+  static fun getMetadata(
+    data: readonly Vector<FixedRow<Array<File>>>,
+  ): ?FixedDirMetadata {
+    if (data.isEmpty()) return None();
+    sourceDir: ?DirName = None();
+    kinds: ?Array<(Int, SQLParser.IKind, SQLParser.Type)> = None();
+
+    for (elt in data) {
+      if (elt.value.size() != 1) return None();
+      (elt.key, elt.value[0]) match {
+      | (SKDB.RowKey(row1, k), row2 @ SKDB.RowValues _) ->
+        kinds match {
+        | None() -> !kinds = Some(k)
+        | Some(k2) ->
+          if (k != k2) {
+            return None()
+          }
+        };
+        !sourceDir = sourceDir match {
+        | None() -> Some(elt.source.dirName)
+        | sd @ Some(dir) if (dir == elt.source.dirName) -> sd
+        | _ -> return None()
+        };
+        if (row1 != row2) return None()
+      | _ -> return None()
+      }
+    };
+    sourceDir.map(sourceDir ->
+      FixedDirMetadata{sourceDir, kinds => kinds.fromSome()}
+    )
+  }
 }
 
 // Assuming delta is monotone, that is, i <= j implies delta(i) <= delta(j),
@@ -209,38 +241,6 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     for (elt in this.data.iterator()) {
       yield this.decode(elt)
     }
-  }
-
-  static fun getMetadata(
-    data: readonly Vector<FixedRow<Array<File>>>,
-  ): ?FixedDirMetadata {
-    if (data.isEmpty()) return None();
-    sourceDir: ?DirName = None();
-    kinds: ?Array<(Int, SQLParser.IKind, SQLParser.Type)> = None();
-
-    for (elt in data) {
-      if (elt.value.size() != 1) return None();
-      (elt.key, elt.value[0]) match {
-      | (SKDB.RowKey(row1, k), row2 @ SKDB.RowValues _) ->
-        kinds match {
-        | None() -> !kinds = Some(k)
-        | Some(k2) ->
-          if (k != k2) {
-            return None()
-          }
-        };
-        !sourceDir = sourceDir match {
-        | None() -> Some(elt.source.dirName)
-        | sd @ Some(dir) if (dir == elt.source.dirName) -> sd
-        | _ -> return None()
-        };
-        if (row1 != row2) return None()
-      | _ -> return None()
-      }
-    };
-    sourceDir.map(sourceDir ->
-      FixedDirMetadata{sourceDir, kinds => kinds.fromSome()}
-    )
   }
 
   fun size(): Int {
