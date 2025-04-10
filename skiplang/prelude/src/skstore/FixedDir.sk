@@ -67,8 +67,8 @@ base class FixedData<K: Key, T> {
     }
   }
 
-  private static fun getMetadata(
-    data: readonly Vector<FixedRow<Key, Array<File>>>,
+  private static fun getMetadata<F: File>(
+    data: readonly Vector<FixedRow<Key, Array<F>>>,
   ): ?FixedDirMetadata {
     if (data.isEmpty()) return None();
     sourceDir: ?DirName = None();
