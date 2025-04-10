@@ -370,8 +370,8 @@ class DataMapValue<F>{
   }
 }
 
-class DataMap<K: Orderable>{
-  data: DMap<K, DMap<Path, (Path, Array<File>)>> = Nil(),
+class DataMap<K: Orderable, F>{
+  data: DMap<K, DMap<Path, (Path, Array<F>)>> = Nil(),
   tombs: DMap<K, DMap<Path, Path>> = Nil(),
   nbrEntries: Int = 0,
 } {
@@ -379,7 +379,7 @@ class DataMap<K: Orderable>{
     static{}
   }
 
-  fun set(tick: Tick, key: K, value: DataMapValue<File>): this {
+  fun set(tick: Tick, key: K, value: DataMapValue<F>): this {
     if (value.map.isEmpty()) {
       if (this.data.containsKey(key)) {
         !this.data = this.data.remove(key)
@@ -403,7 +403,7 @@ class DataMap<K: Orderable>{
     this
   }
 
-  fun maybeGet(k: K): ?DataMapValue<File> {
+  fun maybeGet(k: K): ?DataMapValue<F> {
     (this.data.maybeGet(k), this.tombs.maybeGet(k)) match {
     | (None(), None()) -> None()
     | (Some(map), None()) -> Some(DataMapValue{map, tombs => DMap::empty()})
@@ -445,7 +445,7 @@ class DataMap<K: Orderable>{
     this.data.getChangesAfter(tick).union(this.tombs.getChangesAfter(tick))
   }
 
-  fun items(): mutable Iterator<(K, DataMapValue<File>)> {
+  fun items(): mutable Iterator<(K, DataMapValue<F>)> {
     dataIter = this.data.itemsWithTick();
     tombsIter = this.tombs.itemsWithTick();
     left = dataIter.next();
@@ -648,7 +648,7 @@ class EagerDir private {
   totalSize: Int,
   creator: ?ArrowKey,
   fixedOld: FixedSourceMap = FixedSourceMap::empty(),
-  data: DataMap<Key>,
+  data: DataMap<Key, File>,
   old: SortedMap<Path, MInfo> = SortedMap[],
   parents: FixedSingle<
     DirName,
@@ -679,7 +679,7 @@ class EagerDir private {
     fixedData: FixedDataMap<Key, File> = FixedDataMap::create(),
     totalSize: Int,
     creator: ?ArrowKey,
-    data: DataMap<Key> = DataMap::empty(),
+    data: DataMap<Key, File> = DataMap::empty(),
     optOnDelete: ?Postponable = None(),
   }: this {
     static{
