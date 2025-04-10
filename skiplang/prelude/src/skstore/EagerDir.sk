@@ -294,8 +294,8 @@ native fun unixNotify(String, Int32): Int32;
 /* The map containing the new data. */
 /*****************************************************************************/
 
-class DataMapValue{
-  map: DMap<Path, (Path, Array<File>)> = DMap::empty(),
+class DataMapValue<F>{
+  map: DMap<Path, (Path, Array<F>)> = DMap::empty(),
   tombs: DMap<Path, Path> = DMap::empty(),
 } {
   static fun empty(): this {
@@ -311,7 +311,7 @@ class DataMapValue{
     isMasking: Bool,
     origSource: Path,
     writer: Path, // different to origSource when explicitly tombstoning
-    files: Array<File>,
+    files: Array<F>,
   ): this {
     if (files.isEmpty()) {
       if (isMasking) {
@@ -333,9 +333,7 @@ class DataMapValue{
     this
   }
 
-  fun itemsAfter(
-    limit: Tick,
-  ): mutable Iterator<(Tick, Path, Path, Array<File>)> {
+  fun itemsAfter(limit: Tick): mutable Iterator<(Tick, Path, Path, Array<F>)> {
     mapIter = this.map.getChangesAfterIter(limit);
     tombsIter = this.tombs.getChangesAfterIter(limit);
     left = mapIter.next();
@@ -363,7 +361,7 @@ class DataMapValue{
     }
   }
 
-  fun items(): mutable Iterator<(Tick, Path, Path, Array<File>)> {
+  fun items(): mutable Iterator<(Tick, Path, Path, Array<F>)> {
     mapIter = this.map.itemsWithTick();
     tombsIter = this.tombs.itemsWithTick();
     left = mapIter.next();
@@ -391,7 +389,7 @@ class DataMapValue{
     }
   }
 
-  fun maybeGet(source: Path): ?Array<File> {
+  fun maybeGet(source: Path): ?Array<F> {
     this.map.maybeGet(source) match {
     | None() -> if (this.tombs.containsKey(source)) Some(Array[]) else None()
     | Some(x) -> Some(x.i1)
@@ -408,7 +406,7 @@ class DataMap<K: Orderable> private {
     static{}
   }
 
-  fun set(tick: Tick, key: K, value: DataMapValue): this {
+  fun set(tick: Tick, key: K, value: DataMapValue<File>): this {
     if (value.map.isEmpty()) {
       if (this.data.containsKey(key)) {
         !this.data = this.data.remove(key)
@@ -432,7 +430,7 @@ class DataMap<K: Orderable> private {
     this
   }
 
-  fun maybeGet(k: K): ?DataMapValue {
+  fun maybeGet(k: K): ?DataMapValue<File> {
     (this.data.maybeGet(k), this.tombs.maybeGet(k)) match {
     | (None(), None()) -> None()
     | (Some(map), None()) -> Some(DataMapValue{map, tombs => DMap::empty()})
@@ -474,7 +472,7 @@ class DataMap<K: Orderable> private {
     this.data.getChangesAfter(tick).union(this.tombs.getChangesAfter(tick))
   }
 
-  fun items(): mutable Iterator<(K, DataMapValue)> {
+  fun items(): mutable Iterator<(K, DataMapValue<File>)> {
     dataIter = this.data.itemsWithTick();
     tombsIter = this.tombs.itemsWithTick();
     left = dataIter.next();
