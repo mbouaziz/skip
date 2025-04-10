@@ -56,11 +56,11 @@ base class FixedData<K: Key, T> {
     | Some(metadata) ->
       // This is to avoid a copy of the data in getMetadata even when almost
       // all values are compact-able
-      skdbRowKeyVec = Unsafe.unsafeCast<
+      skdbVec = Unsafe.unsafeCast<
         mutable Vector<FixedRow<K, Array<File>>>,
-        mutable Vector<FixedRow<SKDB.RowKey, Array<File>>>,
+        mutable Vector<FixedRow<SKDB.RowKey, Array<SKDB.RowValues>>>,
       >(vec);
-      dir = CompactFixedDir::create(skdbRowKeyVec, metadata);
+      dir = CompactFixedDir::create(skdbVec, metadata);
       // This is to fill a hole in the type system, where we can't
       // express that in this branch K = SKDB.RowKey
       Unsafe.unsafeCast<CompactFixedDir, FixedData<K, Array<File>>>(dir)
@@ -201,9 +201,11 @@ class FixedDirMetadata{
 // out of the rows themselves.
 class CompactFixedDir protected {
   metadata: FixedDirMetadata,
-} extends IFixedDir<SKDB.RowKey, Array<File>, CompactRow<?SKDB.CValue>> {
+} extends
+  IFixedDir<SKDB.RowKey, Array<SKDB.RowValues>, CompactRow<?SKDB.CValue>>,
+{
   static fun create(
-    data: mutable Vector<FixedRow<SKDB.RowKey, Array<File>>>,
+    data: mutable Vector<FixedRow<SKDB.RowKey, Array<SKDB.RowValues>>>,
     metadata: FixedDirMetadata,
   ): this {
     if (!data.isSortedBy(row ~> row.orderKey())) {
@@ -216,7 +218,7 @@ class CompactFixedDir protected {
     }
   }
   protected static fun stripMetadata(
-    row: FixedRow<Key, Array<File>>,
+    row: FixedRow<Key, Array<SKDB.RowValues>>,
   ): CompactRow<?SKDB.CValue> {
     invariant(row.value.size() == 1);
     sourceKey = if (row.source.baseName != row.key) {
@@ -228,12 +230,11 @@ class CompactFixedDir protected {
     row.value[0] match {
     | SKDB.RowValues(values, repeat) ->
       CompactRow(values, repeat, row.tag, sourceKey)
-    | _ -> invariant_violation("Unexpected type")
     };
   }
   protected fun decode(
     compactRow: CompactRow<?SKDB.CValue>,
-  ): FixedRow<SKDB.RowKey, Array<File>> {
+  ): FixedRow<SKDB.RowKey, Array<SKDB.RowValues>> {
     rowValues = SKDB.RowValues(compactRow.values, compactRow.repeat);
     rowKey = SKDB.RowKey(rowValues, this.metadata.kinds);
     sourceKey = compactRow.sourceKey match {
@@ -242,7 +243,7 @@ class CompactFixedDir protected {
     };
     FixedRow(
       rowKey,
-      Array[(rowValues : File)],
+      Array[rowValues],
       Path(this.metadata.sourceDir, sourceKey),
       compactRow.tag,
     )
