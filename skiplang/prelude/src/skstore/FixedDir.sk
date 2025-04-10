@@ -48,22 +48,22 @@ base class FixedData<K: Key, T> {
   fun getChangesAfter(tick: Tick): SortedSet<K>;
   fun iterator(): mutable Iterator<FixedRow<K, T>>;
 
-  static fun createFixedData(
-    vec: mutable Vector<FixedRow<K, Array<File>>>,
-  ): FixedData<K, Array<File>> {
+  static fun createFixedData<F: File>(
+    vec: mutable Vector<FixedRow<K, Array<F>>>,
+  ): FixedData<K, Array<F>> {
     static::getMetadata(vec) match {
     | None() -> FixedDir::create(vec)
     | Some(metadata) ->
       // This is to avoid a copy of the data in getMetadata even when almost
       // all values are compact-able
       skdbVec = Unsafe.unsafeCast<
-        mutable Vector<FixedRow<K, Array<File>>>,
+        mutable Vector<FixedRow<K, Array<F>>>,
         mutable Vector<FixedRow<SKDB.RowKey, Array<SKDB.RowValues>>>,
       >(vec);
       dir = CompactFixedDir::create(skdbVec, metadata);
       // This is to fill a hole in the type system, where we can't
-      // express that in this branch K = SKDB.RowKey
-      Unsafe.unsafeCast<CompactFixedDir, FixedData<K, Array<File>>>(dir)
+      // express that in this branch K = SKDB.RowKey and F = SKDB.RowValues
+      Unsafe.unsafeCast<CompactFixedDir, FixedData<K, Array<F>>>(dir)
     }
   }
 
