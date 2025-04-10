@@ -76,7 +76,7 @@ class Reducer<K: Key>{
   fixed: Array<(K, Array<File>)>,
   modified: SortedMap<K, Array<File>>,
 } {
-  static fun create(fixedData: FixedDataMap<K>, reducer: IReducer): this {
+  static fun create(fixedData: FixedDataMap<K, File>, reducer: IReducer): this {
     acc = mutable Vector[];
     modified = SortedMap[];
     current = mutable IntRef(0);
@@ -495,12 +495,12 @@ class DataMap<K: Key>{
   }
 }
 
-class FixedDataMap<K: Key>{
-  data: FixedData<K, Array<File>>,
+class FixedDataMap<K: Key, F: File>{
+  data: FixedData<K, Array<F>>,
   tombs: FixedDir<K, Path>,
 } {
   static fun create(
-    vec: mutable Vector<FixedRow<K, Array<File>>> = mutable Vector[],
+    vec: mutable Vector<FixedRow<K, Array<F>>> = mutable Vector[],
     tombs: mutable Vector<FixedRow<K, Path>> = mutable Vector[],
   ): this {
     data = FixedData::createFixedData(vec);
@@ -515,7 +515,7 @@ class FixedDataMap<K: Key>{
     this.data.getChangesAfter(tick).union(this.tombs.getChangesAfter(tick))
   }
 
-  fun getIterAll(): mutable Iterator<(Tick, Path, Path, K, Array<File>)> {
+  fun getIterAll(): mutable Iterator<(Tick, Path, Path, K, Array<F>)> {
     iter1 = this.data.iterator();
     iter2 = this.tombs.data.iterator();
     left = iter1.next();
@@ -543,7 +543,7 @@ class FixedDataMap<K: Key>{
     }
   }
 
-  fun getIter(key: K): mutable Iterator<(Tick, Path, Path, Array<File>)> {
+  fun getIter(key: K): mutable Iterator<(Tick, Path, Path, Array<F>)> {
     iter1 = this.data.getIter(key);
     iter2 = this.tombs.getIter(key);
     left = iter1.next();
@@ -574,7 +574,7 @@ class FixedDataMap<K: Key>{
   fun getIterAfter(
     tick: Tick,
     key: K,
-  ): mutable Iterator<(Tick, Path, Path, Array<File>)> {
+  ): mutable Iterator<(Tick, Path, Path, Array<F>)> {
     iter1 = this.data.getIterAfter(tick, key);
     iter2 = this.tombs.getIterAfter(tick, key);
     left = iter1.next();
@@ -636,7 +636,7 @@ class EagerDir private {
   timeStack: TimeStack,
   dirName: DirName,
   input: Bool,
-  fixedData: FixedDataMap<Key>,
+  fixedData: FixedDataMap<Key, File>,
   totalSize: Int,
   creator: ?ArrowKey,
   fixedOld: FixedSourceMap = FixedSourceMap::empty(),
@@ -664,7 +664,7 @@ class EagerDir private {
     timeStack: TimeStack,
     dirName: DirName,
     input: Bool,
-    fixedData: FixedDataMap<Key>,
+    fixedData: FixedDataMap<Key, File>,
     totalSize: Int,
     creator: ?ArrowKey,
     data: DataMap<Key> = DataMap::empty(),
@@ -799,7 +799,7 @@ class EagerDir private {
     FixedSourceMap::create(acc)
   }
 
-  private fun flattenData(limit: Tick): FixedDataMap<Key> {
+  private fun flattenData(limit: Tick): FixedDataMap<Key, File> {
     withRegionValue(() ~> {
       fixedIter = FixedDataMapIterator::create(this.fixedData.getIterAll());
       data = Vector::mcreate(
