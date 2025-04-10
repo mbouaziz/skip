@@ -517,25 +517,31 @@ class DataMap<K: Orderable> private {
   }
 }
 
-class FixedDataMap<K: Orderable>{
-  data: FixedData<K, Array<File>>,
+class FixedDataMap<K: Orderable, F: frozen>{
+  data: FixedData<K, Array<F>>,
   tombs: FixedDir<K, Path>,
 } {
-  // static fun createPossiblyCompact(
-  //   vec: mutable Vector<FixedRow<SKDB.RowKey, Array<SKDB.RowValues>>> = mutable Vector[],
-  //   tombs: mutable Vector<FixedRow<SKDB.RowKey, Path>> = mutable Vector[],
-  // ): FixedDataMap<SKDB.RowKey> {
-  //   data = IFixedDir::getMetadata(vec) match {
-  //   | None() -> FixedDir::create(vec)
-  //   | Some(metadata) -> CompactFixedDir::create(vec, metadata)
-  //   };
-  //   static{data, tombs => FixedDir::create(tombs)}
-  // }
-  static fun create<V: File>(
-    vec: mutable Vector<FixedRow<K, Array<V>>> = mutable Vector[],
+  static fun createPossiblyCompact[K: SKDB.RowKey, F: SKDB.RowValues](
+    vec: mutable Vector<
+      FixedRow<SKDB.RowKey, Array<SKDB.RowValues>>,
+    > = mutable Vector[],
+    tombs: mutable Vector<FixedRow<SKDB.RowKey, Path>> = mutable Vector[],
+  ): FixedDataMap<SKDB.RowKey, SKDB.RowValues> {
+    data = IFixedDir::getMetadata(vec) match {
+    | None() -> FixedDir::create(vec)
+    | Some(metadata) -> CompactFixedDir::create(vec, metadata)
+    };
+    FixedDataMap<SKDB.RowKey, SKDB.RowValues>{
+      data,
+      tombs => FixedDir::create(tombs),
+    }
+  }
+
+  static fun create(
+    vec: mutable Vector<FixedRow<K, Array<F>>> = mutable Vector[],
     tombs: mutable Vector<FixedRow<K, Path>> = mutable Vector[],
   ): this {
-    data = FixedDir<K, Array<File>>::create(vec);
+    data = FixedDir<K, Array<F>>::create(vec);
     static{data, tombs => FixedDir::create(tombs)}
   }
 
@@ -547,7 +553,7 @@ class FixedDataMap<K: Orderable>{
     this.data.getChangesAfter(tick).union(this.tombs.getChangesAfter(tick))
   }
 
-  fun getIterAll(): mutable Iterator<(Tick, Path, Path, K, Array<File>)> {
+  fun getIterAll(): mutable Iterator<(Tick, Path, Path, K, Array<F>)> {
     iter1 = this.data.iterator();
     iter2 = this.tombs.data.iterator();
     left = iter1.next();
@@ -575,7 +581,7 @@ class FixedDataMap<K: Orderable>{
     }
   }
 
-  fun getIter(key: K): mutable Iterator<(Tick, Path, Path, Array<File>)> {
+  fun getIter(key: K): mutable Iterator<(Tick, Path, Path, Array<F>)> {
     iter1 = this.data.getIter(key);
     iter2 = this.tombs.getIter(key);
     left = iter1.next();
@@ -606,7 +612,7 @@ class FixedDataMap<K: Orderable>{
   fun getIterAfter(
     tick: Tick,
     key: K,
-  ): mutable Iterator<(Tick, Path, Path, Array<File>)> {
+  ): mutable Iterator<(Tick, Path, Path, Array<F>)> {
     iter1 = this.data.getIterAfter(tick, key);
     iter2 = this.tombs.getIterAfter(tick, key);
     left = iter1.next();
@@ -665,7 +671,7 @@ mutable class FixedDataMapIterator<T> private {
 
 class EagerDir protected {
   input: Bool,
-  private fixedData: FixedDataMap<Key>,
+  private fixedData: FixedDataMap<Key, File>,
   private totalSize: Int,
   creator: ?ArrowKey,
   private fixedOld: FixedSourceMap = FixedSourceMap::empty(),
@@ -692,7 +698,7 @@ class EagerDir protected {
     timeStack: TimeStack,
     dirName: DirName,
     input: Bool,
-    fixedData: FixedDataMap<Key> = FixedDataMap::create(),
+    fixedData: FixedDataMap<Key, File> = FixedDataMap::create(),
     creator: ?ArrowKey,
     data: DataMap<Key> = DataMap::empty(),
     optOnDelete: ?Postponable = None(),
@@ -841,7 +847,7 @@ class EagerDir protected {
     FixedSourceMap::create(acc)
   }
 
-  private fun flattenData(limit: Tick): FixedDataMap<Key> {
+  private fun flattenData(limit: Tick): FixedDataMap<Key, File> {
     withRegionValue(() ~> {
       fixedIter = FixedDataMapIterator::create(this.fixedData.getIterAll());
       data = Vector::mcreate(
