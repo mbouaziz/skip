@@ -31,7 +31,7 @@ value class FilterRange private (ranges: Array<KeyRange>, max: Key) {
       for (range in ranges) {
         if (range.end > maxKey) !maxKey = range.end;
       };
-      Some(FilterRange(ranges.sorted(), maxKey))
+      Some(FilterRange(ranges.sortedBy(r ~> r.orderKey()), maxKey))
     }
   }
 }
