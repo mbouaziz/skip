@@ -189,7 +189,10 @@ mutable class IntRef(mutable value: Int) {
 /* Ranges. */
 /*****************************************************************************/
 
-value class KeyRange<K: Orderable & Show> private {start: K, end: K} uses Show {
+value class KeyRange<+K: Orderable & Show> private {
+  start: K,
+  end: K,
+} uses Show {
   static fun create(start: K, end: K): this {
     invariant(start <= end);
     static{start, end}
