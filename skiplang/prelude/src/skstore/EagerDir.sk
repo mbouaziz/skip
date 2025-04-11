@@ -658,7 +658,9 @@ mutable class FixedDataMapIterator<T> private {
 /* An Eager Directory. */
 /*****************************************************************************/
 
-class EagerDir private {
+class EagerDir extends IEagerDir
+
+base class IEagerDir private final {
   time: Time,
   timeStack: TimeStack,
   dirName: DirName,
@@ -701,7 +703,7 @@ class EagerDir private {
     data: DataMap<Key, File> = DataMap::empty(),
     optOnDelete: ?Postponable = None(),
   }: this {
-    static{
+    EagerDir{
       time,
       timeStack,
       dirName,
