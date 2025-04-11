@@ -132,3 +132,13 @@ SkipInt SKIP_isEq(char* obj1, char* obj2) {
 uint32_t SKIP_unsafe_compare_sets(char* obj1, char* obj2) {
   return (obj1 == obj2);
 }
+
+uint32_t SKIP_is_same_type(char* obj1, char* obj2) {
+  SKIP_gc_type_t* ty1 = get_gc_type(obj1);
+  SKIP_gc_type_t* ty2 = get_gc_type(obj2);
+  return ty1 == ty2;
+}
+
+void* SKIP_unsafe_cast(void* obj) {
+  return obj;
+}

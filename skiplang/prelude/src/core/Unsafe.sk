@@ -100,4 +100,46 @@ native fun array_set_byte<T>(v: mutable Array<T>, i: Int, b: UInt8): void;
 @cpp_extern
 native fun string_ptr(v: String, i: Int): Runtime.NonGCPointer;
 
+/*
+ * The following functions are used to fill a gap in the type system and
+ * the backend where we need to be able to downcast from a base type to
+ * a generic derived type.
+ */
+
+@cpp_extern("SKIP_is_same_type")
+native fun isSameType<Base, Lower: Base>(b: Base, l: Lower): Bool;
+
+@cpp_extern("SKIP_unsafe_cast")
+native fun unsafeDownCast<Base, Lower: Base>(v: Base): Lower;
+
+trait Downcastable {
+  static fun witnessInstance(): inst;
+}
+
+fun instanceOf<Base: Downcastable, Concret: Base>(
+  v: Base,
+  c: Concrete<Concret>,
+): Bool {
+  isSameType(v, c::witnessInstance())
+}
+
+fun maybeDownCast<Base: Downcastable, Concret: Base>(
+  v: Base,
+  c: Concrete<Concret>,
+): ?Concret {
+  if (instanceOf(v, c)) {
+    Some(unsafeDownCast<Base, Concret>(v))
+  } else {
+    None()
+  }
+}
+
+fun downCast<Base: Downcastable, Concret: Base>(
+  v: Base,
+  c: Concrete<Concret>,
+): Concret {
+  invariant(instanceOf(v, c), "invalid cast");
+  unsafeDownCast<Base, Concret>(v);
+}
+
 module end;
