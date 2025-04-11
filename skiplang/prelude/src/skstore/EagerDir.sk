@@ -658,6 +658,8 @@ mutable class FixedDataMapIterator<T> private {
 /* An Eager Directory. */
 /*****************************************************************************/
 
+base class IEagerDir extends Dir
+
 class EagerDir private {
   time: Time,
   timeStack: TimeStack,
@@ -689,7 +691,7 @@ class EagerDir private {
     ?(DirName, Key, readonly Context ~> Array<File>) ~> Postponable,
   ) = None(),
   optOnDelete: ?Postponable = None(),
-} extends Dir {
+} extends IEagerDir {
   static fun create{
     time: Time,
     timeStack: TimeStack,
