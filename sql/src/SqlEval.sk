@@ -1147,7 +1147,16 @@ class Evaluator{options: Options, user: ?UserFile} {
         existingFiles[0] match {
         | _ if (!ifNotExists) ->
           error(pos, "VIEW " + viewName + " already exists")
-        | SelectFile(_, _, _, _, _, cs, _, _) if (cselect1 != cs) ->
+        | SelectFile(
+          _,
+          _,
+          _,
+          _,
+          _,
+          cs,
+          _,
+          _,
+        ) if (native_eq(cselect1, cs) != 0) ->
           error(
             pos,
             "VIEW " + viewName + " already exists with a different query",
