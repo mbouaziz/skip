@@ -554,7 +554,7 @@ class EHandle<K: Key, V: File> extends Handle<K, V> {
     f: (mutable SKStore.Context, K, V) ~> Bool,
     fileSize: V ~> Int,
     removeFromFile: (V, Int) ~> V,
-    rangesOpt: ?Array<KeyRange<Key>>,
+    rangesOpt: ?Array<KeyRange<K>>,
   ): EHandle<K, V> {
     EagerFilter::create(
       context,
