@@ -24,7 +24,7 @@ base class IMaxKeyFile extends SKStore.File uses Unsafe.Downcastable
 class MaxKeyFile(key: Key) extends IMaxKeyFile {
   @always_inline
   static fun witnessInstance(): this {
-    static(UnitID::singleton)
+    static(Unsafe.unsafeDummyValue())
   }
   static fun type(obj: File): this {
     obj match {
