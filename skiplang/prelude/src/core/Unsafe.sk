@@ -112,6 +112,9 @@ native fun isSameType<Base, Lower: Base>(b: Base, l: Lower): Bool;
 @cpp_extern("SKIP_unsafe_cast")
 native fun unsafeDownCast<Base, Lower: Base>(v: Base): Lower;
 
+@cpp_extern("SKIP_unsafe_cast")
+native fun unsafeGenericCast<From, To>(v: From): To;
+
 trait Downcastable {
   static fun witnessInstance(): inst;
 }
@@ -129,6 +132,24 @@ fun downCast<Base: Downcastable, Concret: Base>(
 ): Concret {
   invariant(instanceOf(v, c), "invalid cast");
   unsafeDownCast<Base, Concret>(v);
+}
+
+private value class DummyValue(v: Array<DummyValue>)
+
+private const kDummyValue: Array<DummyValue> = {
+  size = 64;
+  a = array_make<DummyValue>(size);
+  result = unsafe_chill_trust_me(a);
+  v = DummyValue(result);
+  for (i in Range(0, size)) {
+    array_set(a, i, v);
+  };
+  result
+};
+
+@always_inline
+fun unsafeDummyValue<T>(): T {
+  unsafeGenericCast<Array<DummyValue>, T>(kDummyValue)
 }
 
 module end;
