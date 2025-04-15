@@ -53,13 +53,13 @@ type MapFun = (
 /*****************************************************************************/
 
 class Reducer<K: Orderable>{
-  reducer: IReducer,
+  reducer: IReducer<File>,
   fixed: Array<(K, Array<File>)>,
   modified: SortedMap<K, Array<File>>,
 } {
   static fun create(
     fixedData: FixedData<K, Array<File>>,
-    reducer: IReducer,
+    reducer: IReducer<File>,
   ): this {
     acc = mutable Vector[];
     modified = SortedMap[];
@@ -155,9 +155,9 @@ class Reducer<K: Orderable>{
   }
 }
 
-class IReducer{
-  init: (mutable Iterator<File> ~> Array<File>),
-  update: (Array<File>, Array<File>, Array<File>) ~> ?Array<File>,
+class IReducer<F>{
+  init: (mutable Iterator<F> ~> Array<F>),
+  update: (Array<F>, Array<F>, Array<F>) ~> ?Array<F>,
 }
 
 mutable class IntRef(mutable value: Int) {
@@ -1290,7 +1290,7 @@ class EagerDir private {
     parentName: DirName,
     childName: DirName,
     f: MapFun,
-    reducerOpt: ?IReducer = None(),
+    reducerOpt: ?IReducer<File> = None(),
     rangeOpt: ?Array<KeyRange<Key>> = None(),
     onUpdate: ?((mutable Context, SortedSet<Key>) ~> void) = None(),
     unsafeSkipInit: Bool = false,
@@ -1314,7 +1314,7 @@ class EagerDir private {
       >,
     >,
     childName: DirName,
-    reducerOpt: ?IReducer = None(),
+    reducerOpt: ?IReducer<File> = None(),
     unsafeSkipInit: Bool = false,
   ): void {
     context.unsafeMaybeGetEagerDir(childName) match {
