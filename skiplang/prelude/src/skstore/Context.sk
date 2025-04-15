@@ -686,7 +686,10 @@ mutable class Context private {
     this.!lazyGets = SortedMap[]
   }
 
-  mutable fun addLazyGet(dir: LazyDir, key: Key): void {
+  mutable fun addLazyGet<K: frozen & Orderable & Show>(
+    dir: LazyDir<K>,
+    key: K,
+  ): void {
     dirName = dir.dirName;
     this.!lazyGets[dirName] = dir.addKeyToKeySetOpt(
       key,
@@ -736,7 +739,7 @@ mutable class Context private {
         | None()
         | Some(DeletedDir _) ->
           void
-        | Some(dir @ LazyDir _) ->
+        | Some(dir @ ILazyDir _) ->
           invariant(parentName == childName);
           dir.update(this, this.dirtyReaders.maybeGet(dir.dirName))
         | Some(child @ EagerDir _) ->
@@ -1003,9 +1006,11 @@ mutable class Context private {
     this.dirs.get(dirName);
   }
 
-  readonly fun unsafeGetLazyDir(dirName: DirName): LazyDir {
+  readonly fun unsafeGetLazyDir<K: frozen & Orderable & Show>(
+    dirName: DirName,
+  ): LazyDir<K> {
     this.unsafeGetDir(dirName) match {
-    | d @ LazyDir _ -> d
+    | d @ ILazyDir _ -> Unsafe.cast(d, LazyDir<K>)
     | _ -> invariant_violation("unsafeGetLazyDir: Was expecting LazyDir")
     }
   }
@@ -1034,12 +1039,14 @@ mutable class Context private {
     }
   }
 
-  mutable fun maybeGetLazyDir(dirName: DirName): ?LazyDir {
+  mutable fun maybeGetLazyDir<K: frozen & Orderable & Show>(
+    dirName: DirName,
+  ): ?LazyDir<K> {
     this.maybeGetDir(dirName) match {
     | None()
     | Some(DeletedDir _) ->
       None()
-    | Some(d @ LazyDir _) -> Some(d)
+    | Some(d @ ILazyDir _) -> Some(Unsafe.cast(d, LazyDir<K>))
     | _ -> invariant_violation("maybeGetLazyDir: Was expecting LazyDir")
     }
   }

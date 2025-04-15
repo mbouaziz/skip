@@ -17,19 +17,26 @@ base class LazyResult<+F> {
   | LAbsent()
 }
 
-base class ILazyDir protected {protected collect: Bool} extends Dir
+base class ILazyDir protected {
+  protected collect: Bool,
+} extends Dir uses Unsafe.Downcastable {
+  fun update(
+    context: mutable Context,
+    dirtyReadersOpt: ?SortedMap<DirName, KeySet>,
+  ): void;
+}
 
-class LazyDir protected {
-  private data: SortedMap<Key, LazyResult<File>> = SortedMap[],
-  private lazyFun: (mutable Context, DirName, Key) ~> ?Array<File>,
-} extends ILazyDir, TDir<Key> {
+class LazyDir<K: frozen & Orderable & Show> protected {
+  private data: SortedMap<K, LazyResult<File>> = SortedMap[],
+  private lazyFun: (mutable Context, DirName, K) ~> ?Array<File>,
+} extends ILazyDir, TDir<K> {
   static fun create(
     context: mutable Context,
     dirName: DirName,
-    lazyFun: (mutable Context, DirName, Key) ~> ?Array<File>,
+    lazyFun: (mutable Context, DirName, K) ~> ?Array<File>,
     collect: Bool = true,
   ): Dir {
-    context.maybeGetLazyDir(dirName) match {
+    context.maybeGetLazyDir<K>(dirName) match {
     | Some(ldir) if (native_eq(ldir.lazyFun, lazyFun) == 0) ->
       if (context.debugMode) {
         print_string(`REUSING: ${dirName}`);
@@ -91,7 +98,7 @@ class LazyDir protected {
     (refCountsOpt, dirOpt)
   }
 
-  private fun removeKeys(keys: readonly Vector<Key>): this {
+  private fun removeKeys(keys: readonly Vector<K>): this {
     data = this.data;
     for (key in keys) {
       data.maybeGet(key) match {
@@ -102,7 +109,7 @@ class LazyDir protected {
     this with {data}
   }
 
-  fun keys(): SortedSet<Key> {
+  fun keys(): SortedSet<K> {
     keys = SortedSet[];
     for (newKey => value in this.data) {
       if (value is LDefined _) {
@@ -112,7 +119,7 @@ class LazyDir protected {
     keys
   }
 
-  fun getArrayRaw(key: Key): Array<File> {
+  fun getArrayRaw(key: K): Array<File> {
     this.data.maybeGet(key) match {
     | Some(LDefined(arr, _)) -> arr
     | _ -> Array[]
@@ -149,10 +156,10 @@ class LazyDir protected {
     context.setDir(this);
   }
 
-  private fun doGet(context: mutable Context, key: Key): LazyResult<File> {
+  private fun doGet(context: mutable Context, key: K): LazyResult<File> {
     dirName = this.dirName;
 
-    dir = context.unsafeGetLazyDir(dirName);
+    dir = context.unsafeGetLazyDir<K>(dirName);
     !dir.data[key] = LCycle();
     context.setDir(dir);
 
@@ -163,7 +170,7 @@ class LazyDir protected {
       this.lazyFun(context, dirName, key)
     } catch {
     | exn ->
-      !dir = context.unsafeGetLazyDir(dirName);
+      !dir = context.unsafeGetLazyDir<K>(dirName);
       !dir.data[key] = LAbsent();
       context.setDir(dir);
       context.!reads = readsCopy;
@@ -182,7 +189,7 @@ class LazyDir protected {
     };
     context.updateNewDeps(arrowKey, context.reads);
 
-    !dir = context.unsafeGetLazyDir(dirName);
+    !dir = context.unsafeGetLazyDir<K>(dirName);
     !dir.data[key] = result;
     context.setDir(dir);
 
@@ -193,7 +200,7 @@ class LazyDir protected {
     result
   }
 
-  fun unsafeGetArray(context: mutable Context, key: Key): Array<File> {
+  fun unsafeGetArray(context: mutable Context, key: K): Array<File> {
     if (this.collect) {
       context.addLazyGet(this, key)
     };
@@ -222,13 +229,13 @@ class LazyDir protected {
     }
   }
 
-  fun getArray(context: mutable Context, key: Key): Array<File> {
+  fun getArray(context: mutable Context, key: K): Array<File> {
     path = Path::create(this.dirName, key);
     context.addRead(path);
     this.unsafeGetArray(context, key)
   }
 
-  fun getIter(context: mutable Context, key: Key): mutable Iterator<File> {
+  fun getIter(context: mutable Context, key: K): mutable Iterator<File> {
     this.getArray(context, key).iterator()
   }
 }
