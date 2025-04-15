@@ -17,6 +17,8 @@ base class LazyResult<F> {
   | LAbsent()
 }
 
+base class ILazyDir extends Dir
+
 class LazyDir private {
   time: Time,
   timeStack: TimeStack,
@@ -24,7 +26,7 @@ class LazyDir private {
   data: SortedMap<Key, LazyResult<File>> = SortedMap[],
   private lazyFun: ((mutable Context, Key) ~> LazyResult<File>),
   collect: Bool,
-} extends Dir {
+} extends ILazyDir {
   static fun create(
     context: mutable Context,
     dirName: DirName,
