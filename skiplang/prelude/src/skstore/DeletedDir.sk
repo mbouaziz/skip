@@ -21,19 +21,19 @@ class DeletedDir private {
   fun getTimeStack(): TimeStack {
     this.timeStack
   }
-  fun getArrayRaw(Key): Array<File> {
+  fun getArrayRaw<K, F>(K): Array<F> {
     Array[]
   }
 
-  fun getArray(mutable Context, Key): Array<File> {
+  fun getArray<K, F>(mutable Context, K): Array<F> {
     Array[]
   }
 
-  fun getIter(mutable Context, Key): mutable Iterator<File> {
+  fun getIter<K, F>(mutable Context, K): mutable Iterator<F> {
     mutable EmptyIterator()
   }
 
-  fun keys(): SortedSet<Key> {
+  fun keys<K: Orderable>(): SortedSet<K> {
     SortedSet[]
   }
   fun getDirName(): DirName {
