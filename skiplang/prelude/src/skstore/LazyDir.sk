@@ -9,9 +9,9 @@ class CyclicExn(Key) extends Exception, File {
   }
 }
 
-base class LazyResult {
+base class LazyResult<F> {
   children =
-  | LDefined(Array<File>, Array<Path>)
+  | LDefined(Array<F>, Array<Path>)
   | LRemoved(Array<Path>)
   | LCycle()
   | LAbsent()
@@ -21,8 +21,8 @@ class LazyDir private {
   time: Time,
   timeStack: TimeStack,
   dirName: DirName,
-  data: SortedMap<Key, LazyResult> = SortedMap[],
-  private lazyFun: ((mutable Context, Key) ~> LazyResult),
+  data: SortedMap<Key, LazyResult<File>> = SortedMap[],
+  private lazyFun: ((mutable Context, Key) ~> LazyResult<File>),
   collect: Bool,
 } extends Dir {
   static fun create(
@@ -92,7 +92,7 @@ class LazyDir private {
     }
   }
 
-  fun withData(data: SortedMap<Key, LazyResult>): this {
+  fun withData(data: SortedMap<Key, LazyResult<File>>): this {
     this with {data}
   }
 
