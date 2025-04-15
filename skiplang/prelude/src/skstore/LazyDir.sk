@@ -17,11 +17,12 @@ base class LazyResult<+F> {
   | LAbsent()
 }
 
+base class ILazyDir protected {protected collect: Bool} extends Dir
+
 class LazyDir protected {
   private data: SortedMap<Key, LazyResult<File>> = SortedMap[],
   private lazyFun: (mutable Context, DirName, Key) ~> ?Array<File>,
-  private collect: Bool,
-} extends Dir, TDir {
+} extends ILazyDir, TDir {
   static fun create(
     context: mutable Context,
     dirName: DirName,
