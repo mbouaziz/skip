@@ -1107,12 +1107,12 @@ mutable class Context{
     }
   }
 
-  mutable fun maybeGetLazyDir(dirName: DirName): ?LazyDir {
+  mutable fun maybeGetLazyDir<K>(dirName: DirName): ?LazyDir<K> {
     this.maybeGetDir(dirName) match {
     | None()
     | Some(DeletedDir _) ->
       None()
-    | Some(d @ LazyDir _) -> Some(d)
+    | Some(d @ ILazyDir _) -> Some(Unsafe.downCast(d, LazyDir<K>))
     | _ -> invariant_violation("maybeGetLazyDir: Was expecting LazyDir")
     }
   }

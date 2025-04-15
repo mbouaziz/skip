@@ -17,24 +17,24 @@ base class LazyResult<F> {
   | LAbsent()
 }
 
-base class ILazyDir extends Dir
+base class ILazyDir extends Dir uses Unsafe.Downcastable
 
-class LazyDir private {
+class LazyDir<K> private {
   time: Time,
   timeStack: TimeStack,
   dirName: DirName,
-  data: SortedMap<Key, LazyResult<File>> = SortedMap[],
-  private lazyFun: ((mutable Context, Key) ~> LazyResult<File>),
+  data: SortedMap<K, LazyResult<File>> = SortedMap[],
+  private lazyFun: ((mutable Context, K) ~> LazyResult<File>),
   collect: Bool,
 } extends ILazyDir {
   static fun create(
     context: mutable Context,
     dirName: DirName,
-    f: (mutable Context, DirName, Key) ~> ?Array<File>,
+    f: (mutable Context, DirName, K) ~> ?Array<File>,
     collect: Bool = true,
   ): Dir {
     time = context.timeStamp();
-    lazyFun = (context: mutable Context, key: Key) ~> {
+    lazyFun = (context: mutable Context, key: K) ~> {
       dir = context.unsafeGetLazyDir(dirName);
       !dir.data[key] = LCycle();
       context.setDir(dir);
@@ -94,7 +94,7 @@ class LazyDir private {
     }
   }
 
-  fun withData(data: SortedMap<Key, LazyResult<File>>): this {
+  fun withData(data: SortedMap<K, LazyResult<File>>): this {
     this with {data}
   }
 
@@ -110,7 +110,7 @@ class LazyDir private {
     context.setDir(this);
   }
 
-  fun keys(): SortedSet<Key> {
+  fun keys(): SortedSet<K> {
     keys = SortedSet[];
     for (newKey => value in this.data) {
       if (value is LDefined _) {
@@ -124,7 +124,7 @@ class LazyDir private {
     this.dirName
   }
 
-  fun getArrayRaw(key: Key): Array<File> {
+  fun getArrayRaw(key: K): Array<File> {
     this.data.maybeGet(key) match {
     | Some(LDefined(arr, _)) -> arr
     | _ -> Array[]
@@ -170,7 +170,7 @@ class LazyDir private {
 
   fun unsafeGetArray(
     context: mutable Context,
-    key: Key,
+    key: K,
     throwOnCycle: Bool = true,
   ): Array<File> {
     if (this.collect) {
@@ -200,13 +200,13 @@ class LazyDir private {
     }
   }
 
-  fun getArray(context: mutable Context, key: Key): Array<File> {
+  fun getArray(context: mutable Context, key: K): Array<File> {
     this.getArrayWithOptions(context, key, true)
   }
 
   fun getArrayWithOptions(
     context: mutable Context,
-    key: Key,
+    key: K,
     throwOnCycle: Bool = true,
   ): Array<File> {
     path = Path::create(this.dirName, key);
@@ -214,11 +214,11 @@ class LazyDir private {
     this.unsafeGetArray(context, key, throwOnCycle)
   }
 
-  fun getIter(context: mutable Context, key: Key): mutable Iterator<File> {
+  fun getIter(context: mutable Context, key: K): mutable Iterator<File> {
     this.getArray(context, key).iterator()
   }
 
-  fun getArrayAsync(context: mutable Context, key: Key): Array<File> {
+  fun getArrayAsync(context: mutable Context, key: K): Array<File> {
     path = Path::create(this.dirName, key);
     context.addDep(path);
     this.unsafeGetArray(context, key, true)
