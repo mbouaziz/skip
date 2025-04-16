@@ -49,19 +49,28 @@ fun splitStringPath(path: String): (DirName, SID) {
 @cpp_extern("SKIP_hash_combine")
 native fun hashCombine(Int, Int): Int;
 
-class DirTagPath extends Path
-class SizeTagPath extends Path
-class FilesTagPath extends Path
-class IsEmptyTagPath extends Path
-class UnitIDPath extends Path
+base class TaggedPath final {} extends Path {
+  fun toString(): String {
+    this.dirName.toString()
+  }
+}
 
-class IIDPath extends Path
-class KeyPath extends Path
+class DirTagPath extends TaggedPath
+class SizeTagPath extends TaggedPath
+class FilesTagPath extends TaggedPath
+class IsEmptyTagPath extends TaggedPath
+class UnitIDPath extends TaggedPath
 
-base class Path final {
-  dirName: DirName,
-  baseName: Key = UnitID::singleton,
-} uses Orderable {
+base class PathWithBase final {baseName: Key} extends Path {
+  fun toString(): String {
+    this.dirName.toString() + this.baseName
+  }
+}
+
+class IIDPath extends PathWithBase
+class KeyPath extends PathWithBase
+
+base class Path protected {dirName: DirName} uses Orderable {
   static fun create(dirName: DirName, baseName: Key): KeyPath {
     KeyPath{dirName, baseName}
   }
@@ -94,9 +103,7 @@ base class Path final {
     UnitIDPath{dirName}
   }
 
-  fun toString(): String {
-    this.dirName.toString() + this.baseName
-  }
+  fun toString(): String;
 }
 
 class DirName private (
