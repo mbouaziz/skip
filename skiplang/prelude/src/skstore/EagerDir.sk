@@ -2049,9 +2049,9 @@ class EagerDir protected {
     context.setDir(this);
   }
 
-  fun writeArraySourceMany(
+  fun writeArraySourceMany<P1: Path, P2: Path>(
     context: mutable Context,
-    bindings: mutable Iterator<(Key, (Path, Path, Array<File>))>,
+    bindings: mutable Iterator<(Key, (P1, P2, Array<File>))>,
     changedKeysIfReset: ?(DirName, SortedSet<Key>) = None(),
   ): void {
     for (kv in bindings) {
