@@ -26,7 +26,7 @@ value class FixedRow<+T>(
   source: Path,
   tag: TickRange,
 ) uses Orderable {
-  fun changeSource(source: Path): this {
+  fun changeSource(source: KeyPath): this {
     !this.source = source;
     this
   }
@@ -446,15 +446,15 @@ class FixedSingle<K: Orderable, +V: frozen> private (
 
 // Mapping from source paths to MInfo
 base class FixedSourceMap {
-  fun maybeGet(key: Path): ?MInfo;
-  fun get(idx: Int): (Path, MInfo);
+  fun maybeGet(key: KeyPath): ?MInfo;
+  fun get(idx: Int): (KeyPath, MInfo);
   fun size(): Int;
-  fun items(): mutable Iterator<(Path, MInfo)>;
+  fun items(): mutable Iterator<(KeyPath, MInfo)>;
   overridable static fun empty(): FixedSourceMap {
     FSMImpl::empty()
   }
   overridable static fun create(
-    data: mutable Vector<(Path, MInfo)>,
+    data: mutable Vector<(KeyPath, MInfo)>,
     allowDuplicates: Bool = false,
   ): FixedSourceMap {
     static::getMetadata(data) match {
@@ -465,7 +465,7 @@ base class FixedSourceMap {
   }
 
   private static fun getMetadata(
-    data: readonly Vector<(Path, MInfo)>,
+    data: readonly Vector<(KeyPath, MInfo)>,
   ): ?FSMMetadata {
     seenDirOpt: ?DirName = None();
     seenRowKindsOpt: ?Array<(Int, SQLParser.IKind, SQLParser.Type)> = None();
@@ -553,26 +553,26 @@ base class FixedSourceMap {
     )
   }
 }
-// Direct implementation of a FixedSourceMap as a (sorted) array of Path/MInfo pairs
+// Direct implementation of a FixedSourceMap as a (sorted) array of KeyPath/MInfo pairs
 private class FSMImpl(
-  protected data: FixedSingle<Path, MInfo>,
+  protected data: FixedSingle<KeyPath, MInfo>,
 ) extends FixedSourceMap {
   static fun create(
-    data: mutable Vector<(Path, MInfo)>,
+    data: mutable Vector<(KeyPath, MInfo)>,
     allowDuplicates: Bool = false,
   ): this {
     static(FixedSingle::create(data, allowDuplicates))
   }
-  fun maybeGet(key: Path): ?MInfo {
+  fun maybeGet(key: KeyPath): ?MInfo {
     this.data.maybeGet(key)
   }
-  fun get(idx: Int): (Path, MInfo) {
+  fun get(idx: Int): (KeyPath, MInfo) {
     this.data.get(idx)
   }
   fun size(): Int {
     this.data.size()
   }
-  fun items(): mutable Iterator<(Path, MInfo)> {
+  fun items(): mutable Iterator<(KeyPath, MInfo)> {
     this.data.items()
   }
   static fun empty(): this {
@@ -632,7 +632,7 @@ private class CompactFSMImpl protected (
     }
   }
 
-  private fun reconstructKVPair(row: SKDB.RowValues): (Path, MInfo) {
+  private fun reconstructKVPair(row: SKDB.RowValues): (KeyPath, MInfo) {
     rowKey = SKDB.RowKey(row, this.metadata.rowKinds);
     path = Path::create(this.metadata.dir, rowKey);
     minfo = this.metadata.minfoType match {
@@ -642,9 +642,9 @@ private class CompactFSMImpl protected (
     (path, minfo)
   }
 
-  fun maybeGet(key: Path): ?MInfo {
-    key match {
-    | KeyPath{baseName => rowKey @ SKDB.RowKey(row, _kinds)} ->
+  fun maybeGet(key: KeyPath): ?MInfo {
+    key.baseName match {
+    | rowKey @ SKDB.RowKey(row, _kinds) ->
       this.metadata.minfoType match {
       | ext @ Extension _ -> this.extendKey(rowKey, ext)
       | _ ->
@@ -657,7 +657,7 @@ private class CompactFSMImpl protected (
     }
   }
 
-  fun get(idx: Int): (Path, MInfo) {
+  fun get(idx: Int): (KeyPath, MInfo) {
     this.reconstructKVPair(this.data.get(idx))
   }
 
@@ -665,14 +665,14 @@ private class CompactFSMImpl protected (
     this.data.size()
   }
 
-  fun items(): mutable Iterator<(Path, MInfo)> {
+  fun items(): mutable Iterator<(KeyPath, MInfo)> {
     for (row in this.data.iterator()) {
       yield this.reconstructKVPair(row)
     }
   }
 
   static fun createWithMetadata(
-    data: mutable Vector<(Path, MInfo)>,
+    data: mutable Vector<(KeyPath, MInfo)>,
     metadata: FSMMetadata,
     allowDuplicates: Bool = false,
   ): this {
