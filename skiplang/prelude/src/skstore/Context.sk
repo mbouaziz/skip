@@ -139,7 +139,7 @@ value class Deps private (
   data: SortedMap<Path, SortedSet<ArrowKey>> = SortedMap[],
   private idata: HashMap<DirName, SortedSet<Path>> = HashMap[],
 ) {
-  static fun createFromItems(items: Array<(Path, ArrowKey)>): this {
+  static fun createFromItems(items: Array<(KeyPath, ArrowKey)>): this {
     deps = Deps();
     for (item in items) {
       (path, arrowKey) = item;
