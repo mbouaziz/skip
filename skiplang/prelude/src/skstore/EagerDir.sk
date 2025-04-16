@@ -660,7 +660,7 @@ base class EagerDir protected {
   creator: ?ArrowKey,
   protected fixedOld: FixedSourceMap = FixedSourceMap::empty(),
   data: DataMap,
-  protected old: SortedMap<Path, MInfo> = SortedMap[],
+  protected old: SortedMap<KeyPath, MInfo> = SortedMap[],
   parents: FixedSingle<
     DirName,
     Array<
@@ -878,7 +878,7 @@ base class EagerDir protected {
 
   protected static fun fixedMapData(
     context: mutable Context,
-    oldVec: mutable Vector<(Path, MInfo)>,
+    oldVec: mutable Vector<(KeyPath, MInfo)>,
     parent: EagerDir,
     childName: DirName,
     timeStack: TimeStack,
@@ -949,7 +949,7 @@ base class EagerDir protected {
     end: ?Key,
   ): (
     readonly Vector<FixedRow<Array<File>>>,
-    readonly Vector<(Path, MInfo)>,
+    readonly Vector<(KeyPath, MInfo)>,
     ?Key,
     Int,
   ) {
@@ -1029,7 +1029,7 @@ base class EagerDir protected {
 
   protected static fun mapData(
     context: mutable Context,
-    oldVec: mutable Vector<(Path, MInfo)>,
+    oldVec: mutable Vector<(KeyPath, MInfo)>,
     parent: EagerDir,
     childName: DirName,
     timeStack: TimeStack,
@@ -1091,7 +1091,7 @@ base class EagerDir protected {
   protected static fun mapRow(
     context: mutable Context,
     acc: mutable Vector<FixedRow<Array<File>>>,
-    oldVec: mutable Vector<(Path, MInfo)>,
+    oldVec: mutable Vector<(KeyPath, MInfo)>,
     parentName: DirName,
     childName: DirName,
     timeStack: TimeStack,
@@ -1542,7 +1542,7 @@ base class EagerDir protected {
     this.fixedOld.items().each(e -> e.i1.getNewDirs().each(context.removeDir))
   }
 
-  protected fun getOld(key: Path): MInfo {
+  protected fun getOld(key: KeyPath): MInfo {
     if (this.old.containsKey(key)) {
       this.old[key]
     } else {
@@ -1559,7 +1559,7 @@ base class EagerDir protected {
 
   protected fun updateNewDirs(
     context: mutable Context,
-    source: Path,
+    source: KeyPath,
     newDirs: SortedSet<DirName>,
   ): this {
     minfo = this.getOld(source);
