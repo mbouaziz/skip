@@ -49,37 +49,49 @@ fun splitStringPath(path: String): (DirName, SID) {
 @cpp_extern("SKIP_hash_combine")
 native fun hashCombine(Int, Int): Int;
 
-class Path private (dirName: DirName, baseName: Key) uses Orderable {
-  static fun create(dirName: DirName, baseName: Key): this {
-    static(dirName, baseName)
+class DirTagPath extends Path
+class SizeTagPath extends Path
+class FilesTagPath extends Path
+class IsEmptyTagPath extends Path
+class UnitIDPath extends Path
+
+class IIDPath extends Path
+class KeyPath extends Path
+
+base class Path final {
+  dirName: DirName,
+  baseName: Key = UnitID::singleton,
+} uses Orderable {
+  static fun create(dirName: DirName, baseName: Key): Path {
+    KeyPath{dirName, baseName}
   }
 
-  static fun dirTag(baseDirName: DirName): this {
-    static(baseDirName.tag(), DirTag())
+  static fun dirTag(baseDirName: DirName): Path {
+    DirTagPath{dirName => baseDirName.tag()}
   }
 
-  static fun sizeTag(baseDirName: DirName): this {
-    static(baseDirName.size(), SizeTag())
+  static fun sizeTag(baseDirName: DirName): Path {
+    SizeTagPath{dirName => baseDirName.size()}
   }
 
-  static fun isEmptyTag(baseDirName: DirName): this {
-    static(baseDirName.size(), IsEmptyTag())
+  static fun isEmptyTag(baseDirName: DirName): Path {
+    IsEmptyTagPath{dirName => baseDirName.size()}
   }
 
-  static fun filesTag(baseDirName: DirName): this {
-    static(baseDirName.files(), FilesTag())
+  static fun filesTag(baseDirName: DirName): Path {
+    FilesTagPath{dirName => baseDirName.files()}
   }
 
-  static fun iid(dirName: DirName, i: Int): this {
-    static(dirName, IID(i))
+  static fun iid(dirName: DirName, baseName: Int): Path {
+    IIDPath{dirName, baseName => IID(baseName)}
   }
 
-  static fun gen(dirName: DirName): this {
+  static fun gen(dirName: DirName): Path {
     static::iid(dirName, genSym(0))
   }
 
-  static fun unit(dirName: DirName): this {
-    static(dirName, UnitID::singleton);
+  static fun unit(dirName: DirName): Path {
+    UnitIDPath{dirName}
   }
 
   fun toString(): String {
@@ -195,30 +207,6 @@ base class Key uses Orderable, Show {
 
   overridable fun toString(): String {
     inspect(this).toString()
-  }
-}
-
-class DirTag() extends Key {
-  fun toString(): String {
-    "DirTag()"
-  }
-}
-
-class SizeTag() extends Key {
-  fun toString(): String {
-    "SizeTag()"
-  }
-}
-
-class FilesTag() extends Key {
-  fun toString(): String {
-    "FilesTag()"
-  }
-}
-
-class IsEmptyTag() extends Key {
-  fun toString(): String {
-    "IsEmptyTag()"
   }
 }
 
