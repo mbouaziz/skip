@@ -61,14 +61,14 @@ class FilesTagPath extends TaggedPath
 class IsEmptyTagPath extends TaggedPath
 class UnitIDPath extends TaggedPath
 
-base class PathWithBase final {baseName: Key} extends Path {
+base class PathWithBase<Base: Show> final {baseName: Base} extends Path {
   fun toString(): String {
     this.dirName.toString() + this.baseName
   }
 }
 
-class IIDPath extends PathWithBase
-class KeyPath extends PathWithBase
+class IIDPath extends PathWithBase<Int>
+class KeyPath extends PathWithBase<Key>
 
 base class Path protected {dirName: DirName} uses Orderable {
   static fun create(dirName: DirName, baseName: Key): KeyPath {
@@ -92,7 +92,7 @@ base class Path protected {dirName: DirName} uses Orderable {
   }
 
   static fun iid(dirName: DirName, baseName: Int): Path {
-    IIDPath{dirName, baseName => IID(baseName)}
+    IIDPath{dirName, baseName}
   }
 
   static fun gen(dirName: DirName): Path {
