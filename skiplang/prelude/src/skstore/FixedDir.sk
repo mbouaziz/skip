@@ -168,10 +168,15 @@ class CompactFixedDir protected {
     row: FixedRow<Array<File>>,
   ): CompactRow<?SKDB.CValue> {
     invariant(row.value.size() == 1);
-    sourceKey = if (row.source.baseName != row.key) {
-      Some(row.source.baseName)
-    } else {
-      None()
+    sourceKey = row.source match {
+    | KeyPath{baseName} ->
+      if (baseName != row.key) {
+        Some(baseName)
+      } else {
+        None()
+      }
+    | _ ->
+      invariant_violation("getMetadata ensures all path basenames are RowKeys")
     };
 
     row.value[0] match {
@@ -451,8 +456,8 @@ base class FixedSourceMap {
       | Some(seenDir) if (seenDir != path.dirName) -> return None()
       | _ -> seenDirOpt
       };
-      path.baseName match {
-      | rowKey @ SKDB.RowKey(pathRow, rowKinds) ->
+      path match {
+      | KeyPath{baseName => rowKey @ SKDB.RowKey(pathRow, rowKinds)} ->
         !seenRowKindsOpt = seenRowKindsOpt match {
         | None() -> Some(rowKinds)
         | Some(seenRowKinds) if (rowKinds != seenRowKinds) -> return None()
@@ -617,8 +622,8 @@ private class CompactFSMImpl protected (
   }
 
   fun maybeGet(key: Path): ?MInfo {
-    key.baseName match {
-    | rowKey @ SKDB.RowKey(row, _kinds) ->
+    key match {
+    | KeyPath{baseName => rowKey @ SKDB.RowKey(row, _kinds)} ->
       this.metadata.minfoType match {
       | ext @ Extension _ -> this.extendKey(rowKey, ext)
       | _ ->
@@ -658,8 +663,8 @@ private class CompactFSMImpl protected (
           | _ -> invariant_violation("malformed data for Extension metadata")
           }
         } else {
-          datum.i0.baseName match {
-          | SKDB.RowKey(values, _kinds) -> values
+          datum.i0 match {
+          | KeyPath{baseName => SKDB.RowKey(values, _kinds)} -> values
           | _ ->
             invariant_violation(
               "getMetadata ensures all path basenames are RowKeys",
