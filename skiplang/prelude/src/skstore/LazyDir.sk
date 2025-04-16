@@ -11,8 +11,8 @@ class CyclicExn(Key) extends Exception, File {
 
 base class LazyResult {
   children =
-  | LDefined(Array<File>, Array<Path>)
-  | LRemoved(Array<Path>)
+  | LDefined(Array<File>, Array<Path /* GenPath */>)
+  | LRemoved(Array<Path /* GenPath */>)
   | LCycle()
   | LAbsent()
 }

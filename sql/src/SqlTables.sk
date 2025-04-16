@@ -522,7 +522,7 @@ fun getSubsDirs(
 }
 
 fun updateIsFromIgnoredSource(
-  ignoredSrc: SKStore.Path,
+  ignoredSrc: SKStore.Path/* GenPath */ ,
   rows: Array<(SKStore.Tick, SKStore.Path, SKStore.Path, Array<SKStore.File>)>,
 ): Bool {
   maxTick = SKStore.Tick(0);

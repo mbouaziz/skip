@@ -137,8 +137,8 @@ fun run(f: (mutable Context) -> void): mutable Context {
 /*****************************************************************************/
 
 value class Deps private (
-  data: SortedMap<Path, SortedSet<ArrowKey>> = SortedMap[],
-  private idata: HashMap<DirName, SortedSet<Path>> = HashMap[],
+  data: SortedMap<Path/* GenPath */ , SortedSet<ArrowKey>> = SortedMap[],
+  private idata: HashMap<DirName, SortedSet<Path /* GenPath */>> = HashMap[],
 ) {
   static fun createFromItems(items: Array<(KeyPath, ArrowKey)>): this {
     deps = Deps();
@@ -149,11 +149,11 @@ value class Deps private (
     deps
   }
 
-  fun maybeGet(path: Path): ?SortedSet<ArrowKey> {
+  fun maybeGet(path: Path /* GenPath */): ?SortedSet<ArrowKey> {
     this.data.maybeGet(path)
   }
 
-  fun set(path: Path, arrowKey: ArrowKey): this {
+  fun set(path: Path/* GenPath */ , arrowKey: ArrowKey): this {
     set = this.data.maybeGet(path) match {
     | None() -> SortedSet[]
     | Some(x) -> x
@@ -164,7 +164,7 @@ value class Deps private (
     this
   }
 
-  private fun iset(dirName: DirName, arrow: Path): this {
+  private fun iset(dirName: DirName, arrow: Path /* GenPath */): this {
     iset = this.idata.maybeGet(dirName) match {
     | None() -> SortedSet[]
     | Some(x) -> x
@@ -174,7 +174,7 @@ value class Deps private (
     this
   }
 
-  private fun iremove(dirName: DirName, arrow: Path): this {
+  private fun iremove(dirName: DirName, arrow: Path /* GenPath */): this {
     iset = this.idata.maybeGet(dirName) match {
     | None() -> SortedSet[]
     | Some(x) -> x
@@ -188,7 +188,7 @@ value class Deps private (
     this
   }
 
-  fun remove(path: Path, arrowKey: ArrowKey): this {
+  fun remove(path: Path/* GenPath */ , arrowKey: ArrowKey): this {
     set = this.data.maybeGet(path) match {
     | None() -> SortedSet[]
     | Some(x) -> x
@@ -341,7 +341,7 @@ mutable class Context{
   mutable toPurge: SortedSet<DirName> = SortedSet[],
   mutable purgeLimit: ?Tick = None(),
   private mutable dirs: Dirs = Dirs{},
-  mutable reads: SortedSet<Path> = SortedSet[],
+  mutable reads: SortedSet<Path /* GenPath */> = SortedSet[],
   private mutable time: Time = Time(0),
   /* Invariant: tick is only updated at the end of updateWithStatus */
   private mutable tick: Tick = Tick(1),
@@ -370,7 +370,7 @@ mutable class Context{
   mutable writeChecker: ?(mutable WriteChecker) = None(),
   mutable purgeFrom: (mutable Context, Dir) ~> Tick = (ctx, _) ~>
     Tick(ctx.getTick().value - 1000),
-  mutable sourceOverride: ?Path = None(),
+  mutable sourceOverride: ?Path/* GenPath */  = None(),
 } {
   readonly fun isWithSharedSubDirs(dirName: DirName): Bool {
     this.dirsWithSharedSubDirs.contains(dirName)
@@ -503,7 +503,7 @@ mutable class Context{
     this.!sourceOverride = ctx.sourceOverride;
   }
 
-  readonly fun getReads(): SortedSet<Path> {
+  readonly fun getReads(): SortedSet<Path /* GenPath */> {
     this.reads
   }
 
@@ -524,14 +524,17 @@ mutable class Context{
     this.arrowStack.maybeHead().map(x -> x.i0)
   }
 
-  private readonly fun getDeps(path: Path): SortedSet<ArrowKey> {
+  private readonly fun getDeps(path: Path /* GenPath */): SortedSet<ArrowKey> {
     this.deps.maybeGet(path) match {
     | None() -> SortedSet[]
     | Some(deps) -> deps
     }
   }
 
-  mutable fun updateNewDeps(reader: ArrowKey, reads: SortedSet<Path>): void {
+  mutable fun updateNewDeps(
+    reader: ArrowKey,
+    reads: SortedSet<Path /* GenPath */>,
+  ): void {
     for (path in reads) {
       this.!deps = this.deps.set(path, reader);
     };
@@ -597,7 +600,7 @@ mutable class Context{
    * - dirty are files that are made dirty because of a Map.
    */
   /*****************************************************************************/
-  mutable fun updateDirtyReaders(path: Path): void {
+  mutable fun updateDirtyReaders(path: Path /* GenPath */): void {
     for (reader in this.getDeps(path)) {
       child = this.unsafeMaybeGetDir(reader.childName) match {
       | None() -> continue
@@ -1092,7 +1095,7 @@ mutable class Context{
     this.dirs.maybeGet(dirName);
   }
 
-  mutable fun addDep(path: Path): void {
+  mutable fun addDep(path: Path /* GenPath */): void {
     this.!reads = this.reads.set(path);
   }
 

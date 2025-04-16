@@ -23,7 +23,7 @@ module SKStore;
 value class FixedRow<T>(
   key: Key,
   value: T,
-  source: Path,
+  source: Path/* GenPath */ ,
   tag: TickRange,
 ) uses Orderable {
   fun changeSource(source: KeyPath): this {
@@ -41,10 +41,16 @@ base class FixedData<T> {
   fun get(idx: Int): FixedRow<T>;
   fun getPos(key: Key): Int;
   fun getArray(key: Key): Array<T>;
-  fun getIter(key: Key): mutable Iterator<(Tick, Path, T)>;
-  fun getIterAfter(tick: Tick, key: Key): mutable Iterator<(Tick, Path, T)>;
-  fun getArraySourceKey(source: Path, key: Key): Array<T>;
-  fun getIterSourceKey(source: Path, key: Key): mutable Iterator<T>;
+  fun getIter(key: Key): mutable Iterator<(Tick, Path/* GenPath */ , T)>;
+  fun getIterAfter(
+    tick: Tick,
+    key: Key,
+  ): mutable Iterator<(Tick, Path/* GenPath */ , T)>;
+  fun getArraySourceKey(source: Path/* GenPath */ , key: Key): Array<T>;
+  fun getIterSourceKey(
+    source: Path/* GenPath */ ,
+    key: Key,
+  ): mutable Iterator<T>;
   fun getChangesAfter(tick: Tick): SortedSet<Key>;
   fun iterator(): mutable Iterator<FixedRow<T>>;
 }
@@ -258,7 +264,10 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     findAll(i ~> this.get(i).key, key, 0, this.size() - 1)
   }
 
-  fun getAllSourceKey(source: Path, key: Key): mutable Iterator<Int> {
+  fun getAllSourceKey(
+    source: Path/* GenPath */ ,
+    key: Key,
+  ): mutable Iterator<Int> {
     delta = i ~> {
       entry = this.get(i);
       c = key.compare(entry.key);
@@ -272,18 +281,21 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     this.getAll(key).map(i ~> this.get(i).value).collect(Array)
   }
 
-  fun getIter(key: Key): mutable Iterator<(Tick, Path, T)> {
+  fun getIter(key: Key): mutable Iterator<(Tick, Path/* GenPath */ , T)> {
     this.getAll(key).map(i -> {
       elt = this.get(i);
       (elt.tag.current, elt.source, elt.value)
     })
   }
 
-  fun getIterSourceKey(source: Path, key: Key): mutable Iterator<T> {
+  fun getIterSourceKey(
+    source: Path/* GenPath */ ,
+    key: Key,
+  ): mutable Iterator<T> {
     this.getAllSourceKey(source, key).map(i -> this.get(i).value)
   }
 
-  fun getArraySourceKey(source: Path, key: Key): Array<T> {
+  fun getArraySourceKey(source: Path/* GenPath */ , key: Key): Array<T> {
     this.getIterSourceKey(source, key).collect(Array)
   }
 
@@ -344,7 +356,7 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     key: Key,
     i: Int,
     j: Int,
-    acc: mutable Vector<(Tick, Path, T)>,
+    acc: mutable Vector<(Tick, Path/* GenPath */ , T)>,
   ): void {
     if (i <= j) {
       pivot = i + (j - i) / 2;
@@ -366,7 +378,10 @@ base class IFixedDir<T: frozen, RowRepresentation: frozen> protected {
     }
   }
 
-  fun getIterAfter(limit: Tick, key: Key): mutable Iterator<(Tick, Path, T)> {
+  fun getIterAfter(
+    limit: Tick,
+    key: Key,
+  ): mutable Iterator<(Tick, Path/* GenPath */ , T)> {
     acc = mutable Vector[];
     this.getKeyChangesAfter(limit, key, 0, this.data.size() - 1, acc);
     acc.iterator()

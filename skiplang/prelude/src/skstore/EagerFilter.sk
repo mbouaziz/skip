@@ -225,7 +225,7 @@ class EagerFilter private {
     fullDir = context.unsafeGetEagerDir(this.fullName);
     !fullDir = fullDir.writeEntry(
       context,
-      source,
+      source, /*TODO? */
       source,
       childDir.dirName,
       fullFiles,
