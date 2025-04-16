@@ -62,7 +62,7 @@ base class Path final {
   dirName: DirName,
   baseName: Key = UnitID::singleton,
 } uses Orderable {
-  static fun create(dirName: DirName, baseName: Key): Path {
+  static fun create(dirName: DirName, baseName: Key): KeyPath {
     KeyPath{dirName, baseName}
   }
 

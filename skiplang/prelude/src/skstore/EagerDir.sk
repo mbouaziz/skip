@@ -2129,9 +2129,9 @@ class EagerDir protected {
     context.setDir(this);
   }
 
-  fun writeArraySourceManyReturnDir(
+  fun writeArraySourceManyReturnDir<P1: Path, P2: Path>(
     context: mutable Context,
-    bindings: mutable Iterator<(Key, (Path, Path, Array<File>))>,
+    bindings: mutable Iterator<(Key, (P1, P2, Array<File>))>,
   ): this {
     for (kv in bindings) {
       (key, (origSource, writer, values)) = kv;
@@ -2141,9 +2141,9 @@ class EagerDir protected {
     this
   }
 
-  fun writeArraySourceMany(
+  fun writeArraySourceMany<P1: Path, P2: Path>(
     context: mutable Context,
-    bindings: mutable Iterator<(Key, (Path, Path, Array<File>))>,
+    bindings: mutable Iterator<(Key, (P1, P2, Array<File>))>,
   ): void {
     !this = this.writeArraySourceManyReturnDir(context, bindings);
     context.setDir(this);
