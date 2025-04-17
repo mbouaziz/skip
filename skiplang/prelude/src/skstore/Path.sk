@@ -61,7 +61,9 @@ class FilesTagPath extends TaggedPath
 class IsEmptyTagPath extends TaggedPath
 class UnitIDPath extends TaggedPath
 
-base class PathWithBase<Base: Show> final {baseName: Base} extends Path {
+base class PathWithBase<Base: Hashable & Show> final {
+  baseName: Base,
+} extends Path {
   fun toString(): String {
     this.dirName.toString() + this.baseName
   }
@@ -70,7 +72,7 @@ base class PathWithBase<Base: Show> final {baseName: Base} extends Path {
 class IIDPath extends PathWithBase<Int>
 class KeyPath extends PathWithBase<Key>
 
-base class Path protected {dirName: DirName} uses Orderable {
+base class Path protected {dirName: DirName} uses Hashable, Orderable {
   static fun create(dirName: DirName, baseName: Key): KeyPath {
     KeyPath{dirName, baseName}
   }
