@@ -1,0 +1,28 @@
+value class HashSet<+K: Equality & Hashable>(map: SortedMap<Int, K>) {
+  static fun createFromItems<I: readonly Sequence<K>>(items: I): HashSet<K> {
+    HashSet(SortedMap::createFromItems(items.map(k -> (k.hash(), k))))
+  }
+
+  fun contains<K2: Equality & Hashable>[K: K2](key: K2): Bool {
+    this.map.maybeGet(key.hash()) match {
+    | None() -> false
+    | Some(x) -> x == key
+    }
+  }
+
+  fun set<K2: Equality & Hashable>[K: K2](key: K2): HashSet<K2> {
+    HashSet<K2>(this.map.set(key.hash(), key))
+  }
+
+  fun remove<K2: Equality & Hashable>[K: K2](key: K2): HashSet<K> {
+    HashSet(this.map.remove(key.hash()))
+  }
+
+  fun values(): mutable Iterator<K> {
+    this.map.values()
+  }
+
+  fun toArray(): Array<K> {
+    this.map.values().collect(Array)
+  }
+}
