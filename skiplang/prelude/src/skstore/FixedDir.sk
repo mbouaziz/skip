@@ -457,7 +457,15 @@ base class FixedSourceMap {
       | _ -> seenDirOpt
       };
       path match {
-      | KeyPath{baseName => rowKey @ SKDB.RowKey(pathRow, rowKinds)} ->
+      | keyPath @ KeyPath _ ->
+        (rowKey, pathRow, rowKinds) = Unsafe.maybeDownCast(
+          keyPath,
+          TKeyPath<SKDB.RowKey>,
+        ) match {
+        | None() -> return None()
+        | Some(TKeyPath{baseName => rowKey @ SKDB.RowKey(pathRow, rowKinds)}) ->
+          (rowKey, pathRow, rowKinds)
+        };
         !seenRowKindsOpt = seenRowKindsOpt match {
         | None() -> Some(rowKinds)
         | Some(seenRowKinds) if (rowKinds != seenRowKinds) -> return None()
