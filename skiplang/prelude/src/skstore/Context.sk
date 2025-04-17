@@ -136,7 +136,7 @@ fun run(f: (mutable Context) -> void): mutable Context {
 /*****************************************************************************/
 
 value class Deps private (
-  data: SortedMap<Path, SortedSet<ArrowKey>> = SortedMap[],
+  data: HashMap<Path, SortedSet<ArrowKey>> = HashMap[],
   private idata: HashMap<DirName, SortedSet<Path>> = HashMap[],
 ) {
   static fun createFromItems(items: Array<(KeyPath, ArrowKey)>): this {
