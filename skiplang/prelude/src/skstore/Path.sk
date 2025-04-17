@@ -61,18 +61,44 @@ class FilesTagPath extends TaggedPath
 class IsEmptyTagPath extends TaggedPath
 class UnitIDPath extends TaggedPath
 
-base class PathWithBase<Base: Show> final {baseName: Base} extends Path {
+base class PathWithBase<Base: Show & Orderable>{baseName: Base} extends Path {
   fun toString(): String {
     this.dirName.toString() + this.baseName
   }
 }
 
+base class KeyPath extends Path uses Unsafe.Downcastable
+
 class IIDPath extends PathWithBase<Int>
-class KeyPath extends PathWithBase<Key>
+
+class TKeyPath<K: Show & Orderable> extends PathWithBase<K>, KeyPath {
+  static fun witnessInstance(): this {
+    static{
+      dirName => Unsafe.unsafeDummyValue<DirName>(),
+      baseName => Unsafe.unsafeDummyValue<K>(),
+    }
+  }
+
+  fun compare(other: Path): Order {
+    other match {
+    | kpOther @ KeyPath _ ->
+      this.dirName.compare(kpOther.dirName) match {
+      | EQ() -> /* Hopefully baseNames of a given directory are all of the same type */
+        typedOther = Unsafe.downCast<KeyPath, TKeyPath<K>>(kpOther, static);
+        this.baseName.compare(typedOther.baseName)
+      | cmp -> cmp
+      }
+    | _ -> this.getClassName().compare(other.getClassName())
+    }
+  }
+}
 
 base class Path protected {dirName: DirName} uses Orderable {
-  static fun create(dirName: DirName, baseName: Key): KeyPath {
-    KeyPath{dirName, baseName}
+  static fun create<K: Show & Orderable>(
+    dirName: DirName,
+    baseName: K,
+  ): KeyPath {
+    TKeyPath{dirName, baseName}
   }
 
   static fun dirTag(baseDirName: DirName): Path {
@@ -192,7 +218,7 @@ class DirName private (
   }
 }
 
-base class Key uses Orderable, Show {
+base class Key uses Hashable, Orderable, Show {
   deferred macro overridable static fun keyType(obj: Key): this {
     obj match {
     | x @ #ThisClass _ -> x
