@@ -1154,7 +1154,7 @@ class EagerDir protected {
     readsCopy = context.reads;
 
     context.!newDirs = SortedSet[];
-    context.!reads = SortedSet[];
+    context.!reads = HashSet[];
 
     writer = mutable Writer{};
     f(context, writer, key, valueIter);
@@ -1622,7 +1622,7 @@ class EagerDir protected {
         newDirsCopy = ctx.newDirs;
         readsCopy = ctx.reads;
         ctx.!newDirs = SortedSet[];
-        ctx.!reads = SortedSet[];
+        ctx.!reads = HashSet[];
 
         keys = mutable Vector<Key>[];
         mvalues = SortedMap<Key, mutable Vector<File>>[];

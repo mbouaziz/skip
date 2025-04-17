@@ -343,7 +343,7 @@ mutable class Context{
   mutable toPurge: SortedSet<DirName> = SortedSet[],
   mutable purgeLimit: ?Tick = None(),
   private mutable dirs: Dirs = Dirs{},
-  mutable reads: SortedSet<Path> = SortedSet[],
+  mutable reads: HashSet<Path> = HashSet[],
   private mutable time: Time = Time(0),
   mutable tick: Tick = Tick(1),
   private mutable lazyCapacity: Int = 10,
@@ -536,7 +536,7 @@ mutable class Context{
     this.!sourceOverride = ctx.sourceOverride;
   }
 
-  readonly fun getReads(): SortedSet<Path> {
+  readonly fun getReads(): HashSet<Path> {
     this.reads
   }
 
@@ -564,7 +564,7 @@ mutable class Context{
     }
   }
 
-  mutable fun updateNewDeps(reader: ArrowKey, reads: SortedSet<Path>): void {
+  mutable fun updateNewDeps(reader: ArrowKey, reads: HashSet<Path>): void {
     for (path in reads) {
       this.!deps = this.deps.set(path, reader);
     };
