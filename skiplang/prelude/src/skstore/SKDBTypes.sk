@@ -6,7 +6,7 @@
 
 module SQLParser;
 
-base class Type uses Orderable {
+base class Type uses Hashable, Orderable {
   children =
   | FLOAT()
   | INTEGER()
@@ -15,7 +15,7 @@ base class Type uses Orderable {
   | SCHEMA()
 }
 
-base class IKind uses Orderable {
+base class IKind uses Hashable, Orderable {
   children =
   | INONE()
   | IASC()
@@ -25,7 +25,7 @@ base class IKind uses Orderable {
 module end;
 module SKDB;
 
-base class CValue uses Orderable {
+base class CValue uses Hashable, Orderable {
   children =
   | CInt(value: Int)
   | CFloat(value: Float)
@@ -40,7 +40,7 @@ class RowKey(
 class RowValues(
   values: Array<?CValue>,
   repeat: Int,
-) uses Orderable extends SKStore.File
+) uses Hashable, Orderable extends SKStore.File
 
 class IndexProjKey(
   row: RowValues,

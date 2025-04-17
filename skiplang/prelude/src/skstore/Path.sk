@@ -192,7 +192,7 @@ class DirName private (
   }
 }
 
-base class Key uses Orderable, Show {
+base class Key uses Hashable, Orderable, Show {
   deferred macro overridable static fun keyType(obj: Key): this {
     obj match {
     | x @ #ThisClass _ -> x

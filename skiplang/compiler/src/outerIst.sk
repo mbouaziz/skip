@@ -274,6 +274,9 @@ class CallableDefFile(value: CallableDef) extends SKStore.File, SKStore.Key {
     | _ -> invariant_violation("Heterogeneous keys detected")
     }
   }
+  fun hash(): Int {
+    this.value.xhash
+  }
 }
 
 // common super of FunDef and MethodDef

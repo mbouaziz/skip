@@ -5,7 +5,7 @@ module SKJSON;
 // with hashtables is not what we want here.
 /*****************************************************************************/
 
-base class CJSON uses Orderable {
+base class CJSON uses Hashable, Orderable {
   children =
   | CJNull()
   | CJBool(Bool)
@@ -91,7 +91,7 @@ base class CJSON uses Orderable {
 value class CJFields private (
   cols: Array<String>,
   values: Array<CJSON>,
-) uses Orderable {
+) uses Hashable, Orderable {
   /* Invariant:
     - cols and values have the same length
       - requires that internFieldNames preserves cols length

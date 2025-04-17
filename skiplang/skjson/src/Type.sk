@@ -19,7 +19,7 @@ base class BinaryOp {
 /* Fields */
 /*****************************************************************************/
 
-value class FieldCount private (count: Int) uses Orderable {
+value class FieldCount private (count: Int) uses Hashable, Orderable {
   const alwaysValue: Int = 2;
 
   static fun create(): this {
@@ -84,9 +84,9 @@ value class Field(
   name: String,
   fieldCount: FieldCount,
   type: Type,
-) uses Orderable
+) uses Hashable, Orderable
 
-class Fields private (fields: Array<Field>) uses Orderable {
+class Fields private (fields: Array<Field>) uses Hashable, Orderable {
   static fun create(fields: Array<Field>): this {
     !fields = fields.sortedBy(x ~> x.name);
     for (i => elt in fields) {
@@ -193,7 +193,7 @@ base class STypeWithNum {
   | TNum()
 }
 
-base class SType uses Orderable extends STypeWithNum {
+base class SType uses Hashable, Orderable extends STypeWithNum {
   const TKNull: Int = 0;
   const TKBool: Int = 1;
   const TKInt: Int = 2;
@@ -285,7 +285,7 @@ class SuperTypeError(
   }
 }
 
-class Type private (types: Array<(Int, SType)>) uses Orderable {
+class Type private (types: Array<(Int, SType)>) uses Hashable, Orderable {
   const any: Type = Type(Array[]);
 
   static fun createFromItems(types: Array<(Int, SType)>): this {
