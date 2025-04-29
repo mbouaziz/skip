@@ -301,16 +301,20 @@ mutable base class WriteChecker {
 }
 
 /* Wrapper for a map from a childName to keys in the parent */
-base class DirDirtyReaders
+base class DirDirtyReaders uses Unsafe.Downcastable
 
-class TDirDirtyReaders private (
-  private map: SortedMap<DirName, SortedSet<Key>>,
+class TDirDirtyReaders<K: Orderable> private (
+  private map: SortedMap<DirName, SortedSet<K>>,
 ) extends DirDirtyReaders {
+  static fun witnessInstance(): this {
+    static(SortedMap[])
+  }
+
   static fun empty(): this {
     static(SortedMap[])
   }
 
-  fun add(childName: DirName, key: Key): this {
+  fun add(childName: DirName, key: K): this {
     !this.map[childName] = this.map.maybeGet(childName) match {
     | None() -> SortedSet[key]
     | Some(set) -> set.set(key)
@@ -318,11 +322,11 @@ class TDirDirtyReaders private (
     this
   }
 
-  fun maybeGet(childName: DirName): ?SortedSet<Key> {
+  fun maybeGet(childName: DirName): ?SortedSet<K> {
     this.map.maybeGet(childName)
   }
 
-  fun items(): mutable Iterator<(DirName, SortedSet<Key>)> {
+  fun items(): mutable Iterator<(DirName, SortedSet<K>)> {
     this.map.items()
   }
 }

@@ -49,15 +49,15 @@ base class Dir protected {timeStack: TimeStack, dirName: DirName} {
     this.timeStack
   }
 
-  static fun castDirDirtyReaders(ddr: DirDirtyReaders): TDirDirtyReaders {
-    ddr match {
-    | d @ TDirDirtyReaders _ -> d
-    }
+  static fun castDirDirtyReaders(ddr: DirDirtyReaders): TDirDirtyReaders<Key> {
+    Unsafe.downCast(ddr, TDirDirtyReaders<Key>)
   }
 
-  fun castOrEmptyDirDirtyReaders(ddrOpt: ?DirDirtyReaders): TDirDirtyReaders {
+  fun castOrEmptyDirDirtyReaders(
+    ddrOpt: ?DirDirtyReaders,
+  ): TDirDirtyReaders<Key> {
     ddrOpt match {
-    | None() -> TDirDirtyReaders::empty()
+    | None() -> TDirDirtyReaders<Key>::empty()
     | Some(ddr) -> static::castDirDirtyReaders(ddr)
     }
   }
