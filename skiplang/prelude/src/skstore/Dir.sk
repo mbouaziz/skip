@@ -66,9 +66,7 @@ base class TDir {
   }
 
   fun addReaderKeyToKeySetOpt(arrowKey: ArrowKey, keySetOpt: ?KeySet): KeySet {
-    arrowKey match {
-    | TArrowKey{key} -> this.addKeyToKeySetOpt(key, keySetOpt)
-    }
+    this.addKeyToKeySetOpt(Unsafe.cast(arrowKey, TArrowKey<Key>).key, keySetOpt)
   }
 
   fun castKeyMap<V: frozen>(keyMap: KeyMap<V>): TKeyMap<Key, V> {
@@ -84,9 +82,7 @@ base class TDir {
   }
 
   static fun staticKeyOfArrowKey(arrowKey: ArrowKey): Key {
-    arrowKey match {
-    | TArrowKey{key} -> key
-    }
+    Unsafe.cast(arrowKey, TArrowKey<Key>).key
   }
 }
 
