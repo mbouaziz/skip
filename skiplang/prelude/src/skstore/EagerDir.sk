@@ -1553,7 +1553,9 @@ class EagerDir protected {
     contextDirtyReadersOpt match {
     | None() -> void
     | Some(contextDirtyReaders) ->
-      contextDirtyReaders.maybeGet(childName) match {
+      static::castDirDirtyReaders(contextDirtyReaders).maybeGet(
+        childName,
+      ) match {
       | None() -> void
       | Some(dirtyKeys) ->
         keys = dirtyKeys.values();

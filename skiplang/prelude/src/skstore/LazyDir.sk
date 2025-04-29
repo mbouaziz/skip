@@ -83,7 +83,9 @@ class LazyDir protected {
     dirtyReadersOpt match {
     | None() -> void
     | Some(dirtyReaders) ->
-      for (dirtyReaderDirName => dirtyReaderKeys in dirtyReaders) {
+      for (dirtyReaderDirName => dirtyReaderKeys in static::castDirDirtyReaders(
+        dirtyReaders,
+      )) {
         for (key in dirtyReaderKeys) {
           oldValue = this.data.maybeGet(key);
           !this.data = this.data.remove(key);

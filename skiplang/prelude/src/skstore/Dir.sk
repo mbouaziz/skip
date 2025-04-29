@@ -49,8 +49,17 @@ base class Dir protected {timeStack: TimeStack, dirName: DirName} {
     this.timeStack
   }
 
-  fun emptyDirDirtyReaders(): DirDirtyReaders {
-    TDirDirtyReaders::empty()
+  static fun castDirDirtyReaders(ddr: DirDirtyReaders): TDirDirtyReaders {
+    ddr match {
+    | d @ TDirDirtyReaders _ -> d
+    }
+  }
+
+  fun castOrEmptyDirDirtyReaders(ddrOpt: ?DirDirtyReaders): TDirDirtyReaders {
+    ddrOpt match {
+    | None() -> TDirDirtyReaders::empty()
+    | Some(ddr) -> static::castDirDirtyReaders(ddr)
+    }
   }
 }
 
