@@ -300,6 +300,31 @@ mutable base class WriteChecker {
   readonly fun mclone(): mutable WriteChecker;
 }
 
+/* Wrapper for a map from a childName to keys in the parent */
+class DirDirtyReaders private (
+  private map: SortedMap<DirName, SortedSet<Key>>,
+) {
+  static fun empty(): this {
+    static(SortedMap[])
+  }
+
+  fun add(childName: DirName, key: Key): this {
+    !this.map[childName] = this.map.maybeGet(childName) match {
+    | None() -> SortedSet[key]
+    | Some(set) -> set.set(key)
+    };
+    this
+  }
+
+  fun maybeGet(childName: DirName): ?SortedSet<Key> {
+    this.map.maybeGet(childName)
+  }
+
+  fun items(): mutable Iterator<(DirName, SortedSet<Key>)> {
+    this.map.items()
+  }
+}
+
 /*****************************************************************************/
 /* The context */
 /*****************************************************************************/
@@ -327,7 +352,7 @@ mutable class Context private {
   private mutable dirty: SortedMap<DirName, SortedSet<Key>> = SortedMap[],
   private mutable dirtyReaders: /* parentName => childName => keys */ SortedMap<
     DirName,
-    SortedMap<DirName, SortedSet<Key>>,
+    DirDirtyReaders,
   > = SortedMap[],
   mutable canReuse: CanReuse = CRIfMatch(),
   private mutable arrowStack: List<(ArrowKey, TimeStack)> = List[],
@@ -596,15 +621,11 @@ mutable class Context private {
       | None() -> continue
       | Some(x) -> x
       };
-      this.!dirtyReaders[reader.parentName] = {
-        map = this.dirtyReaders.maybeGet(reader.parentName).default(
-          SortedMap[],
-        );
-        map.set(
-          reader.childName,
-          map.maybeGet(reader.childName).default(SortedSet[]).set(reader.key),
-        )
-      };
+      this.!dirtyReaders[reader.parentName] = this.dirtyReaders.maybeGet(
+        reader.parentName,
+      )
+        .default(DirDirtyReaders::empty())
+        .add(reader.childName, reader.key);
       time = if (reader.parentName == reader.childName) {
         -child.getTimeStack()
       } else {

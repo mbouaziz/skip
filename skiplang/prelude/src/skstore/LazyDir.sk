@@ -78,7 +78,7 @@ class LazyDir protected {
 
   fun update(
     context: mutable Context,
-    dirtyReadersOpt: ?SortedMap<DirName, SortedSet<Key>>,
+    dirtyReadersOpt: ?DirDirtyReaders,
   ): void {
     dirtyReadersOpt match {
     | None() -> void
