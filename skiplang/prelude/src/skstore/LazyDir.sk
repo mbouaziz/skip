@@ -123,7 +123,7 @@ class TLazyDir extends LazyDir, TDir {
     | Some(x) -> LDefined(x, context.reads.toArray())
     };
 
-    arrowKey = ArrowKey::create{
+    arrowKey = TArrowKey::create{
       parentName => dirName,
       childName => dirName,
       key,
@@ -153,7 +153,7 @@ class TLazyDir extends LazyDir, TDir {
       if (x is Some(LRemoved _) && context.debugMode) {
         print_string(`LRemoved: ${this.dirName}${key}`)
       };
-      arrow = ArrowKey::create{
+      arrow = TArrowKey::create{
         parentName => this.dirName,
         childName => this.dirName,
         key,
@@ -235,7 +235,7 @@ class TLazyDir extends LazyDir, TDir {
           oldValue match {
           | Some(LDefined(_, reads))
           | Some(LRemoved(reads)) ->
-            arrow = ArrowKey::create{
+            arrow = TArrowKey::create{
               parentName => this.dirName,
               childName => this.dirName,
               key,
