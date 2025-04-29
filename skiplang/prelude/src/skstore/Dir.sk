@@ -48,6 +48,8 @@ base class Dir protected {timeStack: TimeStack, dirName: DirName} {
   fun getTimeStack(): TimeStack {
     this.timeStack
   }
+
+  fun addReaderKeyToKeySetOpt(arrowKey: ArrowKey, keySetOpt: ?KeySet): KeySet;
 }
 
 base class TDir {
@@ -60,6 +62,10 @@ base class TDir {
 
   fun addKeyToKeySetOpt(key: Key, keySetOpt: ?KeySet): KeySet {
     keySetOpt.map(this.castKeySet).default(TKeySet::empty()).set(key)
+  }
+
+  fun addReaderKeyToKeySetOpt(arrowKey: ArrowKey, keySetOpt: ?KeySet): KeySet {
+    this.addKeyToKeySetOpt(arrowKey.key, keySetOpt)
   }
 }
 
