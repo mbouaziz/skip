@@ -301,13 +301,9 @@ mutable base class WriteChecker {
 }
 
 /* Wrapper for a map from a childName to keys in the parent */
-class DirDirtyReaders private (
-  private map: SortedMap<DirName, SortedSet<Key>>,
+base class DirDirtyReaders protected (
+  protected map: SortedMap<DirName, SortedSet<Key>>,
 ) {
-  static fun empty(): this {
-    static(SortedMap[])
-  }
-
   fun add(childName: DirName, key: Key): this {
     !this.map[childName] = this.map.maybeGet(childName) match {
     | None() -> SortedSet[key]
@@ -322,6 +318,12 @@ class DirDirtyReaders private (
 
   fun items(): mutable Iterator<(DirName, SortedSet<Key>)> {
     this.map.items()
+  }
+}
+
+class TDirDirtyReaders extends DirDirtyReaders {
+  static fun empty(): this {
+    static(SortedMap[])
   }
 }
 
@@ -624,7 +626,7 @@ mutable class Context private {
       this.!dirtyReaders[reader.parentName] = this.dirtyReaders.maybeGet(
         reader.parentName,
       )
-        .default(DirDirtyReaders::empty())
+        .default(parent.emptyDirDirtyReaders())
         .add(reader.childName, reader.key);
       time = if (reader.parentName == reader.childName) {
         -child.getTimeStack()

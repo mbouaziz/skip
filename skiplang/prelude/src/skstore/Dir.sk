@@ -48,6 +48,10 @@ base class Dir protected {timeStack: TimeStack, dirName: DirName} {
   fun getTimeStack(): TimeStack {
     this.timeStack
   }
+
+  fun emptyDirDirtyReaders(): DirDirtyReaders {
+    TDirDirtyReaders::empty()
+  }
 }
 
 /*****************************************************************************/
