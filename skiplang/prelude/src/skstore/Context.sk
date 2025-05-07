@@ -693,6 +693,10 @@ mutable class Context private {
     this.updateLazyGets();
 
     loop {
+      if (!this.dirLocks.isEmpty()) {
+        invariant_violation(`Locked dirs during update: ${this.dirLocks}`)
+      };
+
       this.toUpdate.removeMin() match {
       | None() ->
         this.!dirty = SortedMap[];
