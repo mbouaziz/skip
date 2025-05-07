@@ -133,7 +133,7 @@ class EagerFilter private {
       changedKeys.min()
     };
     parentDir = context.unsafeGetEagerDir(this.parentName);
-    childDir = context.unsafeGetEagerDirForWriting(this.childName);
+    childDirRO = context.unsafeGetEagerDir(this.childName);
 
     // If we are at capacity and the first changed key is past our
     // last key, we can bail.
@@ -154,7 +154,7 @@ class EagerFilter private {
     startKeyOpt match {
     | None() -> void
     | Some(startKey) ->
-      for (kv in childDir.unsafeGetFileIter(None())) {
+      for (kv in childDirRO.unsafeGetFileIter(None())) {
         (key, files) = kv;
         if (startKey <= key) break void;
         for (file in files) {
@@ -169,6 +169,8 @@ class EagerFilter private {
 
     keys = SortedSet[];
     rangeIndex = 0;
+
+    childDir = context.unsafeGetEagerDirForWriting(this.childName);
 
     for (kv in parentDir.unsafeGetFileIter(startKeyOpt)) {
       (key, files) = kv;
