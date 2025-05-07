@@ -70,6 +70,7 @@ fun testChangesAfter(): void {
     if (rand.random(0, 10) > 5) {
       !dir = dir.purge(SKStore.Tick(context.getTick().value - 1000))
     };
+    context.setDir(dir);
     (!isReset, !changedKeys) = context
       .unsafeGetEagerDir(dirName)
       .getChangesAfter(tick);
