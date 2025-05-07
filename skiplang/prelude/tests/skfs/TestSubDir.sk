@@ -82,8 +82,10 @@ fun testSubDir(): void {
     context.maybeGetDir(SKStore.DirName::create("/dir2/1/")) is Some _,
     "Testing subdir exists",
   );
-  inputDir = context.unsafeGetEagerDir(SKStore.DirName::create("/dirStr1/"));
-  inputSingle = context.unsafeGetEagerDir(
+  inputDir = context.unsafeGetEagerDirForWriting(
+    SKStore.DirName::create("/dirStr1/"),
+  );
+  inputSingle = context.unsafeGetEagerDirForWriting(
     SKStore.DirName::create("/dirSingle/"),
   );
   inputDir.writeArray(context, SKStore.IID(1), Array[SKStore.StringFile("23")]);
@@ -158,7 +160,7 @@ fun testSubSubDirUnit(): void {
       },
     )
   });
-  dir2 = context.unsafeGetEagerDir(SKStore.DirName::create("/dir2/"));
+  dir2 = context.unsafeGetEagerDirForWriting(SKStore.DirName::create("/dir2/"));
   dir2.writeArray(context, SKStore.IID(0), Array[SKStore.IntFile(1)]);
   context.update()
 }

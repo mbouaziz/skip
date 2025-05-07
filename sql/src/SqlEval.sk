@@ -676,7 +676,7 @@ class Evaluator{options: Options, user: ?UserFile} {
             }
           }
         };
-        _ = SKStore.EagerDir::apply(
+        _ = SKStore.EagerDirForWriting::apply(
           context,
           selectDir.dirName,
           sinkDirName,
@@ -1290,7 +1290,7 @@ class Evaluator{options: Options, user: ?UserFile} {
       dir = getDir(table);
       sinkName = "/sinks/sink" + SKStore.genSym(0) + "/";
       sinkDirName = SKStore.DirName::create(sinkName);
-      _ = SKStore.EagerDir::apply(
+      _ = SKStore.EagerDirForWriting::apply(
         context,
         deleteDir,
         sinkDirName,
@@ -1384,7 +1384,7 @@ class Evaluator{options: Options, user: ?UserFile} {
     updateTableMap(context);
     table = getTable(context, pos, name);
     inputDir = getDir(table);
-    SKStore.EagerDir::apply(
+    SKStore.EagerDirForWriting::apply(
       context,
       selectDir.dirName,
       sinkDirName,
@@ -2062,7 +2062,7 @@ fun importNext(
         targetCtx.unsafeMaybeGetDir(targetDirName) match {
         | None() ->
           time = targetCtx.timeStamp();
-          targetDir = SKStore.EagerDir::create{
+          targetDir = SKStore.EagerDirForWriting::create{
             timeStack => SKStore.TimeStack::createInput(time),
             input => true,
             dirName => targetDirName,
@@ -2335,7 +2335,7 @@ fun getReactiveQueryHandle(
           fieldNames = schema.map(x -> x.name.origName);
           printReactiveQueryResult(context, selectDir.dirName, fieldNames);
           if (queryInfo.onlyChanges) printTick(context.getTick().next());
-          SKStore.EagerDir::apply(
+          SKStore.EagerDirForWriting::apply(
             context,
             selectDir.dirName,
             selectDir.dirName.sub("sink"),

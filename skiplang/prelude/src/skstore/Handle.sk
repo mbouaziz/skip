@@ -348,7 +348,7 @@ class LHandle<K: Key, +V: File> extends Handle<K, V> {
     f: (mutable Context, LHandle<K, V>, K) ~> Array<V>,
     collect: Bool = true,
   ): LHandle<K, V> {
-    dir = LazyDir::create(
+    dir = LazyDirForWriting::create(
       context,
       dirName,
       (context, dirName, key) ~> {
@@ -413,7 +413,7 @@ class EHandle<K: Key, V: File> extends Handle<K, V> {
         dynParents.items().map(kv -> (kv.i0, kv.i1.toArray())),
       ),
     );
-    EagerDir::applyMany(context, fixedParents, dirName, reducerOpt);
+    EagerDirForWriting::applyMany(context, fixedParents, dirName, reducerOpt);
     EHandle(typeOutputKey, typeOutput, dirName)
   }
 
@@ -535,7 +535,7 @@ class EHandle<K: Key, V: File> extends Handle<K, V> {
   }
 
   fun writeArray(context: mutable Context, key: K, values: Array<V>): void {
-    dir = context.unsafeGetEagerDir(this.dirName);
+    dir = context.unsafeGetEagerDirForWriting(this.dirName);
     dir.writeArray(context, key, values);
   }
 

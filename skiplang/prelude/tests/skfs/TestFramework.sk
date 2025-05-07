@@ -6,7 +6,9 @@ fun write(
   key: SKStore.Key,
   values: Array<SKStore.File>,
 ): void {
-  context.unsafeGetEagerDir(dirInput).writeArray(context, key, values);
+  context
+    .unsafeGetEagerDirForWriting(dirInput)
+    .writeArray(context, key, values);
 }
 
 fun getData(

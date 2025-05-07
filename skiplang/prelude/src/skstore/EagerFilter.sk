@@ -73,7 +73,7 @@ class EagerFilter private {
     rangesOpt: ?FilterRange,
   ): void {
     sinkName = this.childName.sub("filter-sink").sub(genSym(0).toString());
-    EagerDir::apply(
+    EagerDirForWriting::apply(
       context,
       this.parentName,
       sinkName,
@@ -98,7 +98,7 @@ class EagerFilter private {
     };
     time = context.timeStamp();
     creator = context.currentArrow();
-    dir = EagerDir::create{
+    dir = EagerDirForWriting::create{
       timeStack => TimeStack::createInput(time),
       input => false,
       dirName,
@@ -133,7 +133,7 @@ class EagerFilter private {
       changedKeys.min()
     };
     parentDir = context.unsafeGetEagerDir(this.parentName);
-    childDir = context.unsafeGetEagerDir(this.childName);
+    childDir = context.unsafeGetEagerDirForWriting(this.childName);
 
     // If we are at capacity and the first changed key is past our
     // last key, we can bail.
@@ -220,7 +220,7 @@ class EagerFilter private {
     };
 
     source = Path::unit(childDir.dirName);
-    fullDir = context.unsafeGetEagerDir(this.fullName);
+    fullDir = context.unsafeGetEagerDirForWriting(this.fullName);
     !fullDir = fullDir.writeEntry(
       context,
       source,

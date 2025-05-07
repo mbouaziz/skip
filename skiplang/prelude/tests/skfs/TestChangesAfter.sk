@@ -66,7 +66,7 @@ fun testChangesAfter(): void {
     };
     context.update();
 
-    dir = context.unsafeGetEagerDir(dirName);
+    dir = context.unsafeGetEagerDirForWriting(dirName);
     if (rand.random(0, 10) > 5) {
       !dir = dir.purge(SKStore.Tick(context.getTick().value - 1000))
     };

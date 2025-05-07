@@ -63,7 +63,7 @@ fun testUpdate(
   for (kv in writes) {
     (strKey, values) = kv;
     (dirName, key) = SKStore.splitStringPath(strKey);
-    dir = context.unsafeGetEagerDir(dirName);
+    dir = context.unsafeGetEagerDirForWriting(dirName);
     dir.writeArray(context, key, values.map(x -> IBox(x)));
   };
   context.update();

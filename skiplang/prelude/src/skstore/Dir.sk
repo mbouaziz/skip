@@ -4,6 +4,8 @@
 
 module SKStore;
 
+base class DirForWriting extends Dir
+
 base class Dir protected {timeStack: TimeStack, dirName: DirName} {
   /**
    * Returns an array of files associated with a key.

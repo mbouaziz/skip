@@ -303,7 +303,7 @@ fun dirDescrCopy(
   };
   context.setDir(dir);
   limit = context.getTick();
-  _ = SKStore.EagerDir::apply(
+  _ = SKStore.EagerDirForWriting::apply(
     context,
     dirName,
     sinkName,

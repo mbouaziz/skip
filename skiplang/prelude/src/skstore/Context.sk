@@ -541,11 +541,11 @@ mutable class Context private {
     this.hasPre.each(dirName -> {
       preDirName = dirName.pre();
       this.unsafeMaybeGetEagerDir(dirName).each(dir -> {
-        this.unsafeMaybeGetEagerDir(preDirName) match {
+        this.unsafeMaybeGetEagerDirForWriting(preDirName) match {
         | None() ->
           this.!newDirs = this.newDirs.add(preDirName);
           time = this.timeStamp();
-          preDir = EagerDir::create{
+          preDir = EagerDirForWriting::create{
             input => false,
             timeStack => TimeStack::createInput(time),
             dirName => preDirName,
@@ -657,7 +657,7 @@ mutable class Context private {
       };
     };
     for (dirName => keys in toRemove) {
-      dir = this.unsafeGetLazyDir(dirName);
+      dir = this.unsafeGetLazyDirForWriting(dirName);
       this.setDir(dir.removeKeys(keys))
     }
   }
@@ -703,19 +703,19 @@ mutable class Context private {
         break withChanges
       | Some((_time, Arrow(parentName, childName), toUpdate)) ->
         this.!toUpdate = toUpdate;
-        this.unsafeMaybeGetDir(childName) match {
+        this.unsafeMaybeGetDirForWriting(childName) match {
         | None()
         | Some(DeletedDir _) ->
           void
-        | Some(dir @ LazyDir _) ->
+        | Some(dir @ LazyDirForWriting _) ->
           invariant(parentName == childName);
           dir.update(this, this.dirtyReaders.maybeGet(dir.dirName))
-        | Some(child @ EagerDir _) ->
+        | Some(child @ EagerDirForWriting _) ->
           parentMaps = child.parents.maybeGet(parentName) match {
           | None() -> invariant_violation("Could not find parent")
           | Some(f) -> f
           };
-          EagerDir::update(
+          EagerDirForWriting::update(
             this,
             this.dirty.maybeGet(parentName),
             this.dirtyReaders.maybeGet(parentName),
@@ -932,7 +932,7 @@ mutable class Context private {
 
     creator = this.currentArrow();
     time = this.timeStamp();
-    dir = EagerDir::create{
+    dir = EagerDirForWriting::create{
       timeStack => TimeStack::create(this, time),
       input => true,
       dirName,
@@ -946,7 +946,7 @@ mutable class Context private {
     EHandle(convKey, convValue, dirName)
   }
 
-  mutable fun setDir(dir: Dir): void {
+  mutable fun setDir(dir: DirForWriting): void {
     dirName = dir.getDirName();
     this.!dirs = this.dirs.set(this.tick, dirName, dir);
   }
@@ -961,12 +961,30 @@ mutable class Context private {
     this.dirs.maybeGet(dirName);
   }
 
+  readonly fun unsafeMaybeGetDirForWriting(dirName: DirName): ?DirForWriting {
+    this.dirs.maybeGetForWriting(dirName)
+  }
+
   readonly fun unsafeMaybeGetDir<T: File>(dirName: DirName): ?Dir {
     this.dirs.maybeGet(dirName);
   }
 
+  readonly fun unsafeGetDirForWriting(dirName: DirName): DirForWriting {
+    this.dirs.getForWriting(dirName);
+  }
+
   readonly fun unsafeGetDir(dirName: DirName): Dir {
     this.dirs.get(dirName);
+  }
+
+  readonly fun unsafeGetLazyDirForWriting(dirName: DirName): LazyDirForWriting {
+    this.unsafeGetDirForWriting(dirName) match {
+    | d @ LazyDirForWriting _ -> d
+    | _ ->
+      invariant_violation(
+        "unsafeGetLazyDirForWriting: Was expecting LazyDirForWriting",
+      )
+    }
   }
 
   readonly fun unsafeGetLazyDir(dirName: DirName): LazyDir {
@@ -976,10 +994,37 @@ mutable class Context private {
     }
   }
 
+  readonly fun unsafeGetEagerDirForWriting(
+    dirName: DirName,
+  ): EagerDirForWriting {
+    this.unsafeGetDirForWriting(dirName) match {
+    | d @ EagerDirForWriting _ -> d
+    | _ ->
+      invariant_violation(
+        "unsafeGetEagerDirForWriting: Was expecting EagerDirForWriting",
+      )
+    }
+  }
+
   readonly fun unsafeGetEagerDir(dirName: DirName): EagerDir {
     this.unsafeGetDir(dirName) match {
     | d @ EagerDir _ -> d
     | _ -> invariant_violation("unsafeGetEagerDir: Was expecting EagerDir")
+    }
+  }
+
+  readonly fun unsafeMaybeGetEagerDirForWriting(
+    dirName: DirName,
+  ): ?EagerDirForWriting {
+    this.unsafeMaybeGetDirForWriting(dirName) match {
+    | None()
+    | Some(DeletedDir _) ->
+      None()
+    | Some(d @ EagerDirForWriting _) -> Some(d)
+    | _ ->
+      invariant_violation(
+        "unsafeMaybeGetEagerDirForWriting: Was expecting EagerDirForWriting",
+      )
     }
   }
 
@@ -1038,7 +1083,7 @@ mutable class Context private {
         this.!hasPre = this.hasPre.remove(dirName);
       };
       for (parentName => _ in dir.parents) {
-        this.unsafeMaybeGetEagerDir(parentName) match {
+        this.unsafeMaybeGetEagerDirForWriting(parentName) match {
         | None() -> continue
         | Some(parent) -> this.setDir(parent.removeChildDir(dirName))
         }
@@ -1049,7 +1094,7 @@ mutable class Context private {
       this.!deps = this.deps.removeDir(dirName);
       this.!dirsWithSharedSubDirs = this.dirsWithSharedSubDirs.remove(dirName);
       this.!sharedSubDirsRefCount = this.sharedSubDirsRefCount.remove(dirName);
-      this.setDir(DeletedDir::ofDir(dir))
+      this.setDir(DeletedDirForWriting::ofDir(dir))
     };
   }
 
@@ -1108,7 +1153,7 @@ mutable class Context private {
 
   mutable fun purge(): void {
     for (dirName in this.toPurge) {
-      this.unsafeMaybeGetEagerDir(dirName) match {
+      this.unsafeMaybeGetEagerDirForWriting(dirName) match {
       | None() -> void
       | Some(dir) -> this.setDir(dir.purge(this.purgeFrom(this, dir)))
       }
@@ -1120,13 +1165,24 @@ mutable class Context private {
 // @cpp_extern("SKIP_print_backtrace")
 // native fun printBacktrace(): void;
 
-private class Dirs{private state: DMap<DirName, Dir> = DMap::empty()} {
-  fun set<T: File>(tick: Tick, key: DirName, value: Dir): this {
+private class Dirs{
+  private state: DMap<DirName, DirForWriting> = DMap::empty(),
+} {
+  fun set<T: File>(tick: Tick, key: DirName, value: DirForWriting): this {
     !this.state = this.state.set(tick, key, value);
     this
   }
+  fun maybeGetForWriting(key: DirName): ?DirForWriting {
+    this.state.maybeGet(key)
+  }
   fun maybeGet(key: DirName): ?Dir {
     this.state.maybeGet(key)
+  }
+  fun getForWriting(key: DirName): DirForWriting {
+    this.maybeGetForWriting(key) match {
+    | None() -> invariant_violation(`Directory not found: ${key}`)
+    | Some(x) -> x
+    }
   }
   fun get(key: DirName): Dir {
     this.maybeGet(key) match {
@@ -1137,7 +1193,7 @@ private class Dirs{private state: DMap<DirName, Dir> = DMap::empty()} {
     }
   }
   fun items(): mutable Iterator<(DirName, Dir)> {
-    this.state.items()
+    (this.state : DMap<DirName, Dir>).items()
   }
   fun getChangesAfter(start: Tick): SortedSet<DirName> {
     this.state.getChangesAfter(start)
@@ -1162,7 +1218,7 @@ fun import(
   for (dirName in changedDirNames) {
     sourceCtx.unsafeMaybeGetDir(dirName) match {
     | Some(DeletedDir{}) -> targetCtx.removeDir(dirName)
-    | Some(dir @ EagerDir{input => true, creator => None()}) ->
+    | Some(dir @ EagerDirForWriting{input => true, creator => None()}) ->
       (isReset, changedKeys) = dir.getChangesAfter(tick);
       targetCtx.unsafeMaybeGetDir(dirName) match {
       | None() -> void
@@ -1174,7 +1230,7 @@ fun import(
             entries.push((key, (source, writer, values)));
           }
         };
-        targetCtx.unsafeMaybeGetEagerDir(dir.dirName) match {
+        targetCtx.unsafeMaybeGetEagerDirForWriting(dir.dirName) match {
         | None() ->
           if (dir.creator is None()) {
             targetCtx.setDir(dir);

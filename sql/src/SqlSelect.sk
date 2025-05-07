@@ -415,7 +415,7 @@ class SelectEvaluator{
 
       projLeftName = projName.sub("left");
 
-      SKStore.EagerDir::applyMany(
+      SKStore.EagerDirForWriting::applyMany(
         context,
         SKStore.FixedSingle::create(
           mutable Vector[
@@ -428,7 +428,7 @@ class SelectEvaluator{
 
       projRightName = projName.sub("right");
 
-      SKStore.EagerDir::applyMany(
+      SKStore.EagerDirForWriting::applyMany(
         context,
         SKStore.FixedSingle::create(
           mutable Vector[
@@ -473,7 +473,7 @@ class SelectEvaluator{
         }
       };
 
-      SKStore.EagerDir::applyMany(
+      SKStore.EagerDirForWriting::applyMany(
         context,
         SKStore.FixedSingle::create(
           mutable Vector[
@@ -483,7 +483,7 @@ class SelectEvaluator{
         ),
         projName,
       );
-      SKStore.EagerDir::applyMany(
+      SKStore.EagerDirForWriting::applyMany(
         context,
         SKStore.FixedSingle::create(
           mutable Vector[
@@ -691,7 +691,7 @@ class SelectEvaluator{
           context.!newDirs = context.newDirs.set(selectName1Empty);
         };
 
-        SKStore.EagerDir::applyMany(
+        SKStore.EagerDirForWriting::applyMany(
           context,
           SKStore.FixedSingle::create(
             mutable Vector[

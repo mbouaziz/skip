@@ -11,7 +11,7 @@ fun sumDir<U: File>(
 ): EHandle<UnitID, IntFile> {
   diffCountDirName = dir.dirName.sub(diffName);
   countDirName = dir.dirName.sub(name);
-  SKStore.EagerDir::apply(
+  SKStore.EagerDirForWriting::apply(
     context,
     dir.dirName,
     diffCountDirName,
@@ -33,7 +33,7 @@ fun sumDir<U: File>(
     },
   );
   countDir = EHandle(SKStore.UnitID::keyType, IntFile::type, countDirName);
-  SKStore.EagerDir::apply(
+  SKStore.EagerDirForWriting::apply(
     context,
     diffCountDirName,
     countDirName,

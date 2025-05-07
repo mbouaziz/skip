@@ -162,7 +162,7 @@ fun evalMDir(context: mutable SKStore.Context, dir: MDir): void {
       ),
     )
   };
-  SKStore.EagerDir::applyMany(
+  SKStore.EagerDirForWriting::applyMany(
     context,
     SKStore.FixedSingle::create(parents),
     SKStore.DirName::create(name),
@@ -170,7 +170,7 @@ fun evalMDir(context: mutable SKStore.Context, dir: MDir): void {
 }
 
 fun evalLDir(context: mutable SKStore.Context, dir: LDir): void {
-  _ = SKStore.LazyDir::create(
+  _ = SKStore.LazyDirForWriting::create(
     context,
     SKStore.DirName::create(dir.name),
     (context, _self, key) ~> {
@@ -217,7 +217,7 @@ fun evalSub(
       thisDirName;
     subDirName = SKStore.DirName::create(subDirNameStr);
     !subDirs = List.Cons(subDirNameStr, subDirs);
-    SKStore.EagerDir::apply(
+    SKStore.EagerDirForWriting::apply(
       context,
       dir.dirName,
       subDirName,
@@ -597,7 +597,7 @@ fun updateProgram(
     for (key => values in input.data) {
       if (diff.containsKey(key)) {
         newValues = diff[key];
-        dir = context.unsafeGetEagerDir(dirName);
+        dir = context.unsafeGetEagerDirForWriting(dirName);
         valuesArr = Array::createFromItems(newValues);
         dir.writeArray(context, SKStore.IID(key), valuesArr);
         data![key] = diff[key];
