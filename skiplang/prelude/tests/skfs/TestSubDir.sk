@@ -85,11 +85,11 @@ fun testSubDir(): void {
   inputDir = context.unsafeGetEagerDirForWriting(
     SKStore.DirName::create("/dirStr1/"),
   );
+  inputDir.writeArray(context, SKStore.IID(1), Array[SKStore.StringFile("23")]);
+  context.update();
   inputSingle = context.unsafeGetEagerDirForWriting(
     SKStore.DirName::create("/dirSingle/"),
   );
-  inputDir.writeArray(context, SKStore.IID(1), Array[SKStore.StringFile("23")]);
-  context.update();
   context.maybeGetDir(SKStore.DirName::create("/dir2/1/")) match {
   | None() -> T.fail("Expected an empty directory, not None")
   | Some(dir) ->
