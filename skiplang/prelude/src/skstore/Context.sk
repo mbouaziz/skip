@@ -312,6 +312,7 @@ mutable base class WriteChecker {
 mutable class Context private {
   private mutable toPurge: SortedSet<DirName> = SortedSet[],
   private mutable dirs: Dirs = Dirs{},
+  private mutable dirLocks: SortedSet<DirName> = SortedSet[],
   mutable reads: SortedSet<Path> = SortedSet[],
   private mutable time: Time = Time(0),
   /* Invariant: tick is only updated at the end of updateWithStatus */
@@ -948,6 +949,14 @@ mutable class Context private {
 
   mutable fun setDir(dir: DirForWriting): void {
     dirName = dir.getDirName();
+    if (this.dirLocks.contains(dirName)) {
+      this.!dirLocks = this.dirLocks.remove(dirName);
+    } else {
+      invariant(
+        this.dirs.maybeGet(dirName).isNone(),
+        `setDir: Trying to set a non-new non-locked directory: ${dirName}`,
+      );
+    };
     this.!dirs = this.dirs.set(this.tick, dirName, dir);
   }
 
@@ -961,15 +970,29 @@ mutable class Context private {
     this.dirs.maybeGet(dirName);
   }
 
-  readonly fun unsafeMaybeGetDirForWriting(dirName: DirName): ?DirForWriting {
-    this.dirs.maybeGetForWriting(dirName)
+  mutable fun unsafeMaybeGetDirForWriting(dirName: DirName): ?DirForWriting {
+    invariant(
+      !this.dirLocks.contains(dirName),
+      `unsafeMaybeGetDirForWriting: Trying to get a locked directory: ${dirName}`,
+    );
+    this.dirs.maybeGetForWriting(dirName) match {
+    | None() -> None()
+    | Some(dir) ->
+      this.!dirLocks = this.dirLocks.set(dirName);
+      Some(dir)
+    }
   }
 
   readonly fun unsafeMaybeGetDir<T: File>(dirName: DirName): ?Dir {
     this.dirs.maybeGet(dirName);
   }
 
-  readonly fun unsafeGetDirForWriting(dirName: DirName): DirForWriting {
+  mutable fun unsafeGetDirForWriting(dirName: DirName): DirForWriting {
+    invariant(
+      !this.dirLocks.contains(dirName),
+      `unsafeMaybeGetDirForWriting: Trying to get a locked directory: ${dirName}`,
+    );
+    this.!dirLocks = this.dirLocks.set(dirName);
     this.dirs.getForWriting(dirName);
   }
 
@@ -977,7 +1000,7 @@ mutable class Context private {
     this.dirs.get(dirName);
   }
 
-  readonly fun unsafeGetLazyDirForWriting(dirName: DirName): LazyDirForWriting {
+  mutable fun unsafeGetLazyDirForWriting(dirName: DirName): LazyDirForWriting {
     this.unsafeGetDirForWriting(dirName) match {
     | d @ LazyDirForWriting _ -> d
     | _ ->
@@ -994,7 +1017,7 @@ mutable class Context private {
     }
   }
 
-  readonly fun unsafeGetEagerDirForWriting(
+  mutable fun unsafeGetEagerDirForWriting(
     dirName: DirName,
   ): EagerDirForWriting {
     this.unsafeGetDirForWriting(dirName) match {
@@ -1013,7 +1036,7 @@ mutable class Context private {
     }
   }
 
-  readonly fun unsafeMaybeGetEagerDirForWriting(
+  mutable fun unsafeMaybeGetEagerDirForWriting(
     dirName: DirName,
   ): ?EagerDirForWriting {
     this.unsafeMaybeGetDirForWriting(dirName) match {
