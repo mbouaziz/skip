@@ -193,7 +193,7 @@ class CompactFixedDir protected {
   ): CompactRow {
     invariant(row.value.size() == 1);
     sourceKey = row.source match {
-    | KeyPath{baseName} ->
+    | TKeyPath{baseName} ->
       if (baseName != row.key) {
         Some(baseName)
       } else {
@@ -478,7 +478,7 @@ base class FixedSourceMap {
       | _ -> seenDirOpt
       };
       path match {
-      | KeyPath{baseName => rowKey @ SKDB.RowKey(pathRow, rowKinds)} ->
+      | TKeyPath{baseName => rowKey @ SKDB.RowKey(pathRow, rowKinds)} ->
         !seenRowKindsOpt = seenRowKindsOpt match {
         | None() -> Some(rowKinds)
         | Some(seenRowKinds) if (rowKinds != seenRowKinds) -> return None()
@@ -643,8 +643,8 @@ private class CompactFSMImpl protected (
   }
 
   fun maybeGet(key: KeyPath): ?MInfo {
-    key.baseName match {
-    | rowKey @ SKDB.RowKey(row, _kinds) ->
+    key match {
+    | TKeyPath{baseName => rowKey @ SKDB.RowKey(row, _kinds)} ->
       this.metadata.minfoType match {
       | ext @ Extension _ -> this.extendKey(rowKey, ext)
       | _ ->
@@ -685,7 +685,7 @@ private class CompactFSMImpl protected (
           }
         } else {
           datum.i0 match {
-          | KeyPath{baseName => SKDB.RowKey(values, _kinds)} -> values
+          | TKeyPath{baseName => SKDB.RowKey(values, _kinds)} -> values
           | _ ->
             invariant_violation(
               "getMetadata ensures all path basenames are RowKeys",
