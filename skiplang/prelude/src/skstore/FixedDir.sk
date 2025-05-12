@@ -157,7 +157,7 @@ class FixedDir<+T: frozen> extends IFixedDir<T, FixedRow<T>> {
   }
 }
 
-value class CompactRow<+SourceKey: Key>(
+value class CompactRow<+SourceKey: Orderable & Show>(
   values: Array<?SKDB.CValue>,
   repeat: Int,
   tag: TickRange,
@@ -173,7 +173,7 @@ base class FixedDirMetadata{
   ): FixedData<Array<File>>;
 }
 
-class TFixedDirMetadata<+SourceKey: Key> extends FixedDirMetadata {
+class TFixedDirMetadata<+SourceKey: Orderable & Show> extends FixedDirMetadata {
   fun createCompactFixedDir<V: File>(
     data: mutable Vector<FixedRow<Array<V>>>,
   ): FixedData<Array<File>> {
@@ -184,7 +184,7 @@ class TFixedDirMetadata<+SourceKey: Key> extends FixedDirMetadata {
 // This is a more compact representation of a FixedDir, keeping some shared
 // metadata about the directory and stripping redundant repeated data
 // out of the rows themselves.
-class CompactFixedDir<+SourceKey: Key> protected {
+class CompactFixedDir<+SourceKey: Orderable & Show> protected {
   metadata: TFixedDirMetadata<SourceKey>,
 } extends IFixedDir<Array<File>, CompactRow<SourceKey>> {
   static fun create<V: File>(
@@ -206,11 +206,9 @@ class CompactFixedDir<+SourceKey: Key> protected {
     invariant(row.value.size() == 1);
     sourceKey = row.source match {
     | kp @ KeyPath _ ->
-      baseName = Unsafe.cast(kp, TKeyPath<SourceKey>).baseName;
-      if (baseName != row.key) {
-        Some(baseName)
-      } else {
-        None()
+      Unsafe.maybeCast(kp, TKeyPath<SKDB.RowKey>) match {
+      | Some(TKeyPath{baseName}) if (baseName == row.key) -> None()
+      | _ -> Some(Unsafe.cast(kp, TKeyPath<SourceKey>).baseName)
       }
     | _ -> invariant_violation("getMetadata ensures all paths are KeyPaths")
     };
@@ -482,8 +480,9 @@ base class FixedSourceMap {
       | Some(seenDir) if (seenDir != path.dirName) -> return None()
       | _ -> seenDirOpt
       };
-      path match {
-      | TKeyPath{baseName => rowKey @ SKDB.RowKey(pathRow, rowKinds)} ->
+      Unsafe.maybeCast(path, TKeyPath<SKDB.RowKey>) match {
+      | None() -> return None()
+      | Some(TKeyPath{baseName => rowKey @ SKDB.RowKey(pathRow, rowKinds)}) ->
         !seenRowKindsOpt = seenRowKindsOpt match {
         | None() -> Some(rowKinds)
         | Some(seenRowKinds) if (rowKinds != seenRowKinds) -> return None()
@@ -548,7 +547,6 @@ base class FixedSourceMap {
           }
         | _ -> return None()
         }
-      | _ -> return None()
       };
     };
     seenDirOpt.flatMap(dir ->
@@ -648,8 +646,9 @@ private class CompactFSMImpl protected (
   }
 
   fun maybeGet(key: KeyPath): ?MInfo {
-    key match {
-    | TKeyPath{baseName => rowKey @ SKDB.RowKey(row, _kinds)} ->
+    Unsafe.maybeCast(key, TKeyPath<SKDB.RowKey>) match {
+    | None() -> None()
+    | Some(TKeyPath{baseName => rowKey @ SKDB.RowKey(row, _kinds)}) ->
       this.metadata.minfoType match {
       | ext @ Extension _ -> this.extendKey(rowKey, ext)
       | _ ->
@@ -658,7 +657,6 @@ private class CompactFSMImpl protected (
           Some(this.reconstructMInfo(rowKey))
         }
       }
-    | _ -> None()
     }
   }
 
@@ -689,13 +687,7 @@ private class CompactFSMImpl protected (
           | _ -> invariant_violation("malformed data for Extension metadata")
           }
         } else {
-          datum.i0 match {
-          | TKeyPath{baseName => SKDB.RowKey(values, _kinds)} -> values
-          | _ ->
-            invariant_violation(
-              "getMetadata ensures all path basenames are RowKeys",
-            )
-          }
+          Unsafe.cast(datum.i0, TKeyPath<SKDB.RowKey>).baseName.row
         }
       ),
     );
