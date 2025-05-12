@@ -1537,7 +1537,7 @@ class EagerDir protected {
 
   static fun update(
     context: mutable Context,
-    parentDirtyOpt: ?SortedSet<Key>,
+    parentDirtyOpt: ?KeySet,
     contextDirtyReadersOpt: ?SortedMap<DirName, SortedSet<Key>>,
     parentName: DirName,
     parentMaps: Array<
