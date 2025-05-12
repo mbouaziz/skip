@@ -2056,7 +2056,7 @@ class TEagerDir extends EagerDir, TDir {
     parentDirtyOpt match {
     | None() -> void
     | Some(dirtyKeys) ->
-      keys = dirtyKeys.values();
+      keys = parent.castKeySet(dirtyKeys).values();
       !dirty = withRegionFold(None(), keys, dirty, (_, key, dirtyInRegion) ~> {
         for (p in parentMaps) {
           (_, rangeOpt, _) = p;
