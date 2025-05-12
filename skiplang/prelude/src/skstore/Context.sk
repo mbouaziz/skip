@@ -666,7 +666,8 @@ mutable class Context private {
     this.!lazyGets = this.lazyGets.set(Path::create(dirName, key))
   }
 
-  mutable fun addDirty(dirName: DirName, key: Key): void {
+  mutable fun addDirty(dir: EagerDir, key: Key): void {
+    dirName = dir.dirName;
     this.!dirty[dirName] = this.dirty.maybeGet(dirName)
       .default(SortedSet[])
       .set(key)
