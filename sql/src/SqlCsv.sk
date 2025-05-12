@@ -483,7 +483,7 @@ fun applyDiffStrategy(
       sourceRows.iterator().map(row -> translator(row, newRoot))
     };
 
-    dir = newRoot.unsafeGetEagerDir(table.dirName);
+    dir = newRoot.unsafeGetEagerDirForWriting(table.dirName);
 
     !dir = SKStore.withRegionFoldRec(
       Some(newRoot),
@@ -555,7 +555,7 @@ fun applyDiffStrategy(
       sourceRows.iterator().map(row -> translator(row, newRoot))
     };
 
-    dir = newRoot.unsafeGetEagerDir(table.dirName);
+    dir = newRoot.unsafeGetEagerDirForWriting(table.dirName);
 
     !dir = SKStore.withRegionFoldRec(
       Some(newRoot),
@@ -618,7 +618,7 @@ fun applyDiffStrategy(
   // rebuild - this peer fell off the lead 'tail caravan' and got too
   // far behind. we now need to cold start by rebuilding the table.
   rebuildRows = (newRoot, _delta, _root) ~> {
-    dir = newRoot.unsafeGetEagerDir(table.dirName);
+    dir = newRoot.unsafeGetEagerDirForWriting(table.dirName);
 
     // so we don't wipe out unsynced rows
     isEligibleForTomb = (tick, source) ~>

@@ -794,7 +794,7 @@ class SelectEvaluator{
     };
 
     dirName = this.selectName2;
-    context.unsafeMaybeGetEagerDir(dirName) match {
+    context.unsafeMaybeGetEagerDirForWriting(dirName) match {
     | None() ->
       _dir = context.mkdir(
         SKStore.UnitID::keyType,

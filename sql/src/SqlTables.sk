@@ -315,7 +315,7 @@ fun dirDescrCopy(
         (_, source, writer, values) = srcValue;
         entries.push((key, (source, writer, values)));
       };
-      inputDir = context.unsafeGetEagerDir(nextName);
+      inputDir = context.unsafeGetEagerDirForWriting(nextName);
       inputDir.writeArraySourceMany(context, entries.iterator());
     },
     None(),

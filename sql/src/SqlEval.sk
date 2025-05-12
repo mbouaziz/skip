@@ -504,7 +504,7 @@ class Evaluator{options: Options, user: ?UserFile} {
     key: SKStore.Key,
     value: SKStore.File,
   ): void {
-    context.getEagerDir(dirName).write(context, key, value);
+    context.getEagerDirForWriting(dirName).write(context, key, value);
   }
 
   fun writeArray(
@@ -513,7 +513,7 @@ class Evaluator{options: Options, user: ?UserFile} {
     key: SKStore.Key,
     values: Array<SKStore.File>,
   ): void {
-    context.getEagerDir(dirName).writeArray(context, key, values);
+    context.getEagerDirForWriting(dirName).writeArray(context, key, values);
   }
 
   fun stmt(
@@ -580,7 +580,7 @@ class Evaluator{options: Options, user: ?UserFile} {
 
       Some((context, _, _) ~> {
         this.createTable(context, pos, name, dirDescr, ifNotExists);
-        tableDir = context.unsafeGetEagerDir(dirName);
+        tableDir = context.unsafeGetEagerDirForWriting(dirName);
 
         selectDir = evalSelect(context, cselect, None());
         content = context
@@ -699,7 +699,7 @@ class Evaluator{options: Options, user: ?UserFile} {
               })
               .collect(Array);
             entries = Vector[(key, (src, src, rows))];
-            inputDir = context.unsafeGetEagerDir(dir.dirName);
+            inputDir = context.unsafeGetEagerDirForWriting(dir.dirName);
             inputDir.writeArraySourceMany(context, entries.iterator());
           },
         );
@@ -1134,7 +1134,7 @@ class Evaluator{options: Options, user: ?UserFile} {
         error(pos, "Cannot create a view in a transaction");
       };
       views = getViewsDir(context);
-      viewsDir = context.unsafeGetEagerDir(views.dirName);
+      viewsDir = context.unsafeGetEagerDirForWriting(views.dirName);
       key = SKStore.SID(viewName.lower);
       cselect1 = SKDB.Compiler::create(
         false,
@@ -1192,7 +1192,9 @@ class Evaluator{options: Options, user: ?UserFile} {
               if (context.unsafeMaybeGetDir(changedDirName).isNone()) {
                 context.setGlobal(
                   "PRE_COMPUTED_" + changedDirName,
-                  SKStore.EagerDirFile(delta.unsafeGetEagerDir(changedDirName)),
+                  SKStore.EagerDirFile(
+                    delta.unsafeGetEagerDirForWriting(changedDirName),
+                  ),
                 );
               }
             }
@@ -1232,7 +1234,7 @@ class Evaluator{options: Options, user: ?UserFile} {
       };
       Some((context, _, _) ~> {
         views = getViewsDir(context);
-        viewsDir = context.unsafeGetEagerDir(views.dirName);
+        viewsDir = context.unsafeGetEagerDirForWriting(views.dirName);
         key = SKStore.SID(viewName.lower);
         files = viewsDir.getArrayRaw(key);
         if (files.size() == 0) {
@@ -1297,7 +1299,7 @@ class Evaluator{options: Options, user: ?UserFile} {
         (context, _writer, key, valueIter) ~> {
           src = SKStore.Path::create(deleteDir, key);
           entries = Vector[(key, (src, src, valueIter.collect(Array)))];
-          inputDir = context.unsafeGetEagerDir(dir.dirName);
+          inputDir = context.unsafeGetEagerDirForWriting(dir.dirName);
           inputDir.writeArraySourceMany(context, entries.iterator());
         },
       );
@@ -1390,7 +1392,7 @@ class Evaluator{options: Options, user: ?UserFile} {
       sinkDirName,
       (context, writer, key, rowIter) ~> {
         entries = mutable Vector[];
-        dir = context.unsafeGetEagerDir(inputDir.dirName);
+        dir = context.unsafeGetEagerDirForWriting(inputDir.dirName);
         writerPath = SKStore.Path::gen(selectDir.dirName);
         for ((_, source, _) in dir.getDataIterWithoutTombs(context, key)) {
           entries.push((key, (source, writerPath, Array<SKStore.File>[])));
@@ -1439,7 +1441,7 @@ class Evaluator{options: Options, user: ?UserFile} {
         writer.set(RowKey::create(row, kinds), row);
       },
     );
-    sinkDir = context.unsafeGetEagerDir(sinkDirName);
+    sinkDir = context.unsafeGetEagerDirForWriting(sinkDirName);
     context.setDir(sinkDir.timeMaxMinus());
     updateTableMap(context);
     sinkDirName
@@ -1533,7 +1535,7 @@ class Evaluator{options: Options, user: ?UserFile} {
                   (idx, P.IASC(), x.ty)
                 );
                 entries = mutable Vector[];
-                dir = context.unsafeGetEagerDir(table.dirName);
+                dir = context.unsafeGetEagerDirForWriting(table.dirName);
                 for (row in rowValues) {
                   writerPath = SKStore.Path::gen(table.dirName);
 
@@ -1574,7 +1576,7 @@ class Evaluator{options: Options, user: ?UserFile} {
     rows: Array<RowValues>,
   ): void {
     dir = getDir(table);
-    newDir = context.unsafeGetEagerDir(dir.dirName);
+    newDir = context.unsafeGetEagerDirForWriting(dir.dirName);
     kinds = table.kinds;
     for (row in rows) {
       key = RowKey::create(row, kinds);
@@ -2085,7 +2087,7 @@ fun importNext(
   };
   for (targetDirName => src in updates) {
     (isReset, changedKeys, dir, _, entries) = src;
-    targetCtx.unsafeMaybeGetEagerDir(targetDirName) match {
+    targetCtx.unsafeMaybeGetEagerDirForWriting(targetDirName) match {
     | None() -> invariant_violation("Directory should have been created")
     | Some(inputDir) ->
       inputDir.writeArraySourceMany(
@@ -2674,7 +2676,7 @@ extension class TimeStack {
   }
 }
 
-extension class EagerDir {
+extension class EagerDirForWriting {
   fun timeMaxMinus(): this {
     !this.timeStack = this.timeStack.maxMinus();
     this

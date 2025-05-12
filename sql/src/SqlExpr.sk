@@ -659,7 +659,7 @@ class ExprEvaluator(
 
     | CExists(select) ->
       sdir = evalSelect(context, select, Some(this));
-      dir = context.unsafeGetEagerDir(sdir.dirName);
+      dir = context.unsafeGetEagerDirForWriting(sdir.dirName);
       if (dir.getTime().value > 0) {
         !dir = dir.reverseTime();
         context.setDir(dir);
@@ -846,7 +846,7 @@ class ExprEvaluator(
       };
       sdir = evalSelect(context, query, Some(this));
       dirName = sdir.dirName;
-      dir = context.unsafeGetEagerDir(dirName);
+      dir = context.unsafeGetEagerDirForWriting(dirName);
       if (dir.getTime().value > 0) {
         !dir = dir.reverseTime();
         context.setDir(dir);
@@ -890,7 +890,7 @@ class ExprEvaluator(
       };
       sdir = evalSelect(context, query, Some(this));
       dirName = sdir.dirName;
-      dir = context.unsafeGetEagerDir(dirName);
+      dir = context.unsafeGetEagerDirForWriting(dirName);
       if (dir.getTime().value > 0) {
         !dir = dir.reverseTime();
         context.setDir(dir);
@@ -934,7 +934,7 @@ class ExprEvaluator(
       };
       sdir = evalSelect(context, query, Some(this));
       dirName = sdir.dirName;
-      dir = context.unsafeGetEagerDir(dirName);
+      dir = context.unsafeGetEagerDirForWriting(dirName);
       if (dir.getTime().value > 0) {
         !dir = dir.reverseTime();
         context.setDir(dir);
@@ -1017,7 +1017,7 @@ class ExprEvaluator(
   ): AValue<CValue> {
     sdir = evalSelect(context, select, Some(this));
     dirName = sdir.dirName;
-    dir = context.unsafeGetEagerDir(dirName);
+    dir = context.unsafeGetEagerDirForWriting(dirName);
     if (dir.getTime().value > 0) {
       !dir = dir.reverseTime();
       context.setDir(dir);
@@ -1182,7 +1182,7 @@ module end;
 
 module SKStore;
 
-extension class EagerDir {
+extension base class EagerDir {
   fun reverseTime(): this {
     this with {timeStack => -this.timeStack}
   }

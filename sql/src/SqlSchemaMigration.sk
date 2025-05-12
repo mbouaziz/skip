@@ -48,10 +48,12 @@ private fun resetReactiveViews(
 
     dirName = SKStore.DirName::create("/" + selectFile.name + "/");
 
-    tableDir = context.unsafeGetEagerDir(getTableDir(context).dirName);
+    tableDir = context.unsafeGetEagerDirForWriting(
+      getTableDir(context).dirName,
+    );
     fileName = SKStore.SID::create(selectFile.name.lower);
     tableDir.getArrayRaw(fileName).each((x) -> {
-      table = context.unsafeGetEagerDir(DirDescr::type(x).dirName);
+      table = context.unsafeGetEagerDirForWriting(DirDescr::type(x).dirName);
       clearData: (
         (SKStore.Key, mutable Iterator<SKStore.File>),
       ) -> mutable Iterator<
@@ -103,7 +105,7 @@ fun alterTable(
   | Some(descr) -> getLatestDirDescr(context, descr)
   };
   dirName = oldDescr.dirName;
-  dir = context.unsafeGetEagerDir(dirName);
+  dir = context.unsafeGetEagerDirForWriting(dirName);
 
   newSchema = transformSchema(oldDescr.schema);
   newKinds = newSchema.mapWithIndex((idx, col) -> (idx, P.IASC(), col.ty));

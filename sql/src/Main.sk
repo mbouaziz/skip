@@ -449,7 +449,7 @@ fun execCompact(args: Cli.ParseResults, options: SKDB.Options): void {
   SKDB.runLockedSql(options, context ~> {
     for ((_dirName, dir) in context.listDirs()) {
       dir match {
-      | edir @ SKStore.EagerDir _ ->
+      | edir @ SKStore.EagerDirForWriting _ ->
         !edir = edir.purge(context.getTick());
         context.setDir(edir)
       | _ -> void
@@ -718,7 +718,7 @@ fun execSubscribe(args: Cli.ParseResults, options: SKDB.Options): void {
     viewKey = SKStore.SID(
       views.maybeGet(0).fromSome("Must specify at least one view or table"),
     );
-    inputDir = context.unsafeGetEagerDir(input.dirName);
+    inputDir = context.unsafeGetEagerDirForWriting(input.dirName);
     sessionID = SKStore.genSym(0);
     request = SKDB.SubRequestFile(
       views,

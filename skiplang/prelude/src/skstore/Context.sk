@@ -964,6 +964,11 @@ mutable class Context private {
     this.!dirs = this.dirs.set(this.tick, dirName, dir);
   }
 
+  private mutable fun getDirForWriting(dirName: DirName): DirForWriting {
+    this.addRead(Path::dirTag(dirName));
+    this.unsafeGetDirForWriting(dirName);
+  }
+
   private mutable fun getDir(dirName: DirName): Dir {
     this.addRead(Path::dirTag(dirName));
     this.dirs.get(dirName);
@@ -1065,6 +1070,16 @@ mutable class Context private {
     }
   }
 
+  mutable fun getEagerDirForWriting(dirName: DirName): EagerDirForWriting {
+    this.getDirForWriting(dirName) match {
+    | d @ EagerDirForWriting _ -> d
+    | _ ->
+      invariant_violation(
+        "getEagerDirForWriting: Was expecting EagerDirForWriting",
+      )
+    }
+  }
+
   mutable fun getEagerDir(dirName: DirName): EagerDir {
     this.getDir(dirName) match {
     | d @ EagerDir _ -> d
@@ -1079,6 +1094,21 @@ mutable class Context private {
       None()
     | Some(d @ LazyDir _) -> Some(d)
     | _ -> invariant_violation("maybeGetLazyDir: Was expecting LazyDir")
+    }
+  }
+
+  mutable fun maybeGetEagerDirForWriting(
+    dirName: DirName,
+  ): ?EagerDirForWriting {
+    this.maybeGetDir(dirName) match {
+    | None()
+    | Some(DeletedDir _) ->
+      None()
+    | Some(d @ EagerDirForWriting _) -> Some(d)
+    | _ ->
+      invariant_violation(
+        "maybeGetEagerDirForWriting: Was expecting EagerDirForWriting",
+      )
     }
   }
 
