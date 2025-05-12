@@ -75,7 +75,7 @@ base class KeyPath extends Path uses Unsafe.Downcastable {
   ): FixedDirMetadata;
 }
 
-class TKeyPath<K: Key>{baseName: K} extends KeyPath {
+class TKeyPath<K: Orderable & Show>{baseName: K} extends KeyPath {
   fun createFixedDirMetadata(
     kinds: Array<(Int, SQLParser.IKind, SQLParser.Type)>,
   ): TFixedDirMetadata<K> {
@@ -85,10 +85,27 @@ class TKeyPath<K: Key>{baseName: K} extends KeyPath {
   fun toString(): String {
     `${this.dirName}${this.baseName}`
   }
+
+  fun compare(other: Path): Order {
+    other match {
+    | kp @ KeyPath _ ->
+      this.dirName.compare(other.dirName) match {
+      | EQ() ->
+        // Because of subtyping, cast won't work for e.g. TKeyPath<Key> vs TKeyPath<IID>
+        tkp = Unsafe.unsafeCast<KeyPath, this>(kp);
+        this.baseName.compare(tkp.baseName)
+      | neq -> neq
+      }
+    | _ -> this.getClassName().compare(other.getClassName())
+    }
+  }
 }
 
 base class Path protected {dirName: DirName} uses Orderable {
-  static fun create(dirName: DirName, baseName: Key): KeyPath {
+  static fun create<K: Orderable & Show>(
+    dirName: DirName,
+    baseName: K,
+  ): KeyPath {
     TKeyPath{dirName, baseName}
   }
 
