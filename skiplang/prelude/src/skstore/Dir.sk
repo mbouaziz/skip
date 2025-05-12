@@ -51,10 +51,8 @@ base class Dir protected {timeStack: TimeStack, dirName: DirName} {
 }
 
 base class TDir {
-  fun castKeySet(keySet: KeySet): TKeySet {
-    keySet match {
-    | ks @ TKeySet _ -> ks
-    }
+  fun castKeySet(keySet: KeySet): TKeySet<Key> {
+    Unsafe.cast(keySet, TKeySet<Key>)
   }
   fun addKeyToSetOpt(key: Key, keySetOpt: ?SortedSet<Key>): SortedSet<Key> {
     keySetOpt.default(SortedSet[]).set(key)
