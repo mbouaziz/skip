@@ -50,7 +50,11 @@ base class Dir protected {timeStack: TimeStack, dirName: DirName} {
   }
 }
 
-base class TDir
+base class TDir {
+  fun addKeyToSetOpt(key: Key, keySetOpt: ?SortedSet<Key>): SortedSet<Key> {
+    keySetOpt.default(SortedSet[]).set(key)
+  }
+}
 
 /*****************************************************************************/
 /* Exceptions */
