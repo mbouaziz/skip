@@ -377,6 +377,36 @@ base class .SortedMap<+K: Orderable, +V> uses  //  extends KeyedSequence<K, V>
     )
   }
 
+  fun mergeWith<K2: Orderable, U, R>[K: K2](
+    other: SortedMap<K2, U>,
+    f: (K2, ?V, ?U) -> ?R,
+  ): SortedMap<K2, R> {
+    (this, other) match {
+    | (Nil(), Nil()) -> Nil()
+    | (
+      Node{left => l1, key, value => v1, right => r1, h},
+      _,
+    ) if (h >= other.height()) ->
+      (l2, v2, r2) = other.split(key);
+      static::concatOrJoin(
+        key,
+        f(key, Some(v1), v2),
+        l1.mergeWith(f, l2),
+        r1.mergeWith(f, r2),
+      )
+    | (_, Node{left => l2, key, value => v2, right => r2}) ->
+      (l1, v1, r1) = this.split(key);
+      static::concatOrJoin(
+        key,
+        f(key, v1, Some(v2)),
+        l1.mergeWith(f, l2),
+        r1.mergeWith(f, r2),
+      )
+    | (Node _, Nil()) ->
+      invariant_violation("Nil should be smaller than a Node")
+    }
+  }
+
   fun merge<K2: Orderable, V2>[K: K2, V: V2](
     map2: SortedMap<K2, V2>,
   ): SortedMap<K2, V2>
