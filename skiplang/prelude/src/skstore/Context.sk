@@ -667,9 +667,10 @@ mutable class Context private {
 
   mutable fun addLazyGet(dir: LazyDir, key: Key): void {
     dirName = dir.dirName;
-    this.!lazyGets[dirName] = this.lazyGets.maybeGet(dirName)
-      .default(SortedSet[])
-      .set(key)
+    this.!lazyGets[dirName] = dir.addKeyToSetOpt(
+      key,
+      this.lazyGets.maybeGet(dirName),
+    )
   }
 
   mutable fun addDirty(dir: EagerDir, key: Key): void {
