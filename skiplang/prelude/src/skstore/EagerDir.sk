@@ -1166,7 +1166,7 @@ class EagerDir protected {
     context.!newDirs = newDirsCopy;
     context.!reads = readsCopy;
 
-    context.updateNewDeps(arrow, reads);
+    context.updateNewDeps{parentName, childName, key, reads};
 
     source = Path::create(parentName, key);
 
@@ -1640,7 +1640,7 @@ class EagerDir protected {
 
         !child = child.updateNewDirs(ctx, path, newDirs);
 
-        ctx.updateNewDeps(arrow, reads);
+        ctx.updateNewDeps{parentName, childName, key, reads};
 
         ctx.removeDeps(
           arrow,

@@ -174,8 +174,12 @@ class LazyDir protected {
     | Some(x) -> LDefined(x, context.reads.toArray())
     };
 
-    arrowKey = ArrowKey{parentName => dirName, childName => dirName, key};
-    context.updateNewDeps(arrowKey, context.reads);
+    context.updateNewDeps{
+      parentName => dirName,
+      childName => dirName,
+      key,
+      reads => context.reads,
+    };
 
     !dir = context.unsafeGetLazyDir(dirName);
     !dir.data[key] = result;
