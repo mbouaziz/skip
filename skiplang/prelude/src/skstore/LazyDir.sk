@@ -133,12 +133,12 @@ class LazyDir protected {
           oldValue match {
           | Some(LDefined(_, reads))
           | Some(LRemoved(reads)) ->
-            arrow = ArrowKey{
+            context.removeDeps{
               parentName => this.dirName,
               childName => this.dirName,
               key,
-            };
-            context.removeDeps(arrow, reads.iterator())
+              reads => reads.iterator(),
+            }
           | _ -> void
           }
         };

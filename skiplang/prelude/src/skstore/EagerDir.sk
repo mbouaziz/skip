@@ -1642,12 +1642,14 @@ class EagerDir protected {
 
         ctx.updateNewDeps{parentName, childName, key, reads};
 
-        ctx.removeDeps(
-          arrow,
-          oldInfo.getReads().iterator().filter(oldRead ~>
+        ctx.removeDeps{
+          parentName,
+          childName,
+          key,
+          reads => oldInfo.getReads().iterator().filter(oldRead ~>
             !reads.contains(oldRead)
           ),
-        );
+        };
 
         for (k => v in mvalues) {
           !child = child.writeEntry(ctx, path, path, k, v.toArray());

@@ -526,10 +526,13 @@ mutable class Context private {
     };
   }
 
-  mutable fun removeDeps(
-    reader: ArrowKey,
+  mutable fun removeDeps{
+    parentName: DirName,
+    childName: DirName,
+    key: Key,
     reads: mutable Iterator<Path>,
-  ): void {
+  }: void {
+    reader = ArrowKey{parentName, childName, key};
     for (path in reads) {
       this.!deps = this.deps.remove(path, reader);
     }
