@@ -122,14 +122,15 @@ value class Deps private (
     this.data.maybeGet(path)
   }
 
-  fun set(path: Path, arrowKey: ArrowKey): this {
+  fun set{path: Path, parentName: DirName, childName: DirName, key: Key}: this {
+    arrowKey = ArrowKey{parentName, childName, key};
     set = this.data.maybeGet(path) match {
     | None() -> SortedSet[]
     | Some(x) -> x
     };
     !set = set.set(arrowKey);
     !this.data[path] = set;
-    !this = this.iset(arrowKey.childName, path);
+    !this = this.iset(childName, path);
     this
   }
 
@@ -520,9 +521,8 @@ mutable class Context private {
     key: Key,
     reads: SortedSet<Path>,
   }: void {
-    reader = ArrowKey{parentName, childName, key};
     for (path in reads) {
-      this.!deps = this.deps.set(path, reader);
+      this.!deps = this.deps.set{path, parentName, childName, key}
     };
   }
 
