@@ -158,7 +158,13 @@ value class Deps private (
     this
   }
 
-  fun remove(path: Path, arrowKey: ArrowKey): this {
+  fun remove{
+    path: Path,
+    parentName: DirName,
+    childName: DirName,
+    key: Key,
+  }: this {
+    arrowKey = ArrowKey{parentName, childName, key};
     set = this.data.maybeGet(path) match {
     | None() -> SortedSet[]
     | Some(x) -> x
@@ -169,7 +175,7 @@ value class Deps private (
     } else {
       !this.data[path] = set
     };
-    !this = this.iremove(arrowKey.childName, path);
+    !this = this.iremove(childName, path);
     this
   }
 
@@ -532,9 +538,8 @@ mutable class Context private {
     key: Key,
     reads: mutable Iterator<Path>,
   }: void {
-    reader = ArrowKey{parentName, childName, key};
     for (path in reads) {
-      this.!deps = this.deps.remove(path, reader);
+      this.!deps = this.deps.remove{path, parentName, childName, key};
     }
   }
 
