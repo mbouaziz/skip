@@ -645,6 +645,22 @@ mutable class Context private {
 
     if (this.lazyGets.isEmpty() && deadLazyGets.isEmpty()) return void;
 
+    lazyGetsDelta = this.lazyGets.mergeWith(
+      deadLazyGets,
+      (_dirName, newKeys, deadKeys) ->
+        newKeys.inner.mergeWith(deadKeys.inner, (_key, newOpt, deadOpt) -> {
+          (newOpt, deadOpt) match {
+          | (None(), None()) ->
+            invariant_violation(
+              "SortedMap#mergeWith called with None() and None()",
+            )
+          | (None(), Some(void)) -> Some(-1)
+          | (Some(void), None()) -> Some(1)
+          | (Some(void), Some(void)) -> None()
+          }
+        })
+      ,
+    );
     for (dirName => keys in this.lazyGets) {
       refCounts = this.lazyGetsRefCount.maybeGet(dirName).default(SortedMap[]);
       for (key in keys) {
