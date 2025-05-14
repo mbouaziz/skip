@@ -111,25 +111,37 @@ fun run(f: (mutable Context) -> void): mutable Context {
 /*****************************************************************************/
 
 value class Deps private (
-  private data: SortedMap<Path, SortedSet<ArrowKey>> = SortedMap[],
+  private data: SortedMap<
+    Path,
+    SortedMap<
+      /* parentName */ DirName,
+      SortedMap<
+        /* childName */ DirName,
+        /* keys in the parent */ SortedSet<Key>,
+      >,
+    >,
+  > = SortedMap[],
   private idata: HashMap<DirName, SortedSet<Path>> = HashMap[],
 ) {
   static fun empty(): this {
     Deps()
   }
 
-  fun maybeGet(path: Path): ?SortedSet<ArrowKey> {
+  fun maybeGet(
+    path: Path,
+  ): ?SortedMap<DirName, SortedMap<DirName, SortedSet<Key>>> {
     this.data.maybeGet(path)
   }
 
   fun set{path: Path, parentName: DirName, childName: DirName, key: Key}: this {
-    arrowKey = ArrowKey{parentName, childName, key};
-    set = this.data.maybeGet(path) match {
-    | None() -> SortedSet[]
-    | Some(x) -> x
-    };
-    !set = set.set(arrowKey);
-    !this.data[path] = set;
+    parents = this.data.maybeGet(path).default(SortedMap[]);
+    children_ = parents.maybeGet(parentName).default(SortedMap[]);
+    !children_[childName] = children_
+      .maybeGet(childName)
+      .default(SortedSet[])
+      .set(key);
+    !parents[parentName] = children_;
+    !this.data[path] = parents;
     !this = this.iset(childName, path);
     this
   }
@@ -164,6 +176,18 @@ value class Deps private (
     childName: DirName,
     key: Key,
   }: this {
+    this.data.maybeGet(path) match {
+    | None() -> void
+    | Some(parents) ->
+      parents.maybeGet(parentName) match {
+      | None() -> void
+      | Some(children_) ->
+        children_.maybeGet(childName) match {
+        | None() -> void
+        | Some(keys) -> keys.remove
+        }
+      }
+    };
     arrowKey = ArrowKey{parentName, childName, key};
     set = this.data.maybeGet(path) match {
     | None() -> SortedSet[]
