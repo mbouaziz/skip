@@ -3,7 +3,7 @@
 /*****************************************************************************/
 module SKStore;
 
-class CyclicExn(Key) extends Exception {
+class CyclicExn<K: Show>(K) extends Exception {
   fun toString(): String {
     inspect(this).toString()
   }
