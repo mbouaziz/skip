@@ -639,7 +639,7 @@ class EagerDir protected {
   private purgeCount: Int = 0,
   private tombLimit: ?Tick = None(),
   optOnDelete: ?Postponable = None(),
-} extends Dir, TDir {
+} extends Dir, TDir<Key> {
   static fun create{
     timeStack: TimeStack,
     dirName: DirName,

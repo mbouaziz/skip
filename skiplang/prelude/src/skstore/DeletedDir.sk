@@ -3,7 +3,7 @@
 /*****************************************************************************/
 module SKStore;
 
-class DeletedDir protected {} extends Dir, TDir {
+class DeletedDir protected {} extends Dir, TDir<Key> {
   static fun ofDir(dir: Dir): this {
     timeStack = dir.getTimeStack();
     dirName = dir.getDirName();

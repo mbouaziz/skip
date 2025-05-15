@@ -52,37 +52,37 @@ base class Dir protected {timeStack: TimeStack, dirName: DirName} {
   fun addReaderKeyToKeySetOpt(arrowKey: ArrowKey, keySetOpt: ?KeySet): KeySet;
 }
 
-base class TDir {
-  fun castKeySet(keySet: KeySet): TKeySet<Key> {
-    Unsafe.cast(keySet, TKeySet<Key>)
+base class TDir<K: frozen & Orderable & Show> {
+  fun castKeySet(keySet: KeySet): TKeySet<K> {
+    Unsafe.cast(keySet, TKeySet<K>)
   }
 
-  fun castOrEmptyKeySet(keySetOpt: ?KeySet): TKeySet<Key> {
+  fun castOrEmptyKeySet(keySetOpt: ?KeySet): TKeySet<K> {
     keySetOpt.map(this.castKeySet).default(TKeySet::empty())
   }
 
-  fun addKeyToKeySetOpt(key: Key, keySetOpt: ?KeySet): KeySet {
+  fun addKeyToKeySetOpt(key: K, keySetOpt: ?KeySet): KeySet {
     this.castOrEmptyKeySet(keySetOpt).set(key)
   }
 
   fun addReaderKeyToKeySetOpt(arrowKey: ArrowKey, keySetOpt: ?KeySet): KeySet {
-    this.addKeyToKeySetOpt(Unsafe.cast(arrowKey, TArrowKey<Key>).key, keySetOpt)
+    this.addKeyToKeySetOpt(Unsafe.cast(arrowKey, TArrowKey<K>).key, keySetOpt)
   }
 
-  fun castKeyMap<V: frozen>(keyMap: KeyMap<V>): TKeyMap<Key, V> {
-    Unsafe.cast(keyMap, TKeyMap<Key, V>)
+  fun castKeyMap<V: frozen>(keyMap: KeyMap<V>): TKeyMap<K, V> {
+    Unsafe.cast(keyMap, TKeyMap<K, V>)
   }
 
-  fun castOrEmptyKeyMap<V: frozen>(keyMapOpt: ?KeyMap<V>): TKeyMap<Key, V> {
+  fun castOrEmptyKeyMap<V: frozen>(keyMapOpt: ?KeyMap<V>): TKeyMap<K, V> {
     keyMapOpt.map(this.castKeyMap).default(TKeyMap::empty())
   }
 
-  fun keyOfArrowKey(arrowKey: ArrowKey): Key {
+  fun keyOfArrowKey(arrowKey: ArrowKey): K {
     static::staticKeyOfArrowKey(arrowKey)
   }
 
-  static fun staticKeyOfArrowKey(arrowKey: ArrowKey): Key {
-    Unsafe.cast(arrowKey, TArrowKey<Key>).key
+  static fun staticKeyOfArrowKey(arrowKey: ArrowKey): K {
+    Unsafe.cast(arrowKey, TArrowKey<K>).key
   }
 }
 

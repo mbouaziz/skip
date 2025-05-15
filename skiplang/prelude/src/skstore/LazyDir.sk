@@ -22,7 +22,7 @@ base class ILazyDir protected {protected collect: Bool} extends Dir
 class LazyDir protected {
   private data: SortedMap<Key, LazyResult<File>> = SortedMap[],
   private lazyFun: (mutable Context, DirName, Key) ~> ?Array<File>,
-} extends ILazyDir, TDir {
+} extends ILazyDir, TDir<Key> {
   static fun create(
     context: mutable Context,
     dirName: DirName,
