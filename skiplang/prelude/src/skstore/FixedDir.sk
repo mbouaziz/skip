@@ -170,22 +170,26 @@ base class FixedDirMetadata{
 } {
   fun createCompactFixedDir<V: File>(
     data: mutable Vector<FixedRow<Array<V>>>,
+  ): FixedData<Array<File>>;
+}
+
+class TFixedDirMetadata<+SourceKey: Key> extends FixedDirMetadata {
+  fun createCompactFixedDir<V: File>(
+    data: mutable Vector<FixedRow<Array<V>>>,
   ): FixedData<Array<File>> {
     CompactFixedDir::create(data, this)
   }
 }
 
-class TFixedDirMetadata<+SourceKey: Key> extends FixedDirMetadata
-
 // This is a more compact representation of a FixedDir, keeping some shared
 // metadata about the directory and stripping redundant repeated data
 // out of the rows themselves.
-class CompactFixedDir protected {
-  metadata: FixedDirMetadata,
-} extends IFixedDir<Array<File>, CompactRow<Key>> {
+class CompactFixedDir<+SourceKey: Key> protected {
+  metadata: TFixedDirMetadata<SourceKey>,
+} extends IFixedDir<Array<File>, CompactRow<SourceKey>> {
   static fun create<V: File>(
     data: mutable Vector<FixedRow<Array<V>>>,
-    metadata: FixedDirMetadata,
+    metadata: TFixedDirMetadata<SourceKey>,
   ): this {
     if (!data.isSorted()) {
       data.sort();
@@ -198,10 +202,11 @@ class CompactFixedDir protected {
   }
   protected static fun stripMetadata<V: File>(
     row: FixedRow<Array<V>>,
-  ): CompactRow<Key> {
+  ): CompactRow<SourceKey> {
     invariant(row.value.size() == 1);
     sourceKey = row.source match {
-    | TKeyPath{baseName} ->
+    | kp @ KeyPath _ ->
+      baseName = Unsafe.cast(kp, TKeyPath<SourceKey>).baseName;
       if (baseName != row.key) {
         Some(baseName)
       } else {

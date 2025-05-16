@@ -67,7 +67,7 @@ class IIDPath{baseName: Int} extends Path {
   }
 }
 
-base class KeyPath extends Path {
+base class KeyPath extends Path uses Unsafe.Downcastable {
   // This methods has to be here so that the specializer will create
   // a TFixedDirMetadata for each TKeyPath
   fun createFixedDirMetadata(
