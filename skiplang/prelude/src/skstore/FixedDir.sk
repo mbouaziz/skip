@@ -245,14 +245,11 @@ base class IFixedDir<+T: frozen, RowRepresentation: frozen> protected {
     for (elt in data) {
       if (elt.value.size() != 1) return None();
       (elt.key, elt.value[0], elt.source) match {
-      | (SKDB.RowKey(row1, k), row2 @ SKDB.RowValues _, KeyPath{dirName}) ->
+      | (SKDB.RowKey(row1, k), row2 @ SKDB.RowValues _, source @ KeyPath _) ->
         possibleResult match {
-        | None() ->
-          !possibleResult = Some(
-            FixedDirMetadata{sourceDir => dirName, kinds => k},
-          )
+        | None() -> !possibleResult = Some(source.createFixedDirMetadata(k))
         | Some(FixedDirMetadata{sourceDir, kinds}) ->
-          if (k != kinds || dirName != sourceDir) {
+          if (k != kinds || source.dirName != sourceDir) {
             return None()
           }
         };
