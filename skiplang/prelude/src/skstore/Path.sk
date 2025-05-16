@@ -78,8 +78,8 @@ base class KeyPath extends Path {
 class TKeyPath<K: Key>{baseName: K} extends KeyPath {
   fun createFixedDirMetadata(
     kinds: Array<(Int, SQLParser.IKind, SQLParser.Type)>,
-  ): FixedDirMetadata {
-    FixedDirMetadata{sourceDir => this.dirName, kinds}
+  ): TFixedDirMetadata<K> {
+    TFixedDirMetadata<K>{sourceDir => this.dirName, kinds}
   }
 
   fun toString(): String {
