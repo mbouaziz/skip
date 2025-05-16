@@ -169,9 +169,10 @@ class FixedDirMetadata private {
   kinds: Array<(Int, SQLParser.IKind, SQLParser.Type)>,
 } {
   static fun create{
-    sourceDir: DirName,
+    source: KeyPath,
     kinds: Array<(Int, SQLParser.IKind, SQLParser.Type)>,
   }: this {
+    sourceDir = source.dirName;
     static{sourceDir, kinds}
   }
 }
@@ -252,12 +253,14 @@ base class IFixedDir<+T: frozen, RowRepresentation: frozen> protected {
     for (elt in data) {
       if (elt.value.size() != 1) return None();
       (elt.key, elt.value[0], elt.source) match {
-      | (SKDB.RowKey(row1, k), row2 @ SKDB.RowValues _, KeyPath{dirName}) ->
+      | (
+        SKDB.RowKey(row1, k),
+        row2 @ SKDB.RowValues _,
+        source @ KeyPath{dirName},
+      ) ->
         possibleResult match {
         | None() ->
-          !possibleResult = Some(
-            FixedDirMetadata::create{sourceDir => dirName, kinds => k},
-          )
+          !possibleResult = Some(FixedDirMetadata::create{source, kinds => k})
         | Some(FixedDirMetadata{sourceDir, kinds}) ->
           if (k != kinds || dirName != sourceDir) {
             return None()
