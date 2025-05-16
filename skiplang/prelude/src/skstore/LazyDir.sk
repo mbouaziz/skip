@@ -75,13 +75,6 @@ base class LazyDir protected {
     this with {data}
   }
 
-  fun getArrayRaw(key: Key): Array<File> {
-    this.data.maybeGet(key) match {
-    | Some(LDefined(arr, _)) -> arr
-    | _ -> Array[]
-    }
-  }
-
   fun update(
     context: mutable Context,
     dirtyReadersOpt: ?SortedMap<DirName, SortedSet<Key>>,
@@ -237,6 +230,13 @@ class TLazyDir extends LazyDir, TDir {
       };
     };
     keys
+  }
+
+  fun getArrayRaw(key: Key): Array<File> {
+    this.data.maybeGet(key) match {
+    | Some(LDefined(arr, _)) -> arr
+    | _ -> Array[]
+    }
   }
 }
 
