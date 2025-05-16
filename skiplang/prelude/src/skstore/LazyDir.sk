@@ -105,50 +105,6 @@ base class LazyDir protected {
     context.setDir(this);
   }
 
-  protected fun doGet(context: mutable Context, key: Key): LazyResult {
-    dirName = this.dirName;
-
-    dir = context.unsafeGetLazyDir(dirName);
-    !dir.data[key] = LCycle();
-    context.setDir(dir);
-
-    readsCopy = context.reads;
-    context.!reads = SortedSet[];
-
-    resultOpt = try {
-      this.lazyFun(context, dirName, key)
-    } catch {
-    | exn ->
-      !dir = context.unsafeGetLazyDir(dirName);
-      !dir.data[key] = LAbsent();
-      context.setDir(dir);
-      context.!reads = readsCopy;
-      throw exn
-    };
-
-    result = resultOpt match {
-    | None() -> LAbsent()
-    | Some(x) -> LDefined(x, context.reads.toArray())
-    };
-
-    arrowKey = ArrowKey::create{
-      parentName => dirName,
-      childName => dirName,
-      key,
-    };
-    context.updateNewDeps(arrowKey, context.reads);
-
-    !dir = context.unsafeGetLazyDir(dirName);
-    !dir.data[key] = result;
-    context.setDir(dir);
-
-    if (context.debugMode) {
-      print_string(`WRITTEN LAZY:  ${dirName}${key}`);
-    };
-    context.!reads = readsCopy;
-    result
-  }
-
   fun typed(): TLazyDir;
 }
 
@@ -198,6 +154,50 @@ class TLazyDir extends LazyDir, TDir {
     | Some(LDefined(arr, _)) -> arr
     | _ -> Array[]
     }
+  }
+
+  protected fun doGet(context: mutable Context, key: Key): LazyResult {
+    dirName = this.dirName;
+
+    dir = context.unsafeGetLazyDir(dirName);
+    !dir.data[key] = LCycle();
+    context.setDir(dir);
+
+    readsCopy = context.reads;
+    context.!reads = SortedSet[];
+
+    resultOpt = try {
+      this.lazyFun(context, dirName, key)
+    } catch {
+    | exn ->
+      !dir = context.unsafeGetLazyDir(dirName);
+      !dir.data[key] = LAbsent();
+      context.setDir(dir);
+      context.!reads = readsCopy;
+      throw exn
+    };
+
+    result = resultOpt match {
+    | None() -> LAbsent()
+    | Some(x) -> LDefined(x, context.reads.toArray())
+    };
+
+    arrowKey = ArrowKey::create{
+      parentName => dirName,
+      childName => dirName,
+      key,
+    };
+    context.updateNewDeps(arrowKey, context.reads);
+
+    !dir = context.unsafeGetLazyDir(dirName);
+    !dir.data[key] = result;
+    context.setDir(dir);
+
+    if (context.debugMode) {
+      print_string(`WRITTEN LAZY:  ${dirName}${key}`);
+    };
+    context.!reads = readsCopy;
+    result
   }
 
   fun unsafeGetArray(context: mutable Context, key: Key): Array<File> {
