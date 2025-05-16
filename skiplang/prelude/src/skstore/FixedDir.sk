@@ -167,6 +167,12 @@ value class CompactRow(
 base class FixedDirMetadata{
   sourceDir: DirName,
   kinds: Array<(Int, SQLParser.IKind, SQLParser.Type)>,
+} {
+  fun createCompactFixedDir<V: File>(
+    data: mutable Vector<FixedRow<Array<V>>>,
+  ): FixedData<Array<File>> {
+    CompactFixedDir::create(data, this)
+  }
 }
 
 class TFixedDirMetadata<+SourceKey: Key> extends FixedDirMetadata
