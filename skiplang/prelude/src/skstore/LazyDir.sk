@@ -75,16 +75,6 @@ base class LazyDir protected {
     this with {data}
   }
 
-  fun keys(): SortedSet<Key> {
-    keys = SortedSet[];
-    for (newKey => value in this.data) {
-      if (value is LDefined _) {
-        !keys = keys.set(newKey);
-      };
-    };
-    keys
-  }
-
   fun getArrayRaw(key: Key): Array<File> {
     this.data.maybeGet(key) match {
     | Some(LDefined(arr, _)) -> arr
@@ -237,6 +227,16 @@ class TLazyDir extends LazyDir, TDir {
       context.setDir(newDir);
       newDir
     }
+  }
+
+  fun keys(): SortedSet<Key> {
+    keys = SortedSet[];
+    for (newKey => value in this.data) {
+      if (value is LDefined _) {
+        !keys = keys.set(newKey);
+      };
+    };
+    keys
   }
 }
 
