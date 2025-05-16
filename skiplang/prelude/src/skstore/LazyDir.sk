@@ -89,13 +89,6 @@ class TLazyDir{
     this with {data}
   }
 
-  fun getArrayRaw(key: Key): Array<File> {
-    this.data.maybeGet(key) match {
-    | Some(LDefined(arr, _)) -> arr
-    | _ -> Array[]
-    }
-  }
-
   fun update(
     context: mutable Context,
     dirtyReadersOpt: ?SortedMap<DirName, KeySet>,
@@ -247,6 +240,13 @@ class TLazyDir{
       };
     };
     keys
+  }
+
+  fun getArrayRaw(key: Key): Array<File> {
+    this.data.maybeGet(key) match {
+    | Some(LDefined(arr, _)) -> arr
+    | _ -> Array[]
+    }
   }
 }
 
