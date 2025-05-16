@@ -67,9 +67,21 @@ class IIDPath{baseName: Int} extends Path {
   }
 }
 
-base class KeyPath extends Path
+base class KeyPath extends Path {
+  // This methods has to be here so that the specializer will create
+  // a TFixedDirMetadata for each TKeyPath
+  fun createFixedDirMetadata(
+    kinds: Array<(Int, SQLParser.IKind, SQLParser.Type)>,
+  ): FixedDirMetadata;
+}
 
 class TKeyPath<K: Key>{baseName: K} extends KeyPath {
+  fun createFixedDirMetadata(
+    kinds: Array<(Int, SQLParser.IKind, SQLParser.Type)>,
+  ): FixedDirMetadata {
+    FixedDirMetadata{sourceDir => this.dirName, kinds}
+  }
+
   fun toString(): String {
     `${this.dirName}${this.baseName}`
   }
