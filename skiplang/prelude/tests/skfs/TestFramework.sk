@@ -14,11 +14,11 @@ fun getData(
   dirName: SKStore.DirName,
   key: SKStore.Key,
 ): Array<SKStore.File> {
-  context.unsafeGetDir(dirName) match {
+  context.unsafeGetDir(dirName).typed() match {
   | SKStore.DeletedDir _ ->
     invariant_violation("Trying to write to an empty directory")
   | edir @ SKStore.EagerDir _ -> edir.getArrayRaw(key)
-  | ldir @ SKStore.LazyDir _ -> ldir.unsafeGetArray(context, key)
+  | ldir @ SKStore.TLazyDir _ -> ldir.unsafeGetArray(context, key)
   }
 }
 
