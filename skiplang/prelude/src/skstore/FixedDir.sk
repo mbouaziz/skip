@@ -164,9 +164,16 @@ value class CompactRow(
   sourceKey: ?Key,
 )
 
-class FixedDirMetadata{
+class FixedDirMetadata private {
   sourceDir: DirName,
   kinds: Array<(Int, SQLParser.IKind, SQLParser.Type)>,
+} {
+  static fun create{
+    sourceDir: DirName,
+    kinds: Array<(Int, SQLParser.IKind, SQLParser.Type)>,
+  }: this {
+    static{sourceDir, kinds}
+  }
 }
 
 // This is a more compact representation of a FixedDir, keeping some shared
@@ -249,7 +256,7 @@ base class IFixedDir<+T: frozen, RowRepresentation: frozen> protected {
         possibleResult match {
         | None() ->
           !possibleResult = Some(
-            FixedDirMetadata{sourceDir => dirName, kinds => k},
+            FixedDirMetadata::create{sourceDir => dirName, kinds => k},
           )
         | Some(FixedDirMetadata{sourceDir, kinds}) ->
           if (k != kinds || dirName != sourceDir) {
