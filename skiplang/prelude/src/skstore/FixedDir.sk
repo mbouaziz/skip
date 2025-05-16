@@ -221,16 +221,11 @@ class CompactFixedDir protected {
     compactRow = this.data.unsafe_get(i);
     rowValues = SKDB.RowValues(compactRow.values, compactRow.repeat);
     rowKey = SKDB.RowKey(rowValues, this.metadata.kinds);
-    sourceKey = compactRow.sourceKey match {
-    | None() -> rowKey
-    | Some(otherKey) -> otherKey
+    source = compactRow.sourceKey match {
+    | None() -> Path::create(this.metadata.sourceDir, rowKey)
+    | Some(otherKey) -> Path::create(this.metadata.sourceDir, otherKey)
     };
-    FixedRow(
-      rowKey,
-      Array[(rowValues : File)],
-      Path::create(this.metadata.sourceDir, sourceKey),
-      compactRow.tag,
-    )
+    FixedRow(rowKey, Array[(rowValues : File)], source, compactRow.tag)
   }
 }
 
