@@ -184,10 +184,6 @@ base class LazyDir protected {
     this.unsafeGetArray(context, key)
   }
 
-  fun getIter(context: mutable Context, key: Key): mutable Iterator<File> {
-    this.getArray(context, key).iterator()
-  }
-
   fun typed(): TLazyDir;
 }
 
@@ -237,6 +233,10 @@ class TLazyDir extends LazyDir, TDir {
     | Some(LDefined(arr, _)) -> arr
     | _ -> Array[]
     }
+  }
+
+  fun getIter(context: mutable Context, key: Key): mutable Iterator<File> {
+    this.getArray(context, key).iterator()
   }
 }
 
