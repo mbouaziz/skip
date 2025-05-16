@@ -164,10 +164,12 @@ value class CompactRow(
   sourceKey: ?Key,
 )
 
-class FixedDirMetadata{
+base class FixedDirMetadata{
   sourceDir: DirName,
   kinds: Array<(Int, SQLParser.IKind, SQLParser.Type)>,
 }
+
+class TFixedDirMetadata<+SourceKey: Key> extends FixedDirMetadata
 
 // This is a more compact representation of a FixedDir, keeping some shared
 // metadata about the directory and stripping redundant repeated data
