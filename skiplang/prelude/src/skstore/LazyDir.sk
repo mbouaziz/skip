@@ -149,35 +149,6 @@ base class LazyDir protected {
     result
   }
 
-  fun unsafeGetArray(context: mutable Context, key: Key): Array<File> {
-    if (this.collect) {
-      context.addLazyGet(this, key)
-    };
-    lazyResult = this.data.maybeGet(key) match {
-    | Some(LCycle()) -> throw CyclicExn(key)
-    | x @ None()
-    | x @ Some(LRemoved _)
-    | x @ Some(LAbsent()) ->
-      if (x is Some(LRemoved _) && context.debugMode) {
-        print_string(`LRemoved: ${this.dirName}${key}`)
-      };
-      arrow = ArrowKey::create{
-        parentName => this.dirName,
-        childName => this.dirName,
-        key,
-      };
-      context.enter(arrow, this.timeStack);
-      res = this.doGet(context, key);
-      context.leave(arrow);
-      res
-    | Some(x) -> x
-    };
-    lazyResult match {
-    | LDefined(arr, _reads) -> arr
-    | _ -> Array[]
-    }
-  }
-
   fun typed(): TLazyDir;
 }
 
@@ -225,6 +196,35 @@ class TLazyDir extends LazyDir, TDir {
   fun getArrayRaw(key: Key): Array<File> {
     this.data.maybeGet(key) match {
     | Some(LDefined(arr, _)) -> arr
+    | _ -> Array[]
+    }
+  }
+
+  fun unsafeGetArray(context: mutable Context, key: Key): Array<File> {
+    if (this.collect) {
+      context.addLazyGet(this, key)
+    };
+    lazyResult = this.data.maybeGet(key) match {
+    | Some(LCycle()) -> throw CyclicExn(key)
+    | x @ None()
+    | x @ Some(LRemoved _)
+    | x @ Some(LAbsent()) ->
+      if (x is Some(LRemoved _) && context.debugMode) {
+        print_string(`LRemoved: ${this.dirName}${key}`)
+      };
+      arrow = ArrowKey::create{
+        parentName => this.dirName,
+        childName => this.dirName,
+        key,
+      };
+      context.enter(arrow, this.timeStack);
+      res = this.doGet(context, key);
+      context.leave(arrow);
+      res
+    | Some(x) -> x
+    };
+    lazyResult match {
+    | LDefined(arr, _reads) -> arr
     | _ -> Array[]
     }
   }
