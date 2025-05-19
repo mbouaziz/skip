@@ -171,7 +171,7 @@ base class PredefinedTable private final {
         "Error: could not find ${static::name}, privacy layer not initialized",
       );
       skipExit(2)
-    | Some(x) -> x
+    | Some(x) -> x.typed()
     };
 
     (isReset, changes) = dir.getChangesAfter(tick);

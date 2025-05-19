@@ -2358,7 +2358,7 @@ fun printReactiveQueryChanges(
 ): void {
   lastTick = lastTick(UInt32::truncate(queryID));
   tick = SKStore.Tick(lastTick.toInt());
-  edir = context.unsafeGetEagerDir(dirName);
+  edir = context.unsafeGetEagerDir(dirName).typed();
   (isReset, changes) = edir.getChangesAfter(tick);
   if (isReset) {
     printReactiveQueryResult(context, dirName, fieldNames)
