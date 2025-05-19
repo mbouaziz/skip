@@ -919,18 +919,6 @@ base class EagerDir protected {
     result
   }
 
-  fun getChangesAfter(tick: Tick): (Bool, SortedSet<Key>) {
-    this.tombLimit match {
-    | Some(limit) if (tick.value <= limit.value) ->
-      return (true, this.getAllKeysWithValues())
-    | _ -> void
-    };
-    new = this.data.getChangesAfter(tick);
-    old = this.fixedData.getChangesAfter(tick);
-    result = new.union(old);
-    (false, result)
-  }
-
   protected static fun fixedMapData(
     context: mutable Context,
     oldVec: mutable Vector<(Path, MInfo)>,
@@ -2183,6 +2171,18 @@ class TEagerDir extends EagerDir, TDir {
         static::addChildToParent(context, parentName, childName, rangeOpt);
       }
     };
+  }
+
+  fun getChangesAfter(tick: Tick): (Bool, SortedSet<Key>) {
+    this.tombLimit match {
+    | Some(limit) if (tick.value <= limit.value) ->
+      return (true, this.getAllKeysWithValues())
+    | _ -> void
+    };
+    new = this.data.getChangesAfter(tick);
+    old = this.fixedData.getChangesAfter(tick);
+    result = new.union(old);
+    (false, result)
   }
 
   fun notifySubWatch(start: Tick, tick: Tick, nWatch: NWatch): void {

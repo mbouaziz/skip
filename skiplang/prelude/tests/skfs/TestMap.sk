@@ -159,6 +159,7 @@ fun testMultiMap(): void {
   context.update();
   (_, changedKeys) = context
     .unsafeGetEagerDir(dirNameResult)
+    .typed()
     .getChangesAfter(tick);
   T.expectEq(
     Array<SKStore.Key>[SKStore.IID(0), SKStore.IID(1)],
@@ -177,6 +178,7 @@ fun testMultiMap(): void {
   context.update();
   (_, !changedKeys) = context
     .unsafeGetEagerDir(dirNameResult)
+    .typed()
     .getChangesAfter(tick);
   T.expectEq(
     Array[0, 1],
@@ -247,6 +249,7 @@ fun testMultiMapSameParent(): void {
   context.update();
   (_, changedKeys) = context
     .unsafeGetEagerDir(dirNameResult)
+    .typed()
     .getChangesAfter(tick);
   T.expectEq(
     Array<SKStore.Key>[SKStore.IID(0), SKStore.IID(1)],
@@ -272,6 +275,7 @@ fun testMultiMapSameParent(): void {
   context.update();
   (_, !changedKeys) = context
     .unsafeGetEagerDir(dirNameResult)
+    .typed()
     .getChangesAfter(tick);
   T.expectEq(
     Array[0, 1],

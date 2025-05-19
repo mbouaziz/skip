@@ -24,6 +24,7 @@ fun testChangesAfter(): void {
   context.update();
   (isReset, changedKeys) = context
     .unsafeGetEagerDir(dirName)
+    .typed()
     .getChangesAfter(tick);
   invariant(!isReset);
   T.expectEq(
@@ -37,6 +38,7 @@ fun testChangesAfter(): void {
   context.update();
   (!isReset, !changedKeys) = context
     .unsafeGetEagerDir(dirName)
+    .typed()
     .getChangesAfter(tick);
   invariant(!isReset);
   T.expectEq(
@@ -72,6 +74,7 @@ fun testChangesAfter(): void {
     };
     (!isReset, !changedKeys) = context
       .unsafeGetEagerDir(dirName)
+      .typed()
       .getChangesAfter(tick);
     invariant(!isReset);
 
