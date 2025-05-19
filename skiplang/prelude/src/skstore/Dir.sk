@@ -26,67 +26,67 @@ base class Dir protected {timeStack: TimeStack, dirName: DirName} {
     this.timeStack
   }
 
-  fun typed(): TDir;
+  fun typed(): TDir<Key>;
 
   fun addReaderKeyToKeySetOpt(arrowKey: ArrowKey, keySetOpt: ?KeySet): KeySet;
 }
 
-base class TDir extends Dir {
-  fun typed(): this;
+base class TDir<K: Orderable & Show> extends Dir {
+  fun typed(): TDir<Key>;
 
   /**
    * Returns an array of files associated with a key.
    * The array is empty if the key does not exist.
    */
-  fun getArray(context: mutable Context, key: Key): Array<File>;
+  fun getArray(context: mutable Context, key: K): Array<File>;
 
   /**
    * Returns an iterator of files associated with a key.
    * The iterator is empty if the key does not exist.
    */
-  fun getIter(context: mutable Context, key: Key): mutable Iterator<File>;
+  fun getIter(context: mutable Context, key: K): mutable Iterator<File>;
 
   /**
    * Same as getArray but does not create a dependency, which will break in
    * incremental mode. This should only be used for testing.
    */
-  fun getArrayRaw(key: Key): Array<File>;
+  fun getArrayRaw(key: K): Array<File>;
 
   /**
    * Returns the list of files in a directory. Should only be used for testing.
    */
-  fun keys(): SortedSet<Key>;
+  fun keys(): SortedSet<K>;
 
-  fun castKeySet(keySet: KeySet): TKeySet<Key> {
-    Unsafe.cast(keySet, TKeySet<Key>)
+  fun castKeySet(keySet: KeySet): TKeySet<K> {
+    Unsafe.cast(keySet, TKeySet<K>)
   }
 
-  fun castOrEmptyKeySet(keySetOpt: ?KeySet): TKeySet<Key> {
+  fun castOrEmptyKeySet(keySetOpt: ?KeySet): TKeySet<K> {
     keySetOpt.map(this.castKeySet).default(TKeySet::empty())
   }
 
-  fun addKeyToKeySetOpt(key: Key, keySetOpt: ?KeySet): KeySet {
+  fun addKeyToKeySetOpt(key: K, keySetOpt: ?KeySet): KeySet {
     this.castOrEmptyKeySet(keySetOpt).set(key)
   }
 
   fun addReaderKeyToKeySetOpt(arrowKey: ArrowKey, keySetOpt: ?KeySet): KeySet {
-    this.addKeyToKeySetOpt(Unsafe.cast(arrowKey, TArrowKey<Key>).key, keySetOpt)
+    this.addKeyToKeySetOpt(Unsafe.cast(arrowKey, TArrowKey<K>).key, keySetOpt)
   }
 
-  fun castKeyMap<V: frozen>(keyMap: KeyMap<V>): TKeyMap<Key, V> {
-    Unsafe.cast(keyMap, TKeyMap<Key, V>)
+  fun castKeyMap<V: frozen>(keyMap: KeyMap<V>): TKeyMap<K, V> {
+    Unsafe.cast(keyMap, TKeyMap<K, V>)
   }
 
-  fun castOrEmptyKeyMap<V: frozen>(keyMapOpt: ?KeyMap<V>): TKeyMap<Key, V> {
+  fun castOrEmptyKeyMap<V: frozen>(keyMapOpt: ?KeyMap<V>): TKeyMap<K, V> {
     keyMapOpt.map(this.castKeyMap).default(TKeyMap::empty())
   }
 
-  fun keyOfArrowKey(arrowKey: ArrowKey): Key {
+  fun keyOfArrowKey(arrowKey: ArrowKey): K {
     static::staticKeyOfArrowKey(arrowKey)
   }
 
-  static fun staticKeyOfArrowKey(arrowKey: ArrowKey): Key {
-    Unsafe.cast(arrowKey, TArrowKey<Key>).key
+  static fun staticKeyOfArrowKey(arrowKey: ArrowKey): K {
+    Unsafe.cast(arrowKey, TArrowKey<K>).key
   }
 }
 

@@ -49,7 +49,7 @@ base class LazyDir protected {
   fun typed(): TLazyDir;
 }
 
-class TLazyDir extends LazyDir, TDir {
+class TLazyDir extends LazyDir, TDir<Key> {
   fun typed(): this {
     this
   }
