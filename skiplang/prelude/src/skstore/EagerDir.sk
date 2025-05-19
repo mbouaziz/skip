@@ -1989,29 +1989,7 @@ base class EagerDir protected {
     this.writeArray(context, baseName, Array[]);
   }
 
-  fun notifySubWatch(startOpt: ?Tick, tick: Tick, nWatch: NWatch): void {
-    (init, changedKeys) = startOpt match {
-    | Some(start) -> this.getChangesAfter(start)
-    | None() -> (true, SortedSet[])
-    };
-    keys = if (init) {
-      keys = SortedSet[];
-      // Key can appears multiple times
-      this.unsafeIterKeys((key) -> !keys = keys.set(key));
-      keys
-    } else {
-      changedKeys
-    };
-    if (init || !keys.isEmpty()) {
-      result = mutable Vector[];
-      for (key in keys) {
-        values = this.getArrayRaw(key);
-        result.push((key, values))
-      };
-      fn = Unsafe.cast(nWatch, TNWatch<Key, File>).fn;
-      fn(result.toArray(), tick, !init)
-    }
-  }
+  fun notifySubWatch(startOpt: ?Tick, tick: Tick, nWatch: NWatch): void;
 
   fun notifySubUpdates(
     startOpt: ?Tick,
@@ -2272,6 +2250,30 @@ class TEagerDir extends EagerDir, TDir {
         static::addChildToParent(context, parentName, childName, rangeOpt);
       }
     };
+  }
+
+  fun notifySubWatch(startOpt: ?Tick, tick: Tick, nWatch: NWatch): void {
+    (init, changedKeys) = startOpt match {
+    | Some(start) -> this.getChangesAfter(start)
+    | None() -> (true, SortedSet[])
+    };
+    keys = if (init) {
+      keys = SortedSet[];
+      // Key can appears multiple times
+      this.unsafeIterKeys((key) -> !keys = keys.set(key));
+      keys
+    } else {
+      changedKeys
+    };
+    if (init || !keys.isEmpty()) {
+      result = mutable Vector[];
+      for (key in keys) {
+        values = this.getArrayRaw(key);
+        result.push((key, values))
+      };
+      fn = Unsafe.cast(nWatch, TNWatch<Key, File>).fn;
+      fn(result.toArray(), tick, !init)
+    }
   }
 }
 
