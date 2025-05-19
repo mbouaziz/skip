@@ -37,7 +37,7 @@ base class LazyDir protected {protected collect: Bool} extends Dir {
 class TLazyDir{
   protected data: SortedMap<Key, LazyResult<File>> = SortedMap[],
   protected lazyFun: (mutable Context, DirName, Key) ~> ?Array<File>,
-} extends LazyDir, TDir {
+} extends LazyDir, TDir<Key> {
   fun updateLazyGets(
     refCountsOpt: ?KeyMap<Int>,
     newKeysOpt: ?KeySet,

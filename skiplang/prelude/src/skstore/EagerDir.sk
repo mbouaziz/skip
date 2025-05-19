@@ -1681,7 +1681,7 @@ base class EagerDir protected {
   fun typed(): TEagerDir;
 }
 
-class TEagerDir extends EagerDir, TDir {
+class TEagerDir extends EagerDir, TDir<Key> {
   fun typed(): this {
     this
   }
