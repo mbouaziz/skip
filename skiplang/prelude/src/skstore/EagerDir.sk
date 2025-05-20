@@ -2000,43 +2000,7 @@ base class EagerDir protected {
     destinationTime: ?Tick,
   ): Bool;
 
-  fun updatePre(context: mutable Context): Bool {
-    withChange = false;
-    preDirName = this.dirName.pre();
-    context.unsafeMaybeGetEagerDir(preDirName) match {
-    | None() ->
-      context.!newDirs = context.newDirs.add(preDirName);
-      time = context.timeStamp();
-      preDir = TEagerDir::create{
-        input => false,
-        timeStack => TimeStack::createInput(time),
-        dirName => preDirName,
-        creator => context.currentArrow(),
-      };
-      this.unsafeIterKeys((key) -> {
-        values = this.getArrayRaw(key);
-        !withChange = true;
-        source = Path::create(preDir.dirName, key);
-        !preDir = preDir.writeEntry(context, source, source, key, values);
-      });
-      context.setDir(preDir);
-      context.updateDirtyReaders(Path::dirTag(preDirName))
-    | Some(preDir) ->
-      (isReset, changes) = this.getChangesAfter(context.getTick().prev());
-      for (key in changes) {
-        values = this.getArrayRaw(key);
-        !withChange = true;
-        source = Path::create(preDir.dirName, key);
-        !preDir = preDir.writeEntry(context, source, source, key, values);
-      };
-      if (isReset) {
-        writerPath = Path::gen(preDir.dirName);
-        !preDir = preDir.reset(context, writerPath, changes);
-      };
-      context.setDir(preDir)
-    };
-    withChange
-  }
+  fun updatePre(context: mutable Context): Bool;
 
   fun import{targetCtx: mutable Context, tick: Tick}: void {
     if (!this.input || this.creator is Some _) {
@@ -2283,6 +2247,44 @@ class TEagerDir extends EagerDir, TDir {
       destinationTime,
     );
     producedOutput
+  }
+
+  fun updatePre(context: mutable Context): Bool {
+    withChange = false;
+    preDirName = this.dirName.pre();
+    context.unsafeMaybeGetEagerDir(preDirName) match {
+    | None() ->
+      context.!newDirs = context.newDirs.add(preDirName);
+      time = context.timeStamp();
+      preDir = TEagerDir::create{
+        input => false,
+        timeStack => TimeStack::createInput(time),
+        dirName => preDirName,
+        creator => context.currentArrow(),
+      };
+      this.unsafeIterKeys((key) -> {
+        values = this.getArrayRaw(key);
+        !withChange = true;
+        source = Path::create(preDir.dirName, key);
+        !preDir = preDir.writeEntry(context, source, source, key, values);
+      });
+      context.setDir(preDir);
+      context.updateDirtyReaders(Path::dirTag(preDirName))
+    | Some(preDir) ->
+      (isReset, changes) = this.getChangesAfter(context.getTick().prev());
+      for (key in changes) {
+        values = this.getArrayRaw(key);
+        !withChange = true;
+        source = Path::create(preDir.dirName, key);
+        !preDir = preDir.writeEntry(context, source, source, key, values);
+      };
+      if (isReset) {
+        writerPath = Path::gen(preDir.dirName);
+        !preDir = preDir.reset(context, writerPath, changes);
+      };
+      context.setDir(preDir)
+    };
+    withChange
   }
 }
 
