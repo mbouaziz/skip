@@ -2646,6 +2646,21 @@ extension base class EagerDir {
     targetCtx: mutable Context,
     tick: Tick,
     targetDirName: DirName,
+  }: void;
+
+  fun writeChangesAfter(
+    context: readonly Context,
+    dirsub: DirSub,
+    tick: SKStore.Tick,
+    writer: mutable Debug.BufferedWriter,
+  ): Bool;
+}
+
+extension class TEagerDir {
+  fun importNext{
+    targetCtx: mutable Context,
+    tick: Tick,
+    targetDirName: DirName,
   }: void {
     (isReset, changedKeys) = this.getChangesAfter(tick);
     inputDir = targetCtx.unsafeMaybeGetEagerDir(targetDirName) match {
@@ -2675,15 +2690,6 @@ extension base class EagerDir {
     )
   }
 
-  fun writeChangesAfter(
-    context: readonly Context,
-    dirsub: DirSub,
-    tick: SKStore.Tick,
-    writer: mutable Debug.BufferedWriter,
-  ): Bool;
-}
-
-extension class TEagerDir {
   fun writeChangesAfter(
     context: readonly Context,
     dirsub: DirSub,
