@@ -1942,20 +1942,6 @@ base class EagerDir protected {
     context.setDir(this);
   }
 
-  fun writeArrayMany(
-    context: mutable Context,
-    bindings: mutable Iterator<(Key, Array<File>)>,
-  ): void {
-    this.writeArraySourceMany(
-      context,
-      bindings.map(kv -> {
-        (key, values) = kv;
-        source = Path::create(this.dirName, key);
-        (key, (source, source, values))
-      }),
-    );
-  }
-
   fun size(context: mutable Context): Int {
     context.addRead(Path::sizeTag(this.dirName));
     this.totalSize
@@ -2183,6 +2169,20 @@ class TEagerDir extends EagerDir, TDir {
     old = this.fixedData.getChangesAfter(tick);
     result = new.union(old);
     (false, result)
+  }
+
+  fun writeArrayMany(
+    context: mutable Context,
+    bindings: mutable Iterator<(Key, Array<File>)>,
+  ): void {
+    this.writeArraySourceMany(
+      context,
+      bindings.map(kv -> {
+        (key, values) = kv;
+        source = Path::create(this.dirName, key);
+        (key, (source, source, values))
+      }),
+    );
   }
 
   fun notifySubWatch(start: Tick, tick: Tick, nWatch: NWatch): void {
