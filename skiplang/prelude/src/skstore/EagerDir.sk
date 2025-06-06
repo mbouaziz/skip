@@ -1910,24 +1910,6 @@ base class EagerDir protected {
     context.setDir(this);
   }
 
-  fun writeArraySourceMany(
-    context: mutable Context,
-    bindings: mutable Iterator<(Key, (Path, Path, Array<File>))>,
-    changedKeysIfReset: ?(DirName, SortedSet<Key>) = None(),
-  ): void {
-    for (kv in bindings) {
-      (key, (origSource, writer, values)) = kv;
-      !this = this.writeEntry(context, origSource, writer, key, values);
-    };
-    changedKeysIfReset match {
-    | None() -> void
-    | Some((writerDirName, changedKeys)) ->
-      writerPath = Path::gen(writerDirName);
-      !this = this.reset(context, writerPath, changedKeys)
-    };
-    context.setDir(this);
-  }
-
   fun size(context: mutable Context): Int {
     context.addRead(Path::sizeTag(this.dirName));
     this.totalSize
@@ -2154,6 +2136,24 @@ class TEagerDir extends EagerDir, TDir {
     (false, result)
   }
 
+  fun writeArraySourceMany(
+    context: mutable Context,
+    bindings: mutable Iterator<(Key, (Path, Path, Array<File>))>,
+    changedKeysIfReset: ?(DirName, SortedSet<Key>) = None(),
+  ): void {
+    for (kv in bindings) {
+      (key, (origSource, writer, values)) = kv;
+      !this = this.writeEntry(context, origSource, writer, key, values);
+    };
+    changedKeysIfReset match {
+    | None() -> void
+    | Some((writerDirName, changedKeys)) ->
+      writerPath = Path::gen(writerDirName);
+      !this = this.reset(context, writerPath, changedKeys)
+    };
+    context.setDir(this);
+  }
+
   fun writeArrayMany(
     context: mutable Context,
     bindings: mutable Iterator<(Key, Array<File>)>,
@@ -2279,11 +2279,13 @@ class TEagerDir extends EagerDir, TDir {
           targetCtx.setDir(this);
         }
       | Some(inputDir) ->
-        inputDir.writeArraySourceMany(
-          targetCtx,
-          entries.iterator(),
-          if (isReset) Some((this.dirName, changedKeys)) else None(),
-        )
+        inputDir
+          .typed()
+          .writeArraySourceMany(
+            targetCtx,
+            entries.iterator(),
+            if (isReset) Some((this.dirName, changedKeys)) else None(),
+          )
       }
     | Some(_) -> invariant_violation("Error import: incompatible dir types")
     }
