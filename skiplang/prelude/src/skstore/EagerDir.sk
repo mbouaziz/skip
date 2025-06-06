@@ -692,35 +692,6 @@ base class EagerDir protected {
   protected tombLimit: ?Tick = None(),
   optOnDelete: ?Postponable = None(),
 } extends Dir {
-  protected fun reset(
-    context: mutable Context,
-    writer: Path,
-    keep: SortedSet<Key>,
-  ): this {
-    this.unsafeGetFileIter().each(kv -> {
-      (key, valueIter) = kv;
-      if (!keep.contains(key)) {
-        valueIter.next() match {
-        | None() -> void
-        | Some _ ->
-          this.unsafeGetDataIterWithoutTombs(key).each(kv -> {
-            (_tick, source, _values) = kv;
-            !this = this.writeEntry(
-              context,
-              source,
-              writer,
-              key,
-              Array[],
-              true, // force: reset is low-level and we wish to ignore any safeguards
-            )
-          })
-        }
-      }
-    });
-
-    this
-  }
-
   protected fun writeDiff(
     isReset: Bool,
     changes: mutable Iterator<Key>,
@@ -2185,6 +2156,35 @@ class TEagerDir extends EagerDir, TDir {
     );
   }
 
+  protected fun reset(
+    context: mutable Context,
+    writer: Path,
+    keep: SortedSet<Key>,
+  ): this {
+    this.unsafeGetFileIter().each(kv -> {
+      (key, valueIter) = kv;
+      if (!keep.contains(key)) {
+        valueIter.next() match {
+        | None() -> void
+        | Some _ ->
+          this.unsafeGetDataIterWithoutTombs(key).each(kv -> {
+            (_tick, source, _values) = kv;
+            !this = this.writeEntry(
+              context,
+              source,
+              writer,
+              key,
+              Array[],
+              true, // force: reset is low-level and we wish to ignore any safeguards
+            )
+          })
+        }
+      }
+    });
+
+    this
+  }
+
   fun notifySubWatch(start: Tick, tick: Tick, nWatch: NWatch): void {
     (init, changedKeys) = if (this.created >= start || start <= nWatch.from) {
       (true, SortedSet[])
@@ -2259,7 +2259,8 @@ class TEagerDir extends EagerDir, TDir {
       });
       context.setDir(preDir);
       context.updateDirtyReaders(Path::dirTag(preDirName))
-    | Some(preDir) ->
+    | Some(untypedPreDir) ->
+      preDir = untypedPreDir.typed();
       (isReset, changes) = this.getChangesAfter(context.getTick().prev());
       for (key in changes) {
         values = this.getArrayRaw(key);
