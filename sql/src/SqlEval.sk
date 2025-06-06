@@ -2680,6 +2680,15 @@ extension base class EagerDir {
     dirsub: DirSub,
     tick: SKStore.Tick,
     writer: mutable Debug.BufferedWriter,
+  ): Bool;
+}
+
+extension class TEagerDir {
+  fun writeChangesAfter(
+    context: readonly Context,
+    dirsub: DirSub,
+    tick: SKStore.Tick,
+    writer: mutable Debug.BufferedWriter,
   ): Bool {
     (shouldRebuild, changes) = this.getChangesAfter(tick);
     producedOutput = this.writeDiff(
