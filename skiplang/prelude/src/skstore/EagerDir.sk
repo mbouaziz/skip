@@ -1533,135 +1533,7 @@ base class EagerDir protected {
     k: Key,
     rvalues: Array<File>,
     force: Bool = false,
-  ): this {
-    oldValues = this.getArraySourceKey(origSource, k);
-
-    if (native_eq(rvalues, oldValues) == 0) {
-      return this;
-    };
-
-    if (context.sourceOverride.isSome()) {
-      !origSource = context.sourceOverride.fromSome();
-      !writer = context.sourceOverride.fromSome()
-    };
-
-    context.writeChecker match {
-    | Some(checker) if (!force) ->
-      checker.checkWrite(context, this.dirName, k, rvalues)
-    | _ -> void
-    };
-
-    if (this.data.nbrEntries >= this.fixedData.size()) {
-      context.addToPurge(this.dirName);
-    };
-
-    totalSize = if (oldValues.size() == 0 && rvalues.size() > 0) {
-      this.totalSize + 1
-    } else if (oldValues.size() > 0 && rvalues.size() == 0) {
-      this.totalSize - 1
-    } else {
-      this.totalSize
-    };
-
-    map = this.data.maybeGet(k) match {
-    | None() -> DataMapValue::empty()
-    | Some(x) -> x
-    };
-
-    isMasking = this.fixedData.data.getIterSourceKey(
-      origSource,
-      k,
-    ).next() is Some _;
-    !map = map.set(context.getTick(), isMasking, origSource, writer, rvalues);
-
-    !this.data = this.data.set(context.getTick(), k, map);
-
-    reducer = this.reducer match {
-    | None() -> None()
-    | Some(cdata) ->
-      state = cdata.getArray(k);
-      if (state.size() == 0) {
-        !cdata.modified[k] = cdata.reducer.init(
-          this.unsafeGetDataIterWithoutTombs(k)
-            .map(x -> x.i2.iterator())
-            .flatten(),
-        )
-      } else {
-        cdata.reducer.update(state, oldValues, rvalues) match {
-        | None() ->
-          !cdata.modified[k] = cdata.reducer.init(
-            this.unsafeGetDataIterWithoutTombs(k)
-              .map(x -> x.i2.iterator())
-              .flatten(),
-          )
-        | Some(new) -> !cdata.modified[k] = new
-        }
-      };
-      Some(cdata)
-    };
-
-    context.addDirty(this, k);
-    path = Path::create(this.dirName, k);
-
-    if (this.totalSize != totalSize) {
-      sizePath = Path::sizeTag(this.dirName);
-      context.updateDirtyReaders(sizePath);
-      if ((this.totalSize == 0) != (totalSize == 0)) {
-        context.updateDirtyReaders(Path::isEmptyTag(this.dirName));
-      }
-    };
-
-    filesPath = Path::filesTag(this.dirName);
-    context.updateDirtyReaders(filesPath);
-
-    !this = this with {totalSize, reducer};
-
-    context.updateDirtyReaders(path);
-
-    parentTime = this.getTime();
-    childDirs = SortedSet[];
-
-    for (childName in this.childDirs) {
-      context.unsafeMaybeGetEagerDir(childName) match {
-      | None() -> continue
-      | Some(childDir) ->
-        !childDirs = childDirs.set(childName);
-        context.addToUpdate(
-          childDir.timeStack,
-          parentTime,
-          Arrow(this.dirName, childName),
-        )
-      }
-    };
-
-    purgeCount = this.purgeCount;
-    slices = this.slices;
-
-    for (childNameTime in this.slices.get(k)) {
-      !purgeCount = purgeCount + 1;
-      childName = childNameTime;
-      context.unsafeMaybeGetEagerDir(childName) match {
-      | None() -> continue
-      | Some(childDir) ->
-        context.addToUpdate(
-          childDir.timeStack,
-          parentTime,
-          Arrow(this.dirName, childName),
-        )
-      }
-    };
-
-    if (context.debugMode) {
-      print_string(`WRITTEN:  ${this.dirName}${k}`);
-    };
-
-    if (purgeCount >= PURGE_LIMIT) {
-      !slices = this.purgeSlices(context);
-      !purgeCount = 0;
-    };
-
-    this with {childDirs, slices, purgeCount}
-  }
+  ): this;
 
   protected fun purgeSlices(
     context: readonly Context,
@@ -2105,6 +1977,143 @@ class TEagerDir extends EagerDir, TDir {
     old = this.fixedData.getChangesAfter(tick);
     result = new.union(old);
     (false, result)
+  }
+
+  fun writeEntry(
+    context: mutable Context,
+    origSource: Path,
+    writer: Path,
+    k: Key,
+    rvalues: Array<File>,
+    force: Bool = false,
+  ): this {
+    oldValues = this.getArraySourceKey(origSource, k);
+
+    if (native_eq(rvalues, oldValues) == 0) {
+      return this;
+    };
+
+    if (context.sourceOverride.isSome()) {
+      !origSource = context.sourceOverride.fromSome();
+      !writer = context.sourceOverride.fromSome()
+    };
+
+    context.writeChecker match {
+    | Some(checker) if (!force) ->
+      checker.checkWrite(context, this.dirName, k, rvalues)
+    | _ -> void
+    };
+
+    if (this.data.nbrEntries >= this.fixedData.size()) {
+      context.addToPurge(this.dirName);
+    };
+
+    totalSize = if (oldValues.size() == 0 && rvalues.size() > 0) {
+      this.totalSize + 1
+    } else if (oldValues.size() > 0 && rvalues.size() == 0) {
+      this.totalSize - 1
+    } else {
+      this.totalSize
+    };
+
+    map = this.data.maybeGet(k) match {
+    | None() -> DataMapValue::empty()
+    | Some(x) -> x
+    };
+
+    isMasking = this.fixedData.data.getIterSourceKey(
+      origSource,
+      k,
+    ).next() is Some _;
+    !map = map.set(context.getTick(), isMasking, origSource, writer, rvalues);
+
+    !this.data = this.data.set(context.getTick(), k, map);
+
+    reducer = this.reducer match {
+    | None() -> None()
+    | Some(cdata) ->
+      state = cdata.getArray(k);
+      if (state.size() == 0) {
+        !cdata.modified[k] = cdata.reducer.init(
+          this.unsafeGetDataIterWithoutTombs(k)
+            .map(x -> x.i2.iterator())
+            .flatten(),
+        )
+      } else {
+        cdata.reducer.update(state, oldValues, rvalues) match {
+        | None() ->
+          !cdata.modified[k] = cdata.reducer.init(
+            this.unsafeGetDataIterWithoutTombs(k)
+              .map(x -> x.i2.iterator())
+              .flatten(),
+          )
+        | Some(new) -> !cdata.modified[k] = new
+        }
+      };
+      Some(cdata)
+    };
+
+    context.addDirty(this, k);
+    path = Path::create(this.dirName, k);
+
+    if (this.totalSize != totalSize) {
+      sizePath = Path::sizeTag(this.dirName);
+      context.updateDirtyReaders(sizePath);
+      if ((this.totalSize == 0) != (totalSize == 0)) {
+        context.updateDirtyReaders(Path::isEmptyTag(this.dirName));
+      }
+    };
+
+    filesPath = Path::filesTag(this.dirName);
+    context.updateDirtyReaders(filesPath);
+
+    !this = this with {totalSize, reducer};
+
+    context.updateDirtyReaders(path);
+
+    parentTime = this.getTime();
+    childDirs = SortedSet[];
+
+    for (childName in this.childDirs) {
+      context.unsafeMaybeGetEagerDir(childName) match {
+      | None() -> continue
+      | Some(childDir) ->
+        !childDirs = childDirs.set(childName);
+        context.addToUpdate(
+          childDir.timeStack,
+          parentTime,
+          Arrow(this.dirName, childName),
+        )
+      }
+    };
+
+    purgeCount = this.purgeCount;
+    slices = this.slices;
+
+    for (childNameTime in this.slices.get(k)) {
+      !purgeCount = purgeCount + 1;
+      childName = childNameTime;
+      context.unsafeMaybeGetEagerDir(childName) match {
+      | None() -> continue
+      | Some(childDir) ->
+        context.addToUpdate(
+          childDir.timeStack,
+          parentTime,
+          Arrow(this.dirName, childName),
+        )
+      }
+    };
+
+    if (context.debugMode) {
+      print_string(`WRITTEN:  ${this.dirName}${k}`);
+    };
+
+    if (purgeCount >= PURGE_LIMIT) {
+      !slices = this.purgeSlices(context);
+      !purgeCount = 0;
+    };
+
+    this with {childDirs, slices, purgeCount}
   }
 
   fun writeArraySourceMany(
