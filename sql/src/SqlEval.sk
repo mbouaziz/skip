@@ -580,7 +580,7 @@ class Evaluator{options: Options, user: ?UserFile} {
 
       Some((context, _, _) ~> {
         this.createTable(context, pos, name, dirDescr, ifNotExists);
-        tableDir = context.unsafeGetEagerDir(dirName);
+        tableDir = context.unsafeGetEagerDir(dirName).typed();
 
         selectDir = evalSelect(context, cselect, None());
         content = context
