@@ -413,10 +413,7 @@ extension class Sub {
 }
 
 extension base class EagerDir {
-  fun changesAfterIsResetOrNonEmpty(tick: Tick): Bool {
-    (isReset, changes) = this.getChangesAfter(tick);
-    isReset || !changes.isEmpty()
-  }
+  fun changesAfterIsResetOrNonEmpty(tick: Tick): Bool;
 
   fun writeChangesTailSub{
     context: readonly Context,
@@ -431,6 +428,11 @@ extension base class EagerDir {
 }
 
 extension class TEagerDir {
+  fun changesAfterIsResetOrNonEmpty(tick: Tick): Bool {
+    (isReset, changes) = this.getChangesAfter(tick);
+    isReset || !changes.isEmpty()
+  }
+
   fun writeChangesTailSub{
     context: readonly Context,
     dirSub: DirSub,
