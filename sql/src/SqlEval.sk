@@ -699,7 +699,7 @@ class Evaluator{options: Options, user: ?UserFile} {
               })
               .collect(Array);
             entries = Vector[(key, (src, src, rows))];
-            inputDir = context.unsafeGetEagerDir(dir.dirName);
+            inputDir = context.unsafeGetEagerDir(dir.dirName).typed();
             inputDir.writeArraySourceMany(context, entries.iterator());
           },
         );
@@ -1297,7 +1297,7 @@ class Evaluator{options: Options, user: ?UserFile} {
         (context, _writer, key, valueIter) ~> {
           src = SKStore.Path::create(deleteDir, key);
           entries = Vector[(key, (src, src, valueIter.collect(Array)))];
-          inputDir = context.unsafeGetEagerDir(dir.dirName);
+          inputDir = context.unsafeGetEagerDir(dir.dirName).typed();
           inputDir.writeArraySourceMany(context, entries.iterator());
         },
       );
@@ -1390,7 +1390,7 @@ class Evaluator{options: Options, user: ?UserFile} {
       sinkDirName,
       (context, writer, key, rowIter) ~> {
         entries = mutable Vector[];
-        dir = context.unsafeGetEagerDir(inputDir.dirName);
+        dir = context.unsafeGetEagerDir(inputDir.dirName).typed();
         writerPath = SKStore.Path::gen(selectDir.dirName);
         for ((_, source, _) in dir.getDataIterWithoutTombs(context, key)) {
           entries.push((key, (source, writerPath, Array<SKStore.File>[])));
@@ -1533,7 +1533,7 @@ class Evaluator{options: Options, user: ?UserFile} {
                   (idx, P.IASC(), x.ty)
                 );
                 entries = mutable Vector[];
-                dir = context.unsafeGetEagerDir(table.dirName);
+                dir = context.unsafeGetEagerDir(table.dirName).typed();
                 for (row in rowValues) {
                   writerPath = SKStore.Path::gen(table.dirName);
 
@@ -2675,7 +2675,7 @@ extension class TEagerDir {
       };
       targetCtx.setDir(targetDir);
       targetDir
-    | Some(d) -> d
+    | Some(d) -> d.typed()
     };
     entries = mutable Vector[];
     for (key in changedKeys) {
