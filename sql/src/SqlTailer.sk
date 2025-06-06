@@ -427,6 +427,19 @@ extension base class EagerDir {
     forceCompleteRebuild: Bool,
     established: Bool,
     chunkingDisabled: Bool,
+  }: (Bool, Bool, Bool);
+}
+
+extension class TEagerDir {
+  fun writeChangesTailSub{
+    context: readonly Context,
+    dirSub: DirSub,
+    since: SKStore.Tick,
+    writer: mutable Debug.BufferedWriter,
+    format: OutputFormat,
+    forceCompleteRebuild: Bool,
+    established: Bool,
+    chunkingDisabled: Bool,
   }: (Bool, Bool, Bool) {
     (shouldRebuild, changes) = if (forceCompleteRebuild) {
       (true, Array[].iterator())
