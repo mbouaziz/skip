@@ -1389,146 +1389,7 @@ base class EagerDir protected {
       ),
     >,
     childRef: EagerDir,
-  ): void {
-    parent = this;
-    parentName = parent.dirName;
-    childName = childRef.dirName;
-    timeStack = childRef.timeStack;
-
-    dirty = SortedSet[];
-    contextDirtyReadersOpt match {
-    | None() -> void
-    | Some(contextDirtyReaders) ->
-      contextDirtyReaders.maybeGet(childName) match {
-      | None() -> void
-      | Some(dirtyKeys) ->
-        keys = parent.typed().castKeySet(dirtyKeys).values();
-        !dirty = withRegionFold(None(), keys, dirty, (_, key, dirtyInRegion) ~> {
-          for (p in parentMaps) {
-            (_, rangeOpt, _) = p;
-            rangeOpt match {
-            | Some(
-              ranges,
-            ) if (
-              !ranges.any(range -> range.start <= key && key <= range.end)
-            ) ->
-              void
-            | _ -> !dirtyInRegion = dirtyInRegion.set(key)
-            }
-          };
-          dirtyInRegion;
-        })
-      }
-    };
-    parentDirtyOpt match {
-    | None() -> void
-    | Some(dirtyKeys) ->
-      keys = parent.typed().castKeySet(dirtyKeys).values();
-      !dirty = withRegionFold(None(), keys, dirty, (_, key, dirtyInRegion) ~> {
-        for (p in parentMaps) {
-          (_, rangeOpt, _) = p;
-          rangeOpt match {
-          | Some(
-            ranges,
-          ) if (!ranges.any(range -> range.start <= key && key <= range.end)) ->
-            void
-          | _ -> !dirtyInRegion = dirtyInRegion.set(key)
-          }
-        };
-        dirtyInRegion;
-      })
-    };
-
-    it = dirty.iterator();
-    !childRef = withRegionFold(
-      Some(context),
-      it,
-      childRef,
-      (contextOpt, key, child) ~> {
-        ctx = contextOpt.fromSome();
-        arrow = TArrowKey::create{parentName, childName, key};
-        ctx.enter(arrow, timeStack);
-        path = Path::create(parentName, key);
-        oldInfo = child.getOld(path);
-        oldKeys = SortedSet<Key>::createFromItems(oldInfo.getKeys());
-        newDirsCopy = ctx.newDirs;
-        readsCopy = ctx.reads;
-        ctx.!newDirs = SortedSet[];
-        ctx.!reads = SortedSet[];
-
-        keys = mutable Vector<Key>[];
-        mvalues = SortedMap<Key, mutable Vector<File>>[];
-
-        for (p in parentMaps) {
-          writer = mutable Writer{};
-          (mapFun, _, _) = p;
-          mapFun(ctx, writer, key, parent.getIterRaw(key));
-          mapped = writer.getWrites();
-          for (kv in mapped) {
-            (k, rvalues) = kv;
-
-            keys.push(k);
-            if (oldKeys.contains(k)) {
-              !oldKeys = oldKeys.remove(k);
-            };
-
-            if (!mvalues.containsKey(k)) {
-              !mvalues = mvalues.set(k, mutable Vector[]);
-            };
-            mvalues[k].extend(rvalues);
-          };
-        };
-
-        newDirs = ctx.newDirs;
-        reads = ctx.getReads();
-        ctx.!newDirs = newDirsCopy;
-        ctx.!reads = readsCopy;
-
-        !child = child.updateNewDirs(ctx, path, newDirs);
-
-        ctx.updateNewDeps(arrow, reads);
-
-        ctx.removeDeps(
-          arrow,
-          oldInfo.getReads().iterator().filter(oldRead ~>
-            !reads.contains(oldRead)
-          ),
-        );
-
-        for (k => v in mvalues) {
-          !child = child.writeEntry(ctx, path, path, k, v.toArray());
-        };
-
-        // Let's remove the keys that no longer exist.
-        for (k in oldKeys) {
-          !child = child.writeEntry(ctx, path, path, k, Array[]);
-        };
-
-        // We need to remember what keys we produced for the next
-        // time around.
-        minfo = MInfo::create(
-          keys.toArray(),
-          newDirs.toArray(),
-          reads.toArray(),
-        );
-        // The source cannot be removed from old here
-        // => prevent getting fixed data minfo on multiple call during update
-        !child.old[path] = minfo;
-        ctx.leave(arrow);
-        child
-      },
-    );
-
-    context.setDir(childRef);
-
-    for (p in parentMaps) {
-      (_, _, onUpdate) = p;
-      onUpdate match {
-      | None() -> void
-      | Some(f) -> f(context, dirty)
-      }
-    }
-  }
+  ): void;
 
   fun getArray(context: mutable Context, key: Key): Array<File> {
     this.getIter(context, key).collect(Array);
@@ -2163,6 +2024,160 @@ class TEagerDir extends EagerDir, TDir {
         (key, (source, source, values))
       }),
     );
+  }
+
+  fun update(
+    /* this is the parent */
+    context: mutable Context,
+    parentDirtyOpt: ?KeySet,
+    contextDirtyReadersOpt: ?SortedMap<DirName, KeySet>,
+    parentMaps: Array<
+      (
+        MapFun<Key, File>,
+        ?Array<KeyRange<Key>>,
+        ?((mutable Context, SortedSet<Key>) ~> void),
+      ),
+    >,
+    childRef: EagerDir,
+  ): void {
+    parent = this;
+    parentName = parent.dirName;
+    childName = childRef.dirName;
+    timeStack = childRef.timeStack;
+
+    dirty = SortedSet[];
+    contextDirtyReadersOpt match {
+    | None() -> void
+    | Some(contextDirtyReaders) ->
+      contextDirtyReaders.maybeGet(childName) match {
+      | None() -> void
+      | Some(dirtyKeys) ->
+        keys = parent.typed().castKeySet(dirtyKeys).values();
+        !dirty = withRegionFold(None(), keys, dirty, (_, key, dirtyInRegion) ~> {
+          for (p in parentMaps) {
+            (_, rangeOpt, _) = p;
+            rangeOpt match {
+            | Some(
+              ranges,
+            ) if (
+              !ranges.any(range -> range.start <= key && key <= range.end)
+            ) ->
+              void
+            | _ -> !dirtyInRegion = dirtyInRegion.set(key)
+            }
+          };
+          dirtyInRegion;
+        })
+      }
+    };
+    parentDirtyOpt match {
+    | None() -> void
+    | Some(dirtyKeys) ->
+      keys = parent.typed().castKeySet(dirtyKeys).values();
+      !dirty = withRegionFold(None(), keys, dirty, (_, key, dirtyInRegion) ~> {
+        for (p in parentMaps) {
+          (_, rangeOpt, _) = p;
+          rangeOpt match {
+          | Some(
+            ranges,
+          ) if (!ranges.any(range -> range.start <= key && key <= range.end)) ->
+            void
+          | _ -> !dirtyInRegion = dirtyInRegion.set(key)
+          }
+        };
+        dirtyInRegion;
+      })
+    };
+
+    it = dirty.iterator();
+    !childRef = withRegionFold(
+      Some(context),
+      it,
+      childRef,
+      (contextOpt, key, child) ~> {
+        ctx = contextOpt.fromSome();
+        arrow = TArrowKey::create{parentName, childName, key};
+        ctx.enter(arrow, timeStack);
+        path = Path::create(parentName, key);
+        oldInfo = child.getOld(path);
+        oldKeys = SortedSet<Key>::createFromItems(oldInfo.getKeys());
+        newDirsCopy = ctx.newDirs;
+        readsCopy = ctx.reads;
+        ctx.!newDirs = SortedSet[];
+        ctx.!reads = SortedSet[];
+
+        keys = mutable Vector<Key>[];
+        mvalues = SortedMap<Key, mutable Vector<File>>[];
+
+        for (p in parentMaps) {
+          writer = mutable Writer{};
+          (mapFun, _, _) = p;
+          mapFun(ctx, writer, key, parent.getIterRaw(key));
+          mapped = writer.getWrites();
+          for (kv in mapped) {
+            (k, rvalues) = kv;
+
+            keys.push(k);
+            if (oldKeys.contains(k)) {
+              !oldKeys = oldKeys.remove(k);
+            };
+
+            if (!mvalues.containsKey(k)) {
+              !mvalues = mvalues.set(k, mutable Vector[]);
+            };
+            mvalues[k].extend(rvalues);
+          };
+        };
+
+        newDirs = ctx.newDirs;
+        reads = ctx.getReads();
+        ctx.!newDirs = newDirsCopy;
+        ctx.!reads = readsCopy;
+
+        !child = child.updateNewDirs(ctx, path, newDirs);
+
+        ctx.updateNewDeps(arrow, reads);
+
+        ctx.removeDeps(
+          arrow,
+          oldInfo.getReads().iterator().filter(oldRead ~>
+            !reads.contains(oldRead)
+          ),
+        );
+
+        for (k => v in mvalues) {
+          !child = child.writeEntry(ctx, path, path, k, v.toArray());
+        };
+
+        // Let's remove the keys that no longer exist.
+        for (k in oldKeys) {
+          !child = child.writeEntry(ctx, path, path, k, Array[]);
+        };
+
+        // We need to remember what keys we produced for the next
+        // time around.
+        minfo = MInfo::create(
+          keys.toArray(),
+          newDirs.toArray(),
+          reads.toArray(),
+        );
+        // The source cannot be removed from old here
+        // => prevent getting fixed data minfo on multiple call during update
+        !child.old[path] = minfo;
+        ctx.leave(arrow);
+        child
+      },
+    );
+
+    context.setDir(childRef);
+
+    for (p in parentMaps) {
+      (_, _, onUpdate) = p;
+      onUpdate match {
+      | None() -> void
+      | Some(f) -> f(context, dirty)
+      }
+    }
   }
 
   protected fun reset(
