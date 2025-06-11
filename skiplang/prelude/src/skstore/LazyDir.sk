@@ -78,32 +78,7 @@ base class LazyDir protected {
   fun update(
     context: mutable Context,
     dirtyReadersOpt: ?SortedMap<DirName, SortedSet<Key>>,
-  ): void {
-    dirtyReadersOpt match {
-    | None() -> void
-    | Some(dirtyReaders) ->
-      for (dirtyReaderDirName => dirtyReaderKeys in dirtyReaders) {
-        for (key in dirtyReaderKeys) {
-          oldValue = this.data.maybeGet(key);
-          !this.data = this.data.remove(key);
-          context.updateDirtyReaders(Path::create(dirtyReaderDirName, key));
-          oldValue match {
-          | Some(LDefined(_, reads))
-          | Some(LRemoved(reads)) ->
-            arrow = ArrowKey::create{
-              parentName => this.dirName,
-              childName => this.dirName,
-              key,
-            };
-            context.removeDeps(arrow, reads.iterator())
-          | _ -> void
-          }
-        };
-      }
-    };
-
-    context.setDir(this);
-  }
+  ): void;
 
   fun typed(): TLazyDir;
 }
@@ -237,6 +212,36 @@ class TLazyDir extends LazyDir, TDir {
 
   fun getIter(context: mutable Context, key: Key): mutable Iterator<File> {
     this.getArray(context, key).iterator()
+  }
+
+  fun update(
+    context: mutable Context,
+    dirtyReadersOpt: ?SortedMap<DirName, SortedSet<Key>>,
+  ): void {
+    dirtyReadersOpt match {
+    | None() -> void
+    | Some(dirtyReaders) ->
+      for (dirtyReaderDirName => dirtyReaderKeys in dirtyReaders) {
+        for (key in dirtyReaderKeys) {
+          oldValue = this.data.maybeGet(key);
+          !this.data = this.data.remove(key);
+          context.updateDirtyReaders(Path::create(dirtyReaderDirName, key));
+          oldValue match {
+          | Some(LDefined(_, reads))
+          | Some(LRemoved(reads)) ->
+            arrow = ArrowKey::create{
+              parentName => this.dirName,
+              childName => this.dirName,
+              key,
+            };
+            context.removeDeps(arrow, reads.iterator())
+          | _ -> void
+          }
+        };
+      }
+    };
+
+    context.setDir(this);
   }
 }
 
