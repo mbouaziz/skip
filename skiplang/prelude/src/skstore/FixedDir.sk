@@ -193,8 +193,10 @@ class CompactFixedDir protected {
   IFixedDir<SKDB.RowKey, Array<SKDB.RowValues>, CompactRow>,
   FixedDataFactory<SKDB.RowKey, Array<SKDB.RowValues>>,
 {
-  static fun create<L: SKDB.RowKey, V: Array<SKDB.RowValues>>(
-    vec: mutable Vector<FixedRow<L, V>> = mutable Vector[],
+  static fun create(
+    vec: mutable Vector<
+      FixedRow<SKDB.RowKey, Array<SKDB.RowValues>>,
+    > = mutable Vector[],
   ): FixedData<SKDB.RowKey, Array<SKDB.RowValues>> {
     static::getMetadata(vec) match {
     | None() -> FixedDir::create(vec)
@@ -228,8 +230,8 @@ class CompactFixedDir protected {
     possibleResult
   }
 
-  static fun createWithMetadata<K: SKDB.RowKey, V: Array<SKDB.RowValues>>(
-    data: mutable Vector<FixedRow<K, V>>,
+  static fun createWithMetadata(
+    data: mutable Vector<FixedRow<SKDB.RowKey, Array<SKDB.RowValues>>>,
     metadata: FixedDirMetadata,
   ): this {
     if (!data.isSorted()) {
@@ -242,8 +244,8 @@ class CompactFixedDir protected {
     }
   }
 
-  protected static fun stripMetadata<V: File>(
-    row: FixedRow<Key, Array<V>>,
+  protected static fun stripMetadata(
+    row: FixedRow<Key, Array<File>>,
   ): CompactRow {
     invariant(row.value.size() == 1);
     sourceKey = if (row.source.baseName != row.key) {
