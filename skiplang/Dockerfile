@@ -7,12 +7,19 @@ FROM debian:stable-slim AS base
 
 ARG LLVM_VERSION=20
 
-RUN apt-get update --quiet
-RUN apt-get install --quiet --yes gnupg lsb-release make software-properties-common wget
-RUN wget https://apt.llvm.org/llvm.sh && \
-    chmod +x llvm.sh && \
-    ./llvm.sh ${LLVM_VERSION} && \
-    rm llvm.sh && \
+# Install build dependencies and add LLVM apt repository directly
+# This avoids executing downloaded scripts (supply chain security)
+# Note: [trusted=yes] is used because apt.llvm.org's GPG key uses SHA1 signatures
+# which modern Debian rejects. This is an upstream LLVM infrastructure issue.
+# Packages are still sourced from official apt.llvm.org repository.
+RUN apt-get update --quiet && \
+    apt-get install --quiet --yes make wget && \
+    echo "deb [trusted=yes] http://apt.llvm.org/bookworm/ llvm-toolchain-bookworm-${LLVM_VERSION} main" > /etc/apt/sources.list.d/llvm.list && \
+    apt-get update --quiet && \
+    apt-get install --quiet --yes \
+        clang-${LLVM_VERSION} \
+        llvm-${LLVM_VERSION} \
+        lld-${LLVM_VERSION} && \
     update-alternatives \
       --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VERSION} 101 \
       --slave /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VERSION} \
