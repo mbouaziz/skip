@@ -112,8 +112,9 @@ fun main(): void {
   if (isInit) {
     _ = SKStore.gContextInit(SKStore.Context::create{});
   };
+  initCtx = SKStore.Context::create{};
   SKStore.runWithGc(
-    SKStore.Context::create{},
+    initCtx,
     _context ~> {
       SKStore.CStop(
         Some((context, _, _) ~> {
@@ -128,5 +129,19 @@ fun main(): void {
       )
     },
     Some(SKStore.Synchronizer(SKStore.import, SKStore.export, _ ~> void)),
-  )
+  );
+
+  // After all SKStore work is done, check if there's a deferred link command.
+  // Using execvp replaces the skc process with clang, avoiding the memory
+  // overlap where both skc and clang coexist.
+  initCtx.unsafeMaybeGetEagerDir(backendSinkDirName).each(sinkDir -> {
+    linkArgs = sinkDir.getArrayRaw(SKStore.UnitID::singleton);
+    if (!linkArgs.isEmpty()) {
+      args = LinkCommandFile::type(linkArgs[0]).value;
+      if (config.verbose) {
+        print_error(">> " + args.join(" "))
+      };
+      Posix.execvp(args)
+    }
+  })
 }
