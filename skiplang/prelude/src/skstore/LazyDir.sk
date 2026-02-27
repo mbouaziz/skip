@@ -17,6 +17,11 @@ base class LazyResult<F> {
   | LAbsent()
 }
 
+base class LazyComputed<F> extends LazyResult<F>
+
+extension class LDefined extends LazyComputed<F>
+extension class LAbsent extends LazyComputed<F>
+
 base class LazyCompute<K: frozen, F: frozen> uses Unsafe.Downcastable, Equality{
   fun compute(mutable Context, DirName, K): ?Array<F>;
 }
