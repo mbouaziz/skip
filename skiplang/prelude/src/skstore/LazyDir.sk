@@ -61,6 +61,7 @@ base class LazyDir protected {protected collect: Bool} extends Dir {
 class TLazyDir{
   protected data: SortedMap<Key, LazyResult<File>> = SortedMap[],
   protected compute: LazyCompute<Key, File>,
+  protected compareOnUpdate: Bool = false,
 } extends LazyDir, TDir {
   fun updateLazyGets(
     refCountsOpt: ?KeyMap<Int>,
@@ -140,6 +141,8 @@ class TLazyDir{
       for (dirtyReaderDirName => dirtyReaderKeys in dirtyReaders) {
         for (key in this.castKeySet(dirtyReaderKeys)) {
           oldValue = this.data.maybeGet(key);
+
+          // Remove old deps
           oldValue match {
           | Some(LDefined(_, reads))
           | Some(LRemoved(reads)) ->
@@ -151,8 +154,41 @@ class TLazyDir{
             context.removeDeps(arrow, reads.iterator())
           | _ -> void
           };
+
+          // Remove entry
           !this.data = this.data.remove(key);
-          context.updateDirtyReaders(Path::create(dirtyReaderDirName, key))
+
+          changed = if (this.compareOnUpdate && oldValue is Some(LDefined _)) {
+            // MHandle path: eagerly recompute and compare.
+            // Only propagate if the value actually changed.
+            // Skip when old value was LRemoved (GC'd) — no point recomputing
+            // an entry nobody is reading; it will be recomputed on demand.
+            context.setDir(this);
+            arrowKey = TArrowKey::create{
+              parentName => this.dirName,
+              childName => this.dirName,
+              key,
+            };
+            context.enter(arrowKey, this.timeStack);
+            newResult = this.doGet(context, key);
+            context.leave(arrowKey);
+            // Re-read dir from context (doGet modifies it via setDir)
+            !this = context.unsafeGetLazyDir(this.dirName).typed();
+            (oldValue, newResult) match {
+            | (Some(LDefined(old, _)), LDefined(new_, _)) ->
+              native_eq(old, new_) != 0
+            | (Some(LDefined _), LAbsent())
+            | (_, LDefined _) ->
+              true
+            | (_, LAbsent()) -> false
+            }
+          } else {
+            // LHandle path: unconditionally propagate (current behavior).
+            true
+          };
+          if (changed) {
+            context.updateDirtyReaders(Path::create(dirtyReaderDirName, key));
+          }
         };
       }
     };
