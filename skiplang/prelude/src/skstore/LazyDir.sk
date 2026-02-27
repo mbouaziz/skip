@@ -160,7 +160,7 @@ class TLazyDir{
     context.setDir(this);
   }
 
-  protected fun doGet(context: mutable Context, key: Key): LazyResult<File> {
+  protected fun doGet(context: mutable Context, key: Key): LazyComputed<File> {
     dirName = this.dirName;
 
     dir = context.unsafeGetLazyDir(dirName).typed();
