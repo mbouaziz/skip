@@ -140,8 +140,6 @@ class TLazyDir{
       for (dirtyReaderDirName => dirtyReaderKeys in dirtyReaders) {
         for (key in this.castKeySet(dirtyReaderKeys)) {
           oldValue = this.data.maybeGet(key);
-          !this.data = this.data.remove(key);
-          context.updateDirtyReaders(Path::create(dirtyReaderDirName, key));
           oldValue match {
           | Some(LDefined(_, reads))
           | Some(LRemoved(reads)) ->
@@ -152,7 +150,9 @@ class TLazyDir{
             };
             context.removeDeps(arrow, reads.iterator())
           | _ -> void
-          }
+          };
+          !this.data = this.data.remove(key);
+          context.updateDirtyReaders(Path::create(dirtyReaderDirName, key))
         };
       }
     };
