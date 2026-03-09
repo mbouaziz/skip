@@ -14,3 +14,4 @@ const service = await initService(emptyService);
 console.log("closing service...");
 await service.close();
 console.log("done");
+// Retry CI
