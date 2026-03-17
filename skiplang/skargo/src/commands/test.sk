@@ -60,7 +60,12 @@ fun test(): (Cli.Command, (GlobalContext, Cli.ParseResults) ~> void) {
 fun execTest(gctx: GlobalContext, args: Cli.ParseResults): void {
   ws = workspace(args, gctx);
   opts = compile_options(args);
-  !opts.filter = CompileFilter::all_tests();
+  // In dev mode with bins, use the default filter to trigger merged mode
+  // (all bins+test→__merged). Otherwise, build just the test target.
+  has_bins = ws.package.manifest.targets.any(t -> t.is_bin());
+  if (opts.build_config.requested_profile != "dev" || !has_bins) {
+    !opts.filter = CompileFilter::all_tests()
+  };
   bctx = create_bctx(gctx, ws, opts);
   withTimer(
     () -> {
@@ -81,17 +86,23 @@ fun execTest(gctx: GlobalContext, args: Cli.ParseResults): void {
   jobs = args.getInt("jobs");
   list = if (args.getBool("list")) Some("--list") else None();
 
-  optBinary = if (
-    bctx.roots.size() != 1 ||
-    !(bctx.roots[0].target.kind is TestTarget _)
-  ) {
+  // Find the test unit: either a HardlinkTarget named "test" (merged mode)
+  // or a TestTarget (non-merged mode).
+  test_unit = bctx.roots.find(r ->
+    r.target.kind is HardlinkTarget _ && r.target.name == "test"
+  ) match {
+  | Some(u) -> Some(u)
+  | None() -> bctx.roots.find(r -> r.target.kind is TestTarget _)
+  };
+
+  optBinary = test_unit match {
+  | None() ->
     gctx.console.error("`skargo test` could not find test target.");
     skipExit(1)
-  } else {
-    unit = bctx.roots[0];
+  | Some(unit) ->
     unit.arch match {
     | TargetArchTriple(t) if (t.isWasm32()) -> None()
-    | _ -> // TODO: Expose common API with BuildRunner.
+    | _ ->
       path = Path.join(
         ws.target_dir(),
         "host",
@@ -108,10 +119,15 @@ fun execTest(gctx: GlobalContext, args: Cli.ParseResults): void {
       );
       skipExit(1)
     };
-    cmd_args = Array[binary].concat(
+    cmd_args = mutable Vector[binary];
+    // In merged mode, set SKARGO_BIN=test so the dispatcher routes to tests.
+    if (test_unit.fromSome().target.kind is HardlinkTarget _) {
+      Environ.set_var("SKARGO_BIN", "test")
+    };
+    cmd_args.extend(
       Array[junitxml, filter, list, Some(`-j${jobs}`)].filterNone(),
     );
-    Posix.execvp(cmd_args)
+    Posix.execvp(cmd_args.collect(Array))
   | _ -> void
   }
 }
