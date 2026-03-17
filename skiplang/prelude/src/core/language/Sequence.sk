@@ -282,6 +282,11 @@ mutable base class .Sequence<+T> uses IntoIterator<T> {
     }
   }
 
+  // s.findMap(f) is Some(u) = f(t) for the first t in s where f is Some(_)
+  overridable readonly fun findMap<U>(f: T -> ?U): ?U {
+    this.values().findMap(f)
+  }
+
   // Returns true if the predicate returns true for all elements of this
   // sequence.
   @synonym("every")
