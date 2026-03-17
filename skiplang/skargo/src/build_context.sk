@@ -167,6 +167,44 @@ private fun generate_root_units(
     );
     res.collect(Array)
   };
+  // In dev mode, merge all bin+test targets into a single __merged binary.
+  // Each original bin/test becomes a HardlinkTarget pointing to __merged.
+  !targets = if (
+    build_config.requested_profile == "dev" &&
+    targets.any(t -> t.is_bin())
+  ) {
+    all_bins = package.manifest.targets.filter(t -> t.is_bin()).collect(Array);
+    test_opt = package.manifest.test_target();
+
+    // Collect all sources for the merged binary.
+    merged_srcs = all_bins.flatMap(b -> b.srcs);
+    test_opt.each(t -> !merged_srcs = merged_srcs.concat(t.srcs));
+    merged = Target(
+      BinTarget("SkipInternal.dispatch"),
+      "__merged",
+      merged_srcs,
+    );
+
+    // Replace bin/test targets with hardlinks; keep lib and others as-is.
+    replaced = targets.map(t ->
+      if (t.is_bin() || t.is_test()) {
+        t with {kind => HardlinkTarget("__merged")}
+      } else {
+        t
+      }
+    );
+
+    // If any hardlink was requested, ensure __merged is also a root.
+    has_hardlink = replaced.any(t -> t.kind is HardlinkTarget _);
+    if (has_hardlink) {
+      Array[merged].concat(replaced)
+    } else {
+      replaced
+    }
+  } else {
+    targets
+  };
+
   targets
     .map(target -> {
       Unit(
@@ -283,6 +321,9 @@ private fun compute_deps(
   unit_deps = mutable Vector[];
 
   unit.target.kind match {
+  | HardlinkTarget _ ->
+    // Hardlink targets have no compilation deps; they just link.
+    return Array[]
   | BinTarget _
   | TestTarget _
   | LibTarget(LibraryTypeCdylib _) ->
@@ -318,11 +359,14 @@ private fun compute_deps(
   deps = unit.pkg.manifest.dependencies.filter(dep ->
     unit.target.kind match {
     // Binary targets always depend on the lib target, which pulls in the
-    // dependencies transitively.
-    | BinTarget _ -> false
+    // dependencies transitively. The __merged target also needs dev deps
+    // for test code.
+    | BinTarget _ ->
+      unit.target.name == "__merged" && dep.kind is DevelopmentDep _
     | LibTarget _ -> dep.kind is NormalDep _
     | TestTarget _ -> dep.kind is DevelopmentDep _
     | CustomBuildTarget _ -> dep.kind is BuildDep _
+    | HardlinkTarget _ -> false
     }
   );
   for (dep in deps) {
