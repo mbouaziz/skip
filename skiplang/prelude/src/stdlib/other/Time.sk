@@ -17,6 +17,7 @@ native fun time_ms(): Int;
 native fun time_ns(): Int;
 
 // Sleep for the given number of milliseconds.
+// TODO: mark untracked (callers are @test functions stored as tracked lambdas)
 @debug
 @cpp_extern("SKIP_sleep_ms")
 native fun sleep_ms(ms: Int): void;
