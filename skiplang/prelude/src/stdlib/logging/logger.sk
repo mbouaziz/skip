@@ -6,7 +6,11 @@ class Metadata(
   filename: String,
   lineno: Int,
 ) {
-  static fun create(typename: String, filename: String, lineno: Int): Metadata {
+  static untracked fun create(
+    typename: String,
+    filename: String,
+    lineno: Int,
+  ): Metadata {
     Metadata(Time.time(), typename, filename, lineno)
   }
 }
