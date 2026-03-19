@@ -63,10 +63,12 @@ fun args(): mutable Iterator<String> {
   }
 }
 
+// TODO: mark untracked (transitively called from compiler mapper via writeFiles)
 @debug
 @cpp_extern("SKIP_get_envc")
 native fun internalGetEnvc(): Int;
 
+// TODO: mark untracked (transitively called from compiler mapper via writeFiles)
 @debug
 @cpp_extern("SKIP_get_envN")
 native fun internalGetEnvN(n: Int): String;
