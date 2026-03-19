@@ -1,5 +1,6 @@
 module Posix;
 
+// TODO: mark untracked (cascades through Popen, test harness, compiler)
 @debug
 @cpp_extern("SKIP_posix_open")
 native fun internalOpen(path: String, oflag: Int, mode: Int): Int;
@@ -8,18 +9,22 @@ fun open(path: String, oflag: Int, mode: Int = 0): Int {
   internalOpen(path, oflag, mode)
 }
 
+// TODO: mark untracked (cascades through Popen, IO.File, test harness)
 @debug
 @cpp_extern("SKIP_posix_close")
 native fun close(fd: Int): void;
 
+// TODO: mark untracked (cascades through IO.File.write, Popen)
 @debug
 @cpp_extern("SKIP_posix_write")
 native fun write(fd: Int, buf: readonly Unsafe.Ptr<UInt8>, len: Int): Int;
 
+// TODO: mark untracked (cascades through IO.File.read, Popen)
 @debug
 @cpp_extern("SKIP_posix_read")
 native fun read(fd: Int, buf: mutable Unsafe.Ptr<UInt8>, len: Int): Int;
 
+// TODO: mark untracked (cascades through IO.File)
 @debug
 @cpp_extern("SKIP_posix_lseek")
 native fun internalLseek(fd: Int, offset: Int, whence: Int): Int;
@@ -28,14 +33,17 @@ fun lseek(fd: Int, offset: Int, whence: SeekWhence): Int {
   internalLseek(fd, offset, whence.toInt())
 }
 
+// TODO: mark untracked (cascades through Popen)
 @debug
 @cpp_extern("SKIP_posix_pipe")
 native fun pipe(): Pipe;
 
+// TODO: mark untracked (used in test harness)
 @debug
 @cpp_extern("SKIP_posix_dup")
 native fun dup(fd: Int): Int;
 
+// TODO: mark untracked (used in test harness)
 @debug
 @cpp_extern("SKIP_posix_dup2")
 native fun dup2(oldfd: Int, newfd: Int): void;
@@ -63,14 +71,17 @@ native fun wtermsig(stat_loc: Int): Int;
 @cpp_extern("SKIP_posix_wstopsig")
 native fun wstopsig(stat_loc: Int): Int;
 
+// TODO: mark untracked (cascades through Popen.kill)
 @debug
 @cpp_extern("SKIP_posix_kill")
 native fun kill(pid: Int, sig: Int): void;
 
+// TODO: mark untracked (cascades through Popen.wait)
 @debug
 @cpp_extern("SKIP_posix_waitpid")
 native fun waitpid(pid: Int, nohang: Bool = false): Int;
 
+// TODO: mark untracked (cascades through execvp)
 @debug
 @cpp_extern("SKIP_posix_execvp")
 native fun internalExecvp(args: Array<String>): void;
@@ -80,10 +91,12 @@ fun execvp<T>(args: Array<String>): T {
   invariant_violation("unreachable")
 }
 
+// TODO: mark untracked (cascades through Popen, test harness)
 @debug
 @cpp_extern("SKIP_posix_poll")
 native fun poll(pollfds: mutable Array<mutable Pollfd>): Int;
 
+// TODO: mark untracked (cascades through isatty, Logger)
 @debug
 @cpp_extern("SKIP_posix_isatty")
 native fun internalIsatty(fd: Int): Int;
@@ -91,6 +104,7 @@ fun isatty(fd: Int): Bool {
   internalIsatty(fd) != 0
 }
 
+// TODO: mark untracked (used in test harness)
 @debug
 @cpp_extern("SKIP_posix_mkstemp")
 native fun internalMkstemp(template: String): Int;
