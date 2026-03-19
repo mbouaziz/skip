@@ -166,9 +166,8 @@ untracked fun localGC(): void {
 
 module Debug;
 
-@debug
 @intrinsic
-native fun getMemoryFrameUsage(): Int;
+untracked native fun getMemoryFrameUsage(): Int;
 
 module end;
 
