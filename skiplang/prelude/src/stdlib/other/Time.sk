@@ -11,6 +11,7 @@ native fun time_ms(): Int;
 
 // Current time in nanoseconds from a monotonic clock (steady_clock).
 // Suitable for measuring elapsed time, not wall-clock time.
+// TODO: mark untracked (callers are @test functions stored as tracked lambdas)
 @debug
 @cpp_extern("SKIP_time_ns")
 native fun time_ns(): Int;
