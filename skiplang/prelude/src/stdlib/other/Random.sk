@@ -12,6 +12,7 @@ private native fun init(): void;
 
 const _unit: void = init();
 
+// TODO: mark untracked (SqlEval.sk:247 INSERT defaults in reactive context)
 @cpp_extern("SKIP_random_next")
 @debug
 native fun next(): Int;

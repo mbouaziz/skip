@@ -7,11 +7,13 @@
 
 module Debug;
 
+// TODO: mark untracked (used in skstore/File.sk, FixedDir.sk)
 @debug
 fun .debug<T>(x: T): void {
   debugImpl(x, print_debug_raw)
 }
 
+// TODO: mark untracked (groups with debug())
 @debug
 fun .debug_json<T>(x: T): void {
   writer = mutable BufferedWriter(print_debug);

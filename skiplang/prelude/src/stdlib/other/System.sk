@@ -46,12 +46,14 @@ fun intern<T: frozen>(x: T): T {
   x
 }
 
+// TODO: mark untracked (calls print_raw which is used in mapper code)
 @debug
 fun print_newline(): void {
   print_raw("\n")
 }
 
 // Prints with a new line
+// TODO: mark untracked (used in EagerDir.sk, LazyDir.sk mapper code)
 @debug
 @no_inline
 @no_throw
@@ -61,27 +63,32 @@ fun print_string<T: readonly Show>(value: T): void {
 }
 
 // Prints without a new line
+// TODO: mark untracked (used in SqlTables.sk mapper lambda)
 @debug
 @no_throw
 @cpp_extern
 native fun print_raw(String): void;
 
+// TODO: mark untracked (callers of print_error)
 @debug
 @no_throw
 @cpp_extern
 native fun print_error_raw(String): void;
 
+// TODO: mark untracked (used in Context.sk mapper code)
 @debug
 @no_throw
 @cpp_extern
 native fun print_debug_raw(String): void;
 
 // Prints to stderr
+// TODO: mark untracked (used in Handle.sk, Context.sk)
 @debug
 @no_throw
 @cpp_extern
 native fun print_error(String): void;
 
+// TODO: mark untracked (used in Context.sk mapper code)
 @debug
 @no_throw
 @cpp_extern
@@ -99,16 +106,19 @@ fun throwEndOfFile(): void {
   throw EndOfFile()
 }
 
+// TODO: mark untracked (cascades through compiler/framework code)
 @debug
 @no_throw
 @cpp_runtime
 native fun print_stack_trace(): void;
 
+// TODO: mark untracked (cascades through compiler/framework code)
 @debug
 @no_return
 @cpp_runtime
 native fun print_last_exception_stack_trace_and_exit(Exception): void;
 
+// TODO: mark untracked (compile.sk:242 mapper -> printErrorsAndExit -> skipExit)
 @debug
 @no_return
 fun skipExit<T>(res: Int): T {
@@ -116,6 +126,7 @@ fun skipExit<T>(res: Int): T {
   invariant_violation("never")
 }
 
+// TODO: mark untracked (transitively from compiler mapper via skipExit)
 @debug
 @no_return
 @cpp_extern
