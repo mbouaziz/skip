@@ -14,7 +14,7 @@ fun generateGarbage(s: String = "", depth: Int = 10): String {
 }
 
 @no_inline
-fun doTest(count: Int): String {
+untracked fun doTest(count: Int): String {
   a = generateGarbage("a");
   b = generateGarbage("b");
   c = generateGarbage("c");
@@ -33,7 +33,7 @@ fun doTest(count: Int): String {
   a + "\n" + b + "\n" + c + "\n" + d + "\n"
 }
 
-fun main(): void {
+untracked fun main(): void {
   print_raw(doTest(2));
 }
 module end;

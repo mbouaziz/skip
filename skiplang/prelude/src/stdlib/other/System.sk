@@ -159,9 +159,8 @@ fun assert(cond: Bool): void {
 // made after all inlining is complete. This only does anything in the
 // native back end, it is a no-op in the others (which use a different GC
 // strategy).
-@debug
 @intrinsic
-fun localGC(): void {
+untracked fun localGC(): void {
   void
 }
 

@@ -1,6 +1,6 @@
 module NativeGcGenerator;
 @no_inline
-fun makeGen(): mutable Iterator<Int> {
+untracked fun makeGen(): mutable Iterator<Int> {
   // Make some crazy vector that becomes part of the generator's coroutine
   // state, to make sure it doesn't get GC'd away.
   vec = mutable Vector[];
@@ -18,7 +18,7 @@ fun makeGen(): mutable Iterator<Int> {
   }
 }
 
-fun main(): void {
+untracked fun main(): void {
   gen = makeGen();
 
   for (_ in Range(0, 100)) {
