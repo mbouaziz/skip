@@ -63,7 +63,7 @@ private fun genInvalidTest(basename: String): void {
   T.expectEq(actual, expected)
 }
 
-fun main(): void {
+untracked fun main(): void {
   tests = mutable Map[];
 
   validTests = FileSystem.readFilesRecursive("./tests", fn ->

@@ -3,7 +3,7 @@ module Environ;
 // Return the path to the main executable, given the value of argv[0] from
 // program startup.
 // Inspired from `llvm/lib/Support/Unix/Path.inc`.
-fun current_exe(): String {
+untracked fun current_exe(): String {
   if (internalGetArgc() == 0) {
     invariant_violation("Could not determine main executable.")
   };
@@ -40,9 +40,8 @@ fun current_exe(): String {
   invariant_violation("Could not determine main executable.")
 }
 
-@debug
 @cpp_extern("SKIP_getcwd")
-native fun current_dir(): String;
+untracked native fun current_dir(): String;
 
 fun temp_dir(): String {
   varOpt("TMPDIR").default("/tmp")

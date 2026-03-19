@@ -82,7 +82,7 @@ private class Config{
   canonize_paths: Bool,
   cwd: WorkingDirectory,
 } {
-  static fun make(results: Cli.ParseResults): this {
+  static untracked fun make(results: Cli.ParseResults): this {
     optConfig = Optimize.Config::make(
       results.getBool("dce"),
       results.getBool("peephole"),
