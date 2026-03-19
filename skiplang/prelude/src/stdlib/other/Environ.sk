@@ -90,6 +90,7 @@ fun internalCreateNoneStringOption(): ?String {
   None()
 }
 
+// TODO: mark untracked (breaks tracked higher-order functions like .map())
 @debug
 @cpp_extern("SKIP_getenv")
 native fun varOpt(name: String): ?String;
