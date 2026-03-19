@@ -47,9 +47,8 @@ fun temp_dir(): String {
   varOpt("TMPDIR").default("/tmp")
 }
 
-@debug
 @cpp_extern("SKIP_chdir")
-native fun set_current_dir(path: String): void;
+untracked native fun set_current_dir(path: String): void;
 
 @cpp_extern("SKIP_getArgc")
 native fun internalGetArgc(): Int;
