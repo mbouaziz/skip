@@ -156,6 +156,7 @@ private native fun fillStat(result: mutable FileStat, path: String): Int;
 @cpp_extern
 private native fun .open_file(String): String;
 
+// TODO: mark untracked (cascades to writeTextFile and many callers)
 @debug
 @cpp_extern
 private native fun .string_to_file(s: String, file: String): void;
@@ -163,18 +164,22 @@ private native fun .string_to_file(s: String, file: String): void;
 @cpp_extern("SKIP_is_directory")
 private native fun is_directory(filename: String): Bool;
 
+// TODO: mark untracked (cascades to readDirectory and many callers)
 @debug
 @cpp_extern("SKIP_opendir")
 private native fun opendir(dirname: String): Int;
 
+// TODO: mark untracked (cascades to readDirectory and many callers)
 @debug
 @cpp_extern("SKIP_readdir")
 private native fun readdir(dirhandle: Int): String;
 
+// TODO: mark untracked (cascades to readDirectory and many callers)
 @debug
 @cpp_extern("SKIP_closedir")
 private native fun closedir(dirhandle: Int): void;
 
+// TODO: mark untracked (cascades to current_exe, sklib, build scripts)
 @debug
 @cpp_extern("SKIP_realpath")
 native fun realpath(path: String): String;
