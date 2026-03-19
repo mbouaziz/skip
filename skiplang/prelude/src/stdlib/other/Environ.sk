@@ -108,10 +108,13 @@ fun var(name: String): String {
   }
 }
 
+// TODO: mark untracked (callers are @test functions stored as tracked lambdas)
 @debug
 @cpp_extern("SKIP_setenv")
 native fun set_var(name: String, value: String): void;
 
+// TODO: mark untracked (callers are @test functions stored as tracked lambdas,
+// and remove_var is passed to .each() which expects tracked functions)
 @debug
 @cpp_extern("SKIP_unsetenv")
 native fun remove_var(name: String): void;
